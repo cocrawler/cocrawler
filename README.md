@@ -13,6 +13,23 @@ pluggable modules, capable of working well for a large variety of
 crawl tasks. The core of the crawler is written in Python 3.5+ using
 coroutines.
 
+## Status
+
+CoCrawler is pre-release, with major restructuring going on.
+
+## Installing
+
+We recommend that you use pyenv, because (1) CoCrawler requires
+Python 3.5 or better, and (2) requirements.txt specifies exact
+module versions.
+
+```
+git clone https://github.com/cocrawler/cocrawler.git
+python -m pip install -r requirements.txt
+cd cocrawl
+make test
+```
+
 ## Pluggable Modules
 
 Pluggable modules make policy decisions, and use utility routines
