@@ -1,5 +1,7 @@
 Short-term TODO list:
 
+pylint
+
 wire in css parsing
 
 write link vs. embed code in parse.py

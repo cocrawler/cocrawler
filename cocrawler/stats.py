@@ -16,6 +16,7 @@ burn_in_progress_start = None
 start_time = time.time()
 maxes = {}
 sums = {}
+exitstatus = 0
 
 def stats_max(name, value):
     maxes[name] = max(maxes.get(name, value), value)
@@ -64,10 +65,12 @@ def stat_value(name):
 
 def test(config):
     seq = config.get('Testing', {}).get('StatsEQ', {})
+    global exitstatus
     if seq:
         for s in seq:
             if stat_value(s) != seq[s]:
                 LOGGER.error('Stat {}={} is not the expected value of {}'.format(s, stat_value(s), seq[s]))
+                exitstatus = 1
             else:
                 LOGGER.debug('Stat {}={} is the expected value'.format(s, seq[s]))
 

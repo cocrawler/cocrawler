@@ -12,6 +12,7 @@ import sys
 
 import config
 import cocrawler
+import stats
 
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
@@ -54,3 +55,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    exit(stats.exitstatus)
+
