@@ -4,12 +4,13 @@ Stuff related to robots.txt processing
 
 import asyncio
 
-from urllib.parse import urlparse
-import magic
+import urllib.parse
 import time
 import json
-import robotexclusionrulesparser
 import unittest
+
+import robotexclusionrulesparser
+import magic
 
 import stats
 
@@ -27,8 +28,9 @@ class Robots:
             self.jsonlogfd = open(self.jsonlogfile, 'w')
 
     async def check(self, url, actual_robots=None, headers=None):
-        parts = urlparse(url)
+        parts = urllib.parse.urlparse(url)
         try:
+            # XXX replace this tripe with something less embarrassing
             schemenetloc = parts.scheme + '://' + parts.netloc
             if ':' in parts.netloc:
                 host, port = parts.netloc.split(':', maxsplit=1)
@@ -55,7 +57,7 @@ class Robots:
         except KeyError:
             robots = await self.fetch_robots(schemenetloc, actual_robots=actual_robots, headers=headers)
 
-        if robots == None:
+        if robots is None:
             self.log(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
             return False
 
@@ -89,7 +91,8 @@ class Robots:
         # XXX this is frequently racy, according to the logfiles!
         if schemenetloc in self.in_progress:
             while schemenetloc in self.in_progress:
-                print('sleeping because someone beat me to the robots punch', flush=True) # XXX make this a stat
+                # XXX make this a stat? does it go off for wide when it shouldn't?
+                print('sleeping because someone beat me to the robots punch', flush=True)
                 await asyncio.sleep(1)
 
             # at this point robots might be in the cache... or not.
@@ -143,8 +146,9 @@ class Robots:
 
         # if we got a non-200, some should be empty and some should be None (XXX Policy)
         if str(response.status).startswith('4') or str(response.status).startswith('5'):
-            self.log(schemenetloc, {'error':'got an unexpected status of {}, treating as deny'.format(response.status),
-                                    'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+            self.log(schemenetloc,
+                     {'error':'got an unexpected status of {}, treating as deny'.format(response.status),
+                      'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             self.in_progress.discard(schemenetloc)
             await response.release()
             return None
@@ -152,8 +156,9 @@ class Robots:
         if not self.is_plausible_robots(schemenetloc, body_bytes, apparent_elapsed):
             first10 = body_bytes[:10]
             first10 = urllib.parse.quote(first10)
-            self.log(schemenetloc, {'error':'robots file did not look reasonable, treating like empty, initial bytes are: ' + first10,
-                                    'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+            self.log(schemenetloc,
+                     {'error':'robots file did not look reasonable, treating like empty, initial bytes are: ' + first10,
+                      'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             # this is a warning only; treat the robots as empty.
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
@@ -168,7 +173,7 @@ class Robots:
             body = str(body_bytes, 'utf-8', 'ignore')
         except Exception as e:
             # something unusual went wrong. treat like a fetch error.
-            self.log(schemenetloc, { 'error':'robots decode threw an exception: ' + str(e),
+            self.log(schemenetloc, {'error':'robots decode threw an exception: ' + str(e),
                                     'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             self.in_progress.discard(schemenetloc)
             await response.release()
@@ -191,7 +196,9 @@ class Robots:
 
         # OK: BOM, it signals a text file ... utf8 or utf16 be/le
         # (this info doesn't appear to be recognized by libmagic?!)
-        if body_bytes.startswith(b'\xef\xbb\xbf') or body_bytes.startswith(b'\xfe\xff') or body_bytes.startswith(b'\xff\xfe'):
+        if (body_bytes.startswith(b'\xef\xbb\xbf') or
+                body_bytes.startswith(b'\xfe\xff') or
+                body_bytes.startswith(b'\xff\xfe')):
             return True
 
         # OK: file magic mimetype is 'text'
@@ -217,9 +224,7 @@ class Robots:
             json_log['who'] = 'robots'
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd, flush=True)
 
-'''
-testing of this file is done with end-to-end tests
-'''
+# XXX add some real tests
 
 class TestUrlAlowed(unittest.TestCase):
     def placeholder(self):

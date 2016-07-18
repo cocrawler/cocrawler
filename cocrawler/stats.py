@@ -5,7 +5,6 @@ A trivial stats system for CoCrawler
 import logging
 
 import time
-from operator import itemgetter
 import unittest
 
 LOGGER = logging.getLogger(__name__)
@@ -42,19 +41,19 @@ def end_cpu_burn(name):
 def report():
     LOGGER.info('Stats report:')
     for s in sorted(sums):
-        LOGGER.info('  {}: {}'.format(s, sums[s]))
+        LOGGER.info('  %s: %d', s, sums[s])
     for s in sorted(maxes):
-        LOGGER.info('  {}: {}'.format(s, maxes[s]))
+        LOGGER.info('  %s: %d', s, maxes[s])
 
     LOGGER.info('CPU burn report:')
     for key, burn in sorted(burners.items(), key=lambda x: x[1]['time'], reverse=True):
-        LOGGER.info('  {} has {} calls taking {:.3f} cpu seconds.'.format(key, burn['count'], burn['time']))
+        LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, burn['count'], burn['time'])
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
-    LOGGER.info('  Elapsed time is {:.3f} seconds'.format(elapsed))
+    LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     if sums.get('URLs fetched', 0) and elapsed > 0:
-        LOGGER.info('  Crawl rate is {} pages/second'.format(int(sums['URLs fetched']/elapsed)))
+        LOGGER.info('  Crawl rate is %d pages/second', int(sums['URLs fetched']/elapsed))
 
 def stat_value(name):
     if name in sums:
@@ -69,10 +68,10 @@ def test(config):
     if seq:
         for s in seq:
             if stat_value(s) != seq[s]:
-                LOGGER.error('Stat {}={} is not the expected value of {}'.format(s, stat_value(s), seq[s]))
+                LOGGER.error('Stat %s=%s is not the expected value of %s', s, stat_value(s), seq[s])
                 exitstatus = 1
             else:
-                LOGGER.debug('Stat {}={} is the expected value'.format(s, seq[s]))
+                LOGGER.debug('Stat %s=%s is the expected value', s, seq[s])
 
 class TestUrlAlowed(unittest.TestCase):
     def test_max(self):

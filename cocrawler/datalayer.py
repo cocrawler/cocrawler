@@ -14,8 +14,8 @@
 # path to seed - naive or accurate?
 
 #import sortedcontainers - I wish!
-import cachetools.ttl
 import unittest
+import cachetools.ttl
 
 class Datalayer:
     def __init__(self, config):

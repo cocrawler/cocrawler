@@ -2,19 +2,18 @@
 The actual web crawler
 '''
 
-import asyncio
-import aiohttp
-import logging
-
 import cgi
 import urllib.parse
-import re
 import math
 import json
 import time
 import os
 from functools import partial
-import tldextract
+
+import asyncio
+import logging
+import aiohttp
+
 import pluginbase
 
 import stats
@@ -58,8 +57,12 @@ class Crawler:
             plugin.setup(self, config)
         LOGGER.info('Installed plugins: %s', ','.join(sorted(list(self.plugins.keys()))))
 
+        self.max_workers = int(self.config['Crawl']['MaxWorkers'])
+        mcu = int(self.config['Crawl'].get('MaxCrawledUrls', 0))
+        self.max_crawled_urls = math.ceil(mcu / self.max_workers)
+
         # testing setup
-        if self.config.get('Testing',{}).get('TestHostmapAll'):
+        if self.config.get('Testing', {}).get('TestHostmapAll'):
             self.test_hostmap_all = self.config['Testing']['TestHostmapAll']
         else:
             self.test_hostmap_all = None
@@ -79,7 +82,8 @@ class Crawler:
                 return # things like mailto: ...
             url = 'http://' + url
         # drop meaningless cgi args?
-        # uses HSTS to upgrade to https: https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
+        # uses HSTS to upgrade to https:
+        #https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
         # use HTTPSEverwhere? would have to have a fallback if https failed
 
         # XXX optionally generate additional urls plugin here
@@ -173,7 +177,8 @@ class Crawler:
         # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
         # for example, add to a WARC, or post to a Kafka queue
         apparent_elapsed = '{:.3f}'.format(time.time() - t0)
-        json_log = {'type':'get', 'url':original_url, 'status':response.status, 'apparent_elapsed':apparent_elapsed, 'time':time.time()}
+        json_log = {'type':'get', 'url':original_url, 'status':response.status,
+                    'apparent_elapsed':apparent_elapsed, 'time':time.time()}
 
         if is_redirect(response):
             headers = response.headers
@@ -199,7 +204,7 @@ class Crawler:
             json_log['content_type'] = content_type
             stats.stats_sum('content-type=' + content_type, 1)
             # PLUGIN: post_crawl_200 by content type
-            if content_type in ('text/html'):
+            if content_type == 'text/html':
                 try:
                     body = await response.text() # do not use encoding found in the headers -- policy
                 except UnicodeDecodeError as e:
@@ -207,7 +212,8 @@ class Crawler:
                     body = body_bytes.decode(encoding='utf-8', errors='replace')
 
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds
-                # should have an option to run this in a separate process or fork, so as to not burn in the main process
+                # should have an option to run this in a separate process or fork,
+                #  so as to not cpu burn in the main process
                 urls = parse.find_html_links(body)
                 LOGGER.debug('parsing content of url %r returned %r links', url, len(urls))
                 json_log['found_links'] = len(urls)
@@ -221,7 +227,6 @@ class Crawler:
                 if new_links:
                     json_log['found_new_links'] = new_links
                 LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
-                LOGGER.debug('unfinished tasks is now %r urls', self.q._unfinished_tasks)
                 stats.stats_max('max queue size', self.q.qsize())
 
         await response.release() # No pipelining
@@ -238,8 +243,8 @@ class Crawler:
                 url = await self.q.get()
                 await self.fetch_and_process(url)
                 self.q.task_done()
-                LOGGER.debug('right after task_done, unfinished tasks is now %r urls', self.q._unfinished_tasks)
 
+                # XXX this needs to become a dynamic schedule instead of static
                 crawled_urls += 1
                 if self.max_crawled_urls and crawled_urls >= self.max_crawled_urls:
                     raise asyncio.CancelledError
@@ -251,25 +256,17 @@ class Crawler:
         '''
         Run the crawler until it's out of work
         '''
-        max_workers = int(self.config['Crawl']['MaxWorkers'])
-        mcu = int(self.config['Crawl'].get('MaxCrawledUrls', 0))
-        self.max_crawled_urls = math.ceil(mcu / max_workers)
-
-        workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(max_workers)]
+        workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
         while True:
-            '''
-            Stop when the queue is empty, or we run out of active workers
-            '''
             await asyncio.sleep(1)
-
             # there's no way to do (empty or no workers), so we cheat
             if self.q._unfinished_tasks == 0:
-                LOGGER.warn('no tasks remain undone, finishing up.')
+                LOGGER.warning('no tasks remain undone, finishing up.')
                 break
             workers = [w for w in workers if not w.done()]
             if len(workers) == 0:
-                LOGGER.warn('all workers exited, finishing up.')
+                LOGGER.warning('all workers exited, finishing up.')
                 break
         for w in workers:
             w.cancel()

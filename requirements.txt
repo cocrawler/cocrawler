@@ -10,6 +10,7 @@ cachetools==1.1.6
 pluginbase==0.4
 bottle==0.12.9
 gevent==1.1.1
+coverage
 
 # filemagic needs the OS libmagic to work; there's a test in robots.py
 filemagic==1.6

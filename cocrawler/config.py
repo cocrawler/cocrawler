@@ -49,7 +49,7 @@ Logging:
 def print_default():
     print(default_yaml)
 
-def merge_dicts(a,b):
+def merge_dicts(a, b):
     '''
     Merge 2-level dict b into a.
     Not very general purpose!
@@ -77,7 +77,7 @@ def config(configfile, configlist):
         with open(configfile, 'r') as c:
             config_from_file = yaml.safe_load(c)
 
-    config = merge_dicts(default, config_from_file)
+    combined = merge_dicts(default, config_from_file)
 
     if configlist:
         for c in configlist:
@@ -92,13 +92,12 @@ def config(configfile, configlist):
             xpath = lhs.split('.')
             key = xpath.pop()
             try:
-                temp = config
+                temp = combined
                 for x in xpath:
-                    temp = config[x]
+                    temp = combined[x]
                 temp[key] = rhs
-            except:
-                LOGGER.error('invalid config of %s', c)
+            except Exception as e:
+                LOGGER.error('invalid config of %s, exception was %r', c, e)
                 continue
 
-    return config
-
+    return combined

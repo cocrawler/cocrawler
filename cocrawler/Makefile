@@ -4,3 +4,5 @@ unittest:
 test: unittest
 	(cd ../test; ./test.sh)
 
+pylint:
+	PYTHONPATH=. pylint *.py

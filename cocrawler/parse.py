@@ -1,13 +1,13 @@
-import re
-import unittest
-
-import stats
-
 '''
 Parse links in html and css pages.
 
 XXX also need a gumbocy alternative
 '''
+
+import re
+import unittest
+
+import stats
 
 def find_html_links(html):
     '''

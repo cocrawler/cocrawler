@@ -8,7 +8,7 @@ import magic
 
 class TestPythonVersion(unittest.TestCase):
     def test_python_version(self):
-        self.assertGreaterEqual(sys.version_info, (3,5), msg='Python 3.5+ needed for async def syntax')
+        self.assertGreaterEqual(sys.version_info, (3, 5), msg='Python 3.5+ needed for async def syntax')
 
     def test_magic(self):
         '''
