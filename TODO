@@ -1,0 +1,43 @@
+Short-term TODO list:
+
+wire in css parsing
+
+write link vs. embed code in parse.py
+
+PriorityQueue ! (prio, work), low prio goes first
+ prio = pathlength to seed ... eventually rank?
+ embed -= 1
+
+retry loop in cocrawler.py
+
+Polite crawling
+ affected by: 503s, slow replies, and crawl-delay in robots
+ Try a per-host Queue with timeslot tokens? filled by main coroutine?
+
+Save/Restore queues
+
+better python packaging
+unit test integration with CI system (easy)
+crawl test integration with CI system (hard)
+
+seed from sitemap
+
+wire in warc code -- internetarchive/warc is BSD
+
+get an example of each usecase
+
+release version 1.0 ----------------------------------------
+
+write Apache-licensed surt module
+
+parser-based extraction of links and embeds - see commonsearch gumbocy
+
+Per-host queues; domain, publicprefix, cctld stats
+
+Datalayer-using queue-fillers
+
+helpers to fetch from IA cdx: domain count, detailed reports, guesses at irrelevant cgi args
+
+helpers to fetch from Alexa million, quantcast million
+
+

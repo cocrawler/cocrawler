@@ -1,0 +1,30 @@
+Crawl:
+  MaxCrawledUrls: 5000 # prevent a runaway
+  UserAgent: cocrawler-test/0.01
+
+Plugins:
+  url_allowed: OnlySeeds
+
+Seeds:
+  Hosts:
+  - http://host1.com/ordinary/0
+  - http://host2.com/ordinary/3
+  - http://host3.com/ordinary/6
+  - http://host4.com/ordinary/2
+  - http://host5.com/ordinary/8
+  - http://host6.com/ordinary/7
+  - http://host7.com/ordinary/1
+  - http://host8.com/ordinary/4
+  - http://host9.com/ordinary/5
+  - http://host10.com/ordinary/9
+
+Logging:
+  Crawllog: crawllog.jsonl
+  Robotslog: robotslog.jsonl
+
+Testing:
+  TestHostmapAll: localhost:8080
+  StatsEQ:
+    fetch http code=200: 10
+    URLs fetched: 10
+    max urls found on a page: 3

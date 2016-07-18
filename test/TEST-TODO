@@ -1,0 +1,7 @@
+503 slowed retries - 10% once slow-down feature is added
+
+polite-crawling test - needs lots of feature work first
+ one-per-second, 503 enforced
+ one per 10 seconds, 503 enforced
+ slow responder, 30 seconds per page, one at a time
+
