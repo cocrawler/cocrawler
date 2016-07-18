@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.5.0"
+  - "3.5"
+  - "3.5-dev"
+  - "nightly"
+
+install: "pip install -r requirements.txt"
+
+script:
+  - (cd cocrawler; make test)
+
