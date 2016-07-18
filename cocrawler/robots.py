@@ -32,16 +32,12 @@ class Robots:
         try:
             # XXX replace this tripe with something less embarrassing
             schemenetloc = parts.scheme + '://' + parts.netloc
-            if ':' in parts.netloc:
-                host, port = parts.netloc.split(':', maxsplit=1)
-            else:
-                host = parts.netloc
             if parts.path:
                 pathplus = parts.path
             else:
                 pathplus = '/'
             if parts.params:
-                patplus += ';' + parts.params
+                pathplus += ';' + parts.params
             if parts.query:
                 pathplus += '?' + parts.query
         except:

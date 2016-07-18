@@ -76,7 +76,7 @@ class Crawler:
 
     def add_url(self, url, seed=False):
         # XXX canonical plugin here
-        url, frag = urllib.parse.urldefrag(url) # drop the frag
+        url, _ = urllib.parse.urldefrag(url) # drop the frag
         if '://' not in url: # will happen for seeds
             if ':' in url:
                 return # things like mailto: ...
@@ -131,7 +131,7 @@ class Crawler:
             # no good way to parse the netloc. it has username, password, host, port
             # XXX just parse host:port
             if ':' in old_netloc:
-                old_host, port = old_netloc.split(':', maxsplit=1)
+                old_host, _ = old_netloc.split(':', maxsplit=1)
             else:
                 old_host = old_netloc
             headers['Host'] = old_host
@@ -195,9 +195,8 @@ class Crawler:
         if response.status == 200:
             headers = response.headers
             content_type = response.headers.get('content-type')
-            extras = {}
             if content_type:
-                content_type, extras = cgi.parse_header(content_type)
+                content_type, _ = cgi.parse_header(content_type)
             else:
                 content_type = 'Unknown'
             LOGGER.debug('url %r came back with content type %r', url, content_type)
