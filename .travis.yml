@@ -9,4 +9,3 @@ install: "pip install -r requirements.txt"
 
 script:
   - (cd cocrawler; make test)
-
