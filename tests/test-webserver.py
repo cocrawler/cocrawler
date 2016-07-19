@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+'''
+A bottle+gevent based webservice suitable for testing CoCrawler
+'''
+
+from gevent import monkey; monkey.patch_all()
+from bottle import route, run, request, abort
+import os
+import random
+import sys
+
+def generate_robots(host):
+    if host.startswith('robotsdenyall'):
+        return 'User-Agent: *\nDisallow: /\n'
+    return 'User-Agent: *\nDisallow: /denied/\n'
+
+siteheader = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+'''
+sitelink = '<url><loc>/ordinary/{}</loc></url>\n'
+sitefooter = '</urlset>\n'
+
+def generate_sitemap(host):
+    mylinks = ''
+    for i in range(10):
+        mylinks += sitelink.format(i)
+    return siteheader + mylinks + sitefooter
+
+header = '''
+<html><head><title>Title</title></head><body>
+'''
+
+links = '''<ul>
+<li><a href="{}">next link</a>
+<li><a href="{}">next link</a>
+<li><a href="/denied/">but not this one</a>
+</ul>
+'''
+
+trailer = '''
+</body></html>
+'''
+
+def generate_ordinary(name, host):
+    mylinks = links.format((name+1)%1000, (2*name)%1000)
+    return header + mylinks + trailer
+
+def generate_ordinary_503s(name, host):
+    if random.randint(1, 9) < 2: # 10% chance
+        abort(503, 'Slow down, you move too fast. You got to make the morning last.\n')
+    return generate_ordinary(name, host)
+
+def generate_code(code, host):
+    abort(code, 'Here is your code; host is {}\n'.format(host))
+
+def generate_trap(name, host):
+    mylinks = links.format(name+1, 2*name)
+    return header + mylinks + trailer
+
+# bottle stuff ------------------------------------------------------------
+
+@route('/hello')
+def hello():
+    return 'Hello World! Host is {}\n'.format(request.get_header('Host'))
+
+@route('/robots.txt')
+def robots():
+    host = request.get_header('Host')
+    return generate_robots(host)
+
+@route('/sitemap.xml')
+def sitemap():
+    host = request.get_header('Host')
+    return generate_sitemap(host)
+
+@route('/ordinary/<name:int>')
+def ordinary(name):
+    host = request.get_header('Host')
+    return generate_ordinary(name, host)
+
+@route('/ordinary-with-503s/<name:int>')
+def ordinary(name):
+    host = request.get_header('Host')
+    return generate_ordinary_503s(name, host, ua)
+
+@route('/code/<code:int>')
+def code(code):
+    host = request.get_header('Host')
+    return generate_code(code, host)
+
+@route('/trap/<name:int>/')
+def trap(name):
+    host = request.get_header('Host')
+    return generate_trap(name, host)
+
+port = os.getenv('PORT') or 8080
+run(host='localhost', port=port)
+

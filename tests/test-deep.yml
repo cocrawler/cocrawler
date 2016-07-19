@@ -1,0 +1,21 @@
+Crawl:
+  MaxCrawledUrls: 5000 # prevent a runaway
+  UserAgent: cocrawler-test/0.01
+
+Plugins:
+  url_allowed: SeedsHostname
+
+Seeds:
+  Hosts:
+  - http://test.website/ordinary/0
+
+Logging:
+  Crawllog: crawllog.jsonl
+  Robotslog: robotslog.jsonl
+
+Testing:
+  TestHostmapAll: localhost:8080
+  StatsEQ:
+    fetch http code=200: 1000
+    URLs fetched: 1000
+    max urls found on a page: 3
