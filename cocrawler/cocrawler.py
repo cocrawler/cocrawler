@@ -108,7 +108,7 @@ class Crawler:
 
     def close(self):
         stats.report()
-        stats.test(self.config)
+        stats.check(self.config)
         self.session.close()
         if self.jsonlogfd:
             self.jsonlogfd.close()

@@ -62,7 +62,7 @@ def stat_value(name):
         return maxes[name]
     return None
 
-def test(config):
+def check(config):
     seq = config.get('Testing', {}).get('StatsEQ', {})
     global exitstatus
     if seq:
