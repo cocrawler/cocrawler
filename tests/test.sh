@@ -4,7 +4,7 @@
 set -e
 
 # start a webserver
-python ./test-webserver.py > /dev/null 2>&1 &
+python ./mock-webserver.py > /dev/null 2>&1 &
 
 echo test-deep
 echo
