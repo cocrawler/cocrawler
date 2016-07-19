@@ -58,8 +58,8 @@ class Crawler:
         LOGGER.info('Installed plugins: %s', ','.join(sorted(list(self.plugins.keys()))))
 
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
-        mcu = int(self.config['Crawl'].get('MaxCrawledUrls', 0))
-        self.max_crawled_urls = math.ceil(mcu / self.max_workers)
+        self.remaining_url_budget = int(self.config['Crawl'].get('MaxCrawledUrls'))
+        self.awaiting_work = 0
 
         # testing setup
         if self.config.get('Testing', {}).get('TestHostmapAll'):
@@ -235,18 +235,19 @@ class Crawler:
         '''
         Process queue items until we run out.
         '''
-        crawled_urls = 0
-
         try:
             while True:
+                self.awaiting_work += 1
                 url = await self.q.get()
+                self.awaiting_work -= 1
                 await self.fetch_and_process(url)
                 self.q.task_done()
 
-                # XXX this needs to become a dynamic schedule instead of static
-                crawled_urls += 1
-                if self.max_crawled_urls and crawled_urls >= self.max_crawled_urls:
-                    raise asyncio.CancelledError
+                if self.remaining_url_budget is not None:
+                    self.remaining_url_budget -= 1
+                    print('remaining budget is', self.remaining_url_budget)
+                    if self.remaining_url_budget <= 0:
+                        raise asyncio.CancelledError
 
         except asyncio.CancelledError:
             pass
@@ -257,15 +258,19 @@ class Crawler:
         '''
         workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
-        while True:
-            await asyncio.sleep(1)
-            # there's no way to do (empty or no workers), so we cheat
-            if self.q._unfinished_tasks == 0:
-                LOGGER.warning('no tasks remain undone, finishing up.')
-                break
-            workers = [w for w in workers if not w.done()]
-            if len(workers) == 0:
-                LOGGER.warning('all workers exited, finishing up.')
-                break
+        if self.remaining_url_budget is not None:
+            while True:
+                await asyncio.sleep(1)
+                workers = [w for w in workers if not w.done()]
+                print(len(workers), 'workers remain')
+                if len(workers) == 0:
+                    LOGGER.warning('all workers exited, finishing up.')
+                    break
+                if self.awaiting_work == len(workers):
+                    LOGGER.warning('all workers are awaiting work, finishing up.')
+                    break
+        else:
+            await self.q.join()
+
         for w in workers:
             w.cancel()
