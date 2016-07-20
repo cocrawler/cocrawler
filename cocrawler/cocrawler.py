@@ -140,16 +140,20 @@ class Crawler:
 
         if not await self.robots.check(original_url, actual_robots=actual_robots, headers=headers):
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
+            # XXX treat 'no robots data' as a soft failure?
             json_log = {'type':'get', 'url':original_url, 'status':'robots', 'time':time.time()}
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
 
+        # XXX switch elapsed to only the final fetch. add delay= for overall delay form retries.
         t0 = time.time()
 
         try:
             response = await self.session.get(url, allow_redirects=False, headers=headers)
-            # XXX special sleepy 503 handling here
-            # XXX retry handling loop here
+            # XXX special sleepy 503 handling here - soft fail
+            # XXX retry handling loop here -- jsonlog count
+            # XXX test with DNS error - soft fail
+            # XXX serverdisconnected is a soft fail
         except aiohttp.errors.ClientError as e:
             stats.stats_sum('URL fetch ClientError exceptions', 1)
             # XXX json log something at total fail
@@ -259,6 +263,7 @@ class Crawler:
         workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
         if self.remaining_url_budget is not None:
+            LOGGER.info('lead coroutine waiting until no more workers (url budget)')
             while True:
                 await asyncio.sleep(1)
                 workers = [w for w in workers if not w.done()]
@@ -270,6 +275,7 @@ class Crawler:
                     LOGGER.warning('all workers are awaiting work, finishing up.')
                     break
         else:
+            LOGGER.info('lead coroutine waiting for queue to empty')
             await self.q.join()
 
         for w in workers:
