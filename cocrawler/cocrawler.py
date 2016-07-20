@@ -13,6 +13,8 @@ from functools import partial
 import asyncio
 import logging
 import aiohttp
+import aiohttp.resolver
+import aiohttp.connector
 
 import pluginbase
 
@@ -21,6 +23,7 @@ import seeds
 import datalayer
 import robots
 import parse
+import fetcher
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +36,18 @@ class Crawler:
         self.config = config
         self.loop = loop
         useragent = config['Crawl']['UserAgent'] # die if not set
-        self.session = aiohttp.ClientSession(loop=loop, headers={'User-Agent': useragent})
+
+        ns = config['Fetcher'].get('Nameservers')
+        if ns:
+            resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)
+        else:
+            resolver = None
+        local_addr = config['Fetcher'].get('LocalAddr')
+        conn = aiohttp.connector.TCPConnector(use_dns_cache=True, resolver=resolver, local_addr=local_addr)
+        self.connector = conn # temporary XXX ?? can print cached_hosts and resolved_hosts
+        self.session = aiohttp.ClientSession(loop=loop, connector=conn,
+                                             headers={'User-Agent': useragent})
+
         self.q = asyncio.Queue(loop=self.loop)
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.session, self.datalayer, config)
@@ -60,12 +74,6 @@ class Crawler:
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
         self.remaining_url_budget = int(self.config['Crawl'].get('MaxCrawledUrls'))
         self.awaiting_work = 0
-
-        # testing setup
-        if self.config.get('Testing', {}).get('TestHostmapAll'):
-            self.test_hostmap_all = self.config['Testing']['TestHostmapAll']
-        else:
-            self.test_hostmap_all = None
 
     @property
     def seeds(self):
@@ -113,47 +121,36 @@ class Crawler:
         if self.jsonlogfd:
             self.jsonlogfd.close()
 
-    # XXX should be a plugin -- does pluginbase deal with async def ?!
     async def fetch_and_process(self, url):
         '''
         Fetch and process a single url.
         '''
-        if '://' not in url: # XXX should I deal with this at a higher level?
-            url = 'http://' + url
+        parts = urllib.parse.urlparse(url)
+        headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, parts, self.config)
 
-        original_url = url
-
-        headers = {}
-        actual_robots = None
-        if self.test_hostmap_all:
-            parts = urllib.parse.urlparse(url)
-            old_netloc = parts.netloc
-            # no good way to parse the netloc. it has username, password, host, port
-            # XXX just parse host:port
-            if ':' in old_netloc:
-                old_host, _ = old_netloc.split(':', maxsplit=1)
-            else:
-                old_host = old_netloc
-            headers['Host'] = old_host
-            url = parts._replace(netloc=self.test_hostmap_all).geturl()
-            actual_robots = parts.scheme + '://' + self.test_hostmap_all + '/robots.txt'
-
-        if not await self.robots.check(original_url, actual_robots=actual_robots, headers=headers):
+        if not await self.robots.check(url, parts, headers=headers, proxy=proxy, mock_robots=mock_robots):
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
             # XXX treat 'no robots data' as a soft failure?
-            json_log = {'type':'get', 'url':original_url, 'status':'robots', 'time':time.time()}
+            # XXX log particular robots fail
+            json_log = {'type':'get', 'url':url, 'status':'robots', 'time':time.time()}
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
+
+        if proxy:
+            # a per-url proxy is a bit annoying, it is a different kind of connector
+            # we need to preserve the existing connector config (see __init__ above)
+            raise ValueError('not yet implemented')
 
         # XXX switch elapsed to only the final fetch. add delay= for overall delay form retries.
         t0 = time.time()
 
         try:
-            response = await self.session.get(url, allow_redirects=False, headers=headers)
+            response = await self.session.get(mock_url or url, allow_redirects=False, headers=headers)
             # XXX special sleepy 503 handling here - soft fail
             # XXX retry handling loop here -- jsonlog count
             # XXX test with DNS error - soft fail
             # XXX serverdisconnected is a soft fail
+            # XXX aiodns.error.DNSError
         except aiohttp.errors.ClientError as e:
             stats.stats_sum('URL fetch ClientError exceptions', 1)
             # XXX json log something at total fail
@@ -181,15 +178,15 @@ class Crawler:
         # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
         # for example, add to a WARC, or post to a Kafka queue
         apparent_elapsed = '{:.3f}'.format(time.time() - t0)
-        json_log = {'type':'get', 'url':original_url, 'status':response.status,
+        json_log = {'type':'get', 'url':url, 'status':response.status,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}
 
         if is_redirect(response):
             headers = response.headers
             location = response.headers.get('location')
-            next_url = urllib.parse.urljoin(original_url, location)
+            next_url = urllib.parse.urljoin(url, location)
             # XXX make sure it didn't redirect to itself.
-            # XXX some hosts redir to themselves while setting cookies
+            # XXX some hosts redir to themselves while setting cookies, that's an infinite loop
             json_log['redirect'] = next_url
             if self.add_url(next_url):
                 json_log['found_new_links'] = 1
@@ -224,8 +221,8 @@ class Crawler:
 
                 new_links = 0
                 for u in urls:
-                    url = urllib.parse.urljoin(original_url, u)
-                    if self.add_url(url):
+                    new_url = urllib.parse.urljoin(url, u)
+                    if self.add_url(new_url):
                         new_links += 1
                 if new_links:
                     json_log['found_new_links'] = new_links
@@ -249,7 +246,6 @@ class Crawler:
 
                 if self.remaining_url_budget is not None:
                     self.remaining_url_budget -= 1
-                    print('remaining budget is', self.remaining_url_budget)
                     if self.remaining_url_budget <= 0:
                         raise asyncio.CancelledError
 
@@ -280,3 +276,8 @@ class Crawler:
 
         for w in workers:
             w.cancel()
+
+#        print('on the way out, connector.cached_hosts is')
+#        print(self.connector.cached_hosts)
+#        print('on the way out, connector.resolved_hosts is')
+#        print(self.connector.resolved_hosts)

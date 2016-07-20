@@ -2,6 +2,7 @@
 
 pur==3.0.5
 aiohttp==0.22.1
+aiodns==1.0.1
 pyyaml==3.11
 cchardet==1.0.0
 surt==0.3.0

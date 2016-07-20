@@ -26,6 +26,11 @@ Robots:
   RobotsCacheSize: 1000
   RobotsCacheTimeout: 86400
 
+Fetcher:
+  Nameservers:
+  - 8.8.8.8
+  - 8.8.4.4
+
 Plugins:
   Path:
   - ./plugins/generic

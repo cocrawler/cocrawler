@@ -17,7 +17,8 @@ Logging:
   Robotslog: robotslog.jsonl
 
 Testing:
-  TestHostmapAll: localhost:8080
+  TestHostmapAll: 127.0.0.1:8080
+#  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
     fetch http code=200: 10
     URLs fetched: 10
