@@ -1,6 +1,8 @@
 Short-term TODO list:
 
-pylint
+switch to pytest to make coverage easier -- packaging problems
+
+more pylint
 
 wire in css parsing
 
@@ -18,10 +20,6 @@ Polite crawling
 
 Save/Restore queues
 
-better python packaging
-unit test integration with CI system (easy)
-crawl test integration with CI system (hard)
-
 seed from sitemap
 
 wire in warc code -- internetarchive/warc is BSD
@@ -29,6 +27,8 @@ wire in warc code -- internetarchive/warc is BSD
 get an example of each usecase
 
 release version 1.0 ----------------------------------------
+
+re2 for regex parsing speed? difficult to install.
 
 write Apache-licensed surt module
 
