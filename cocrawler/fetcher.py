@@ -37,21 +37,6 @@ Failure returns enough details for the caller to do something smart:
 full response, proxy failure. Plus an errorstring good enough for logging.
 '''
 
-# hm. TCPConnector has resolved_hosts, use_dns_cache=True
-# local_addr (to bind to)
-# verify_ssl=True might want False as an option for sites that fail ... dangerous, but...
-#resolver = AsyncResolver(nameservers=[“8.8.8.8”, “8.8.4.4”]) conn = aiohttp.TCPConnector(resolver=resolver)
-#limit=None is infinite (default)
-
-#conn = aiohttp.ProxyConnector(proxy="http://some.proxy.com") # or even https://user:pass@some.proxy.com
-#session = aiohttp.ClientSession(connector=conn)
-#async with session.get('http://python.org') as resp:
-#    print(resp.status)
-# or conn.close()
-
-# self.session = aiohttp.ClientSession(loop=loop, headers={'User-Agent': useragent})
-
-
 import asyncio
 import aiohttp
 
@@ -74,15 +59,28 @@ def apply_url_policies(url, parts, config):
 async def fetch(url, headers=None, proxy=None, mock_url=None):
     if proxy:
         proxy = aiohttp.ProxyConnector(proxy=proxy)
+        # we need to preserve the existing connector config (see cocrawler.__init__)
+        # XXX need to research how to do this
+        raise ValueError('not yet implemented')
 
-    # extract host from url
 
+
+
+
+    # checks after fetch:
+    # hsts? if ssl, check strict-transport-security header, remember max-age=foo part., other stuff like includeSubDomains
+    # did we receive cookies? was the security bit set?
+    # fish dns for host out of tcpconnector object?
+    # record everything needed for warc. all headers, for example.
 
 def upgrade_scheme(url):
     '''
     Upgrade crawled scheme to https, if reasonable. This helps to reduce MITM attacks
     against the crawler.
     https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
+
+    Alternately, the return headers from a site might have strict-transport-security set ... a bit more
+    dangerous as we'd have to respect the timeout to avoid permanently learning something that's broken
 
     TODO: use HTTPSEverwhere? would have to have a fallback if https failed, which it occasionally will
     '''

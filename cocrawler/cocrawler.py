@@ -131,7 +131,7 @@ class Crawler:
         if not await self.robots.check(url, parts, headers=headers, proxy=proxy, mock_robots=mock_robots):
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
             # XXX treat 'no robots data' as a soft failure?
-            # XXX log particular robots fail
+            # XXX log more particular robots fail reason here
             json_log = {'type':'get', 'url':url, 'status':'robots', 'time':time.time()}
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
@@ -141,16 +141,17 @@ class Crawler:
             # we need to preserve the existing connector config (see __init__ above)
             raise ValueError('not yet implemented')
 
-        # XXX switch elapsed to only the final fetch. add delay= for overall delay form retries.
-        t0 = time.time()
+        t0_total_delay = time.time()
 
         try:
+            t0 = time.time()
             response = await self.session.get(mock_url or url, allow_redirects=False, headers=headers)
             # XXX special sleepy 503 handling here - soft fail
             # XXX retry handling loop here -- jsonlog count
             # XXX test with DNS error - soft fail
             # XXX serverdisconnected is a soft fail
             # XXX aiodns.error.DNSError
+            # XXX equivalent to requests.exceptions.SSLerror ?? reddit.com is an example of a CDN-related SSL fail
         except aiohttp.errors.ClientError as e:
             stats.stats_sum('URL fetch ClientError exceptions', 1)
             # XXX json log something at total fail
@@ -167,7 +168,7 @@ class Crawler:
             LOGGER.debug('fetching url %r raised %r', url, e)
             raise
 
-        # fully receive headers and body
+        # fully receive headers and body. XXX if we want to limit bytecount, do it here?
         body_bytes = await response.read()
         header_bytes = response.raw_headers
 
@@ -175,11 +176,12 @@ class Crawler:
         LOGGER.debug('url %r came back with status %r', url, response.status)
         stats.stats_sum('fetch http code=' + str(response.status), 1)
 
-        # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
-        # for example, add to a WARC, or post to a Kafka queue
         apparent_elapsed = '{:.3f}'.format(time.time() - t0)
         json_log = {'type':'get', 'url':url, 'status':response.status,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}
+
+        # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
+        # for example, add to a WARC, or post to a Kafka queue
 
         if is_redirect(response):
             headers = response.headers
@@ -208,7 +210,7 @@ class Crawler:
                 try:
                     body = await response.text() # do not use encoding found in the headers -- policy
                 except UnicodeDecodeError as e:
-                    # XXX if encoding in header, maybe I should use it?
+                    # XXX if encoding was in header, maybe I should use it?
                     body = body_bytes.decode(encoding='utf-8', errors='replace')
 
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds
@@ -226,6 +228,7 @@ class Crawler:
                         new_links += 1
                 if new_links:
                     json_log['found_new_links'] = new_links
+                # XXX plugin for links and new links - post to Kafka, etc
                 LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
                 stats.stats_max('max queue size', self.q.qsize())
 
