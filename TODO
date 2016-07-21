@@ -1,12 +1,10 @@
 Short-term TODO list:
 
-switch to pytest to make coverage easier -- packaging problems
+plugin system revamp
 
-more pylint
+add css parsing and parse embeds to a mocked test
 
-wire in css parsing
-
-write link vs. embed code in parse.py
+figure out why coveralls report isn't getting displayed on coveralls.io?
 
 PriorityQueue ! (prio, work), low prio goes first
  prio = pathlength to seed ... eventually rank?
