@@ -14,7 +14,6 @@
 # path to seed - naive or accurate?
 
 #import sortedcontainers - I wish!
-import unittest
 import cachetools.ttl
 
 class Datalayer:
@@ -46,19 +45,3 @@ class Datalayer:
     def read_robots_cache(self, schemenetloc):
         return self.robots[schemenetloc]
 
-class TestUrlAllowed(unittest.TestCase):
-    def setUp(self):
-        self.datalayer = Datalayer({'Robots':{'RobotsCacheSize':1, 'RobotsCacheTimeout': 1}})
-
-    def test_seen(self):
-        self.assertFalse(self.datalayer.seen_url('example.com'))
-        self.datalayer.add_seen_url('example.com')
-        self.assertTrue(self.datalayer.seen_url('example.com'))
-
-    def test_datalayer(self):
-        self.assertRaises(KeyError, self.datalayer.read_robots_cache, 'http://example.com')
-        self.datalayer.cache_robots('http://example.com', b'THIS IS A TEST')
-        self.assertEqual(self.datalayer.read_robots_cache('http://example.com'), b'THIS IS A TEST')
-
-if __name__ == '__main__':
-    unittest.main()

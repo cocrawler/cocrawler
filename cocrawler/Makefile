@@ -1,5 +1,5 @@
 unittest:
-	python -m unittest *.py plugins/*/*.py
+	py.test
 
 test: unittest
 	(cd ../tests; ./test.sh)

@@ -7,7 +7,6 @@ import asyncio
 import urllib.parse
 import time
 import json
-import unittest
 
 import robotexclusionrulesparser
 import magic
@@ -216,11 +215,3 @@ class Robots:
             json_log['who'] = 'robots'
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd, flush=True)
 
-# XXX add some real tests
-
-class TestUrlAlowed(unittest.TestCase):
-    def placeholder(self):
-        self.assertTrue(True)
-
-if __name__ == '__main__':
-    unittest.main()

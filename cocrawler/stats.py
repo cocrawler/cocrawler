@@ -5,7 +5,6 @@ A trivial stats system for CoCrawler
 import logging
 
 import time
-import unittest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,34 +72,3 @@ def check(config):
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, seq[s])
 
-class TestUrlAlowed(unittest.TestCase):
-    def test_max(self):
-        stats_max('foo', 3)
-        stats_max('bar', 2)
-        stats_max('foo', 5)
-        self.assertEqual(maxes['foo'], 5)
-        self.assertEqual(maxes['bar'], 2)
-
-    def test_sum(self):
-        stats_sum('foo', 3)
-        stats_sum('bar', 2)
-        stats_sum('foo', 5)
-        self.assertEqual(sums['foo'], 8)
-        self.assertEqual(sums['bar'], 2)
-
-    def test_burn(self):
-        begin_cpu_burn('foo')
-        end_cpu_burn('foo')
-        self.assertEqual(burners['foo']['count'], 1)
-        self.assertTrue(burners['foo']['time'] < 0.01, msg='empty burn is less than 10ms')
-        begin_cpu_burn('foo')
-        t0 = time.time()
-        while time.time() - t0 < 0.1:
-            pass
-        end_cpu_burn('foo')
-        self.assertEqual(burners['foo']['count'], 2)
-        self.assertTrue(burners['foo']['time'] > 0.05, msg='100ms burn is more than 50ms cpu')
-        self.assertTrue(burners['foo']['time'] < 0.15, msg='100ms burn is less than 150ms cpu')
-
-if __name__ == '__main__':
-    unittest.main()
