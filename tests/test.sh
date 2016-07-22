@@ -7,7 +7,7 @@ set -e
 python ./mock-webserver.py > /dev/null 2>&1 &
 
 # if COVERAGE is set, use it, else python
-if [ -z "$COVERAGE"]; then COVERAGE=python; fi
+if [ -z "$COVERAGE" ]; then COVERAGE=python; fi
 
 echo test-deep
 echo
@@ -22,7 +22,7 @@ echo
 $COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml
 
 # remove logfiles
-rm -f robotslog.jsonl crawllog.jsonl
+#rm -f robotslog.jsonl crawllog.jsonl
 
 # tear down the webserver. fails in travis, so ignore
 kill %1 || true

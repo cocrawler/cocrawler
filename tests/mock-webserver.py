@@ -12,6 +12,10 @@ import sys
 def generate_robots(host):
     if host.startswith('robotsdenyall'):
         return 'User-Agent: *\nDisallow: /\n'
+    if host.startswith('404'):
+        abort(404, 'No robots.txt here')
+    if host.startswith('pdfrobots'):
+        return '%PDF-1.3\n'
     return 'User-Agent: *\nDisallow: /denied/\n'
 
 siteheader = '''<?xml version="1.0" encoding="UTF-8"?>
