@@ -55,16 +55,16 @@ class Robots:
         if len(robots) == 0:
             return True
 
-        stats.begin_cpu_burn('robots parse')
+        start = time.clock()
         self.rerp.parse(robots) # cache this parse?
-        stats.end_cpu_burn('robots parse')
+        stats.record_cpu_burn('robots parse', start)
 
 #        if self.rerp.sitemaps:
 #           ...
 
-        stats.begin_cpu_burn('robots is_allowed')
+        start = time.clock()
         check = self.rerp.is_allowed('CoCrawler', pathplus) # XXX proper user-agent
-        stats.end_cpu_burn('robots is_allowed')
+        stats.record_cpu_burn('robots is_allowed', start)
 
         if check:
             # don't log success
@@ -104,6 +104,8 @@ class Robots:
             return None
 
         self.in_progress.add(schemenetloc)
+
+        # XXX start of code that should be replaced by fetcher.fetch(allow_redirects=True)
 
         tries = 0
         error = None

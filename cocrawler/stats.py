@@ -9,8 +9,6 @@ import time
 LOGGER = logging.getLogger(__name__)
 
 burners = {}
-burn_in_progress_name = None
-burn_in_progress_start = None
 start_time = time.time()
 maxes = {}
 sums = {}
@@ -22,19 +20,11 @@ def stats_max(name, value):
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
 
-def begin_cpu_burn(name):
-    global burn_in_progress_name
-    global burn_in_progress_start
-    burn_in_progress_name = name
-    burn_in_progress_start = time.clock()
-
-def end_cpu_burn(name):
-    if name != burn_in_progress_name:
-        raise ValueError('name did not match for begin/end: {} and {}'.format(burn_in_progress_name, name))
-    end = time.clock()
+def record_cpu_burn(name, start):
+    elapsed = time.clock() - start
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
-    burn['time'] = burn.get('time', 0.0) + end - burn_in_progress_start
+    burn['time'] = burn.get('time', 0.0) + elapsed
     burners[name] = burn
 
 def report():
@@ -59,7 +49,6 @@ def stat_value(name):
         return sums[name]
     if name in maxes:
         return maxes[name]
-    return None
 
 def check(config):
     seq = config.get('Testing', {}).get('StatsEQ', {})
