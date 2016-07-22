@@ -9,20 +9,23 @@ plugin system revamp
 add css parsing and parse embeds to a mocked test
 
 PriorityQueue ! (prio, work), low prio goes first
- prio = pathlength to seed ... eventually rank?
+ prio = pathlength to seed ... eventually combined with rank?
  embed -= 1
+ add in a random number between 0-1 to shake things up a bit
 
 Polite crawling
  affected by: 503s, slow replies, and crawl-delay in robots
  Try a per-host Queue with timeslot tokens? filled by main coroutine?
 
-Save/Restore queues
+Save/Restore queues -- perhaps reranking the priorities?
+ shorter path-to-seed might have been found, plus rank could update
 
 seed from sitemap
 
-wire in warc code -- internetarchive/warc is BSD
+wire in warc code -- pip warc is BSD
+  doc for package does not explain how to generate good headers
 
-get an example of each usecase
+get an example of each usecase written up -- useragent foo
 
 release version 1.0 ----------------------------------------
 
