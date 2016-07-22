@@ -136,47 +136,9 @@ class Crawler:
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
 
-        if proxy:
-            # a per-url proxy is a bit annoying, it is a different kind of connector
-            # we need to preserve the existing connector config (see __init__ above)
-            raise ValueError('not yet implemented')
+        response, body_bytes, header_bytes, apparent_elapsed = await fetcher.fetch(url, self.session, headers=headers,
+                                                                           proxy=proxy, mock_url=mock_url)
 
-        t0_total_delay = time.time()
-
-        try:
-            t0 = time.time()
-            response = await self.session.get(mock_url or url, allow_redirects=False, headers=headers)
-            # XXX special sleepy 503 handling here - soft fail
-            # XXX retry handling loop here -- jsonlog count
-            # XXX test with DNS error - soft fail
-            # XXX serverdisconnected is a soft fail
-            # XXX aiodns.error.DNSError
-            # XXX equivalent to requests.exceptions.SSLerror ?? reddit.com is an example of a CDN-related SSL fail
-        except aiohttp.errors.ClientError as e:
-            stats.stats_sum('URL fetch ClientError exceptions', 1)
-            # XXX json log something at total fail
-            LOGGER.debug('fetching url %r raised %r', url, e)
-            raise
-        except aiohttp.errors.ServerDisconnectedError as e:
-            stats.stats_sum('URL fetch ServerDisconnectedError exceptions', 1)
-            # XXX json log something at total fail
-            LOGGER.debug('fetching url %r raised %r', url, e)
-            raise
-        except Exception as e:
-            stats.stats_sum('URL fetch Exception exceptions', 1)
-            # XXX json log something at total fail
-            LOGGER.debug('fetching url %r raised %r', url, e)
-            raise
-
-        # fully receive headers and body. XXX if we want to limit bytecount, do it here?
-        body_bytes = await response.read()
-        header_bytes = response.raw_headers
-
-        stats.stats_sum('URLs fetched', 1)
-        LOGGER.debug('url %r came back with status %r', url, response.status)
-        stats.stats_sum('fetch http code=' + str(response.status), 1)
-
-        apparent_elapsed = '{:.3f}'.format(time.time() - t0)
         json_log = {'type':'get', 'url':url, 'status':response.status,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}
 
