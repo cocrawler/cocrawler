@@ -2,6 +2,8 @@ Short-term TODO list:
 
 build fetcher, include retry loop
 
+build soft/hard fail in, somehow
+
 plugin system revamp
 
 add css parsing and parse embeds to a mocked test
