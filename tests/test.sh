@@ -19,7 +19,7 @@ grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in rob
 echo
 echo test-wide
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml
+$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1
 
 # remove logfiles
 #rm -f robotslog.jsonl crawllog.jsonl
