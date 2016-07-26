@@ -4,7 +4,7 @@ A bottle+gevent based webservice suitable for testing CoCrawler
 '''
 
 from gevent import monkey; monkey.patch_all()
-from bottle import route, run, request, abort
+from bottle import route, run, request, abort, redirect
 import os
 import random
 import sys
@@ -16,9 +16,18 @@ def generate_robots(host):
         abort(404, 'No robots.txt here')
     if host.startswith('500'):
         abort(500, 'I don\'t know what I\'m doing!')
+    if host.startswith('302'):
+        # unfortunately, we can't use a fake hostname here.
+        # XXX figure out how to get this constant out of here... header?
+        print('\n\nmock-webserver: issuing robots redir\n\n')
+        redirect('http://127.0.0.1:8080/robots.txt.302')
     if host.startswith('pdfrobots'):
         return '%PDF-1.3\n'
     return 'User-Agent: *\nDisallow: /denied/\n'
+
+def generate_robots_302(host):
+    host = 'do-not-redirect-me'
+    return generate_robots(host)
 
 siteheader = '''<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -48,6 +57,10 @@ trailer = '''
 '''
 
 def generate_ordinary(name, host):
+    # send 302.foo/ordinary/0 to 302.foo/ordinary/1, which will not be a redirect
+    if host.startswith('302') and name <= 0:
+        print('\n\nmock-webserver: issuing ordinary redir\n\n')
+        redirect('/ordinary/{}'.format(name+1))
     mylinks = links.format((name+1)%1000, (2*name)%1000)
     return header + mylinks + trailer
 
@@ -57,7 +70,7 @@ def generate_ordinary_503s(name, host):
     return generate_ordinary(name, host)
 
 def generate_code(code, host):
-    abort(code, 'Here is your code; host is {}\n'.format(host))
+    abort(code, 'Here is your code {}; host is {}\n'.format(code, host))
 
 def generate_trap(name, host):
     mylinks = links.format(name+1, 2*name)
@@ -73,6 +86,11 @@ def hello():
 def robots():
     host = request.get_header('Host')
     return generate_robots(host)
+
+@route('/robots.txt.302')
+def robots():
+    host = request.get_header('Host')
+    return generate_robots_302(host)
 
 @route('/sitemap.xml')
 def sitemap():

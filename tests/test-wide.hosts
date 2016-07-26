@@ -7,3 +7,8 @@ http://host8.com/ordinary/4
 http://pdfrobots.host9.com/ordinary/5
 http://404.host10.com/ordinary/9
 http://500.host10.com/ordinary/9
+
+# will redir once on robots and once on the link
+http://302.host10.com/ordinary/0
+# needed so that add_url will fail, which is part of the test verification
+http://302.host10.com/ordinary/1

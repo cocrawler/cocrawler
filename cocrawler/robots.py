@@ -134,13 +134,7 @@ class Robots:
             return None
 
         if not self.is_plausible_robots(schemenetloc, body_bytes, apparent_elapsed):
-            first10 = body_bytes[:10]
-            first10 = urllib.parse.quote(first10)
-            self.jsonlog(schemenetloc,
-                         {'error':
-                          'robots file did not look reasonable, treating like empty, initial bytes are: ' +
-                          first10, 'action':'fetch', 'apparent_elapsed':apparent_elapsed})
-            # this is a warning only; treat the robots as empty.
+            # treat as empty
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
             await response.release()
@@ -154,7 +148,7 @@ class Robots:
             body = str(body_bytes, 'utf-8', 'ignore')
         except Exception as e: # pragma: no cover
             # something unusual went wrong. treat like a fetch error.
-            self.jsonlog(schemenetloc, {'error':'robots decode threw an exception: ' + str(e),
+            self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + str(e),
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             self.in_progress.discard(schemenetloc)
             await response.release()

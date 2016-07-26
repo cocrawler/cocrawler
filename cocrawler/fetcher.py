@@ -102,7 +102,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
         # lots of different kinds, let's just remember the last one
         except Exception as e:
             last_exception = str(e)
-            print('omg we failed once, exception is', last_exception)
+            print('omg we failed once, url is {}, exception is {}'.format(mock_url or url, last_exception))
 
         # treat all 5xx somewhat similar to a 503: slow down and retry
         await asyncio.sleep(10)
@@ -121,7 +121,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
     LOGGER.debug('url %r came back with status %r', url, response.status)
     stats.stats_sum('fetch http code=' + str(response.status), 1)
 
-    # fish dns for host out of tcpconnector object?
+    # fish dns for host out of tcpconnector object? requires (host, port)
     #print('on the way out, connector.cached_hosts is', session.connector.cached_hosts)
 
     # checks after fetch:

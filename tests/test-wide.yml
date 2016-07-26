@@ -20,7 +20,10 @@ Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
-    fetch http code=200: 19
-    URLs fetched: 20
+    fetch http code=200: 21
+    fetch http code=303: 1
+    fetch http code=404: 1
     max urls found on a page: 3
+    rejected by seen_urls: 2
     robots denied: 1
+    URLs fetched: 23
