@@ -36,4 +36,3 @@ def test_css_parse():
     links = parse.find_css_links(test_css)
     assert len(links) == 3
     assert 'images/foo3.png' in links # space?
-

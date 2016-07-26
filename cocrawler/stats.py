@@ -62,4 +62,3 @@ def check(config):
                 exitstatus = 1
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, seq[s])
-

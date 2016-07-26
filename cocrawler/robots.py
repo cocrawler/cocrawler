@@ -137,8 +137,9 @@ class Robots:
             first10 = body_bytes[:10]
             first10 = urllib.parse.quote(first10)
             self.jsonlog(schemenetloc,
-                         {'error':'robots file did not look reasonable, treating like empty, initial bytes are: ' + first10,
-                          'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                         {'error':
+                          'robots file did not look reasonable, treating like empty, initial bytes are: ' +
+                          first10, 'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             # this is a warning only; treat the robots as empty.
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
@@ -184,7 +185,8 @@ class Robots:
         # OK: file magic mimetype is 'text'
         mime_type = self.magic.id_buffer(body_bytes)
         if not mime_type.startswith('text'):
-            self.jsonlog(schemenetloc, {'error':'robots has unexpected mimetype {}, ignoring'.format(mime_type),
+            self.jsonlog(schemenetloc, {'error':
+                                        'robots has unexpected mimetype {}, ignoring'.format(mime_type),
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             return False
 

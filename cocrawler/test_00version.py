@@ -2,8 +2,8 @@
 Misc unit tests, run first in Makefile.
 '''
 
-import pytest
 import sys
+import pytest
 import magic
 
 def test_python_version():

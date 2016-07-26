@@ -4,7 +4,6 @@ The actual web crawler
 
 import cgi
 import urllib.parse
-import math
 import json
 import time
 import os
@@ -154,6 +153,10 @@ class Crawler:
             url, self.session, headers=headers, proxy=proxy, mock_url=mock_url
         )
 
+        if last_exception is not None:
+            # XXX do something
+            pass
+
         json_log = {'type':'get', 'url':url, 'status':response.status,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}
 
@@ -186,7 +189,7 @@ class Crawler:
             if content_type == 'text/html':
                 try:
                     body = await response.text() # do not use encoding found in the headers -- policy
-                except UnicodeDecodeError as e:
+                except UnicodeDecodeError:
                     # XXX if encoding was in header, maybe I should use it?
                     body = body_bytes.decode(encoding='utf-8', errors='replace')
 

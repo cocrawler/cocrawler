@@ -15,4 +15,3 @@ def test_sum():
     stats.stats_sum('foo2', 5)
     assert stats.stat_value('foo2') == 8
     assert stats.stat_value('bar2') == 2
-

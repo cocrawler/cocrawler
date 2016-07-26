@@ -47,4 +47,3 @@ class Datalayer:
 
     def read_robots_cache(self, schemenetloc):
         return self.robots[schemenetloc]
-

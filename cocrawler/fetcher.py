@@ -37,11 +37,11 @@ Failure returns enough details for the caller to do something smart:
 full response, proxy failure. Plus an errorstring good enough for logging.
 '''
 
+import time
+
 import asyncio
 import logging
 import aiohttp
-
-import time
 
 import stats
 
@@ -85,8 +85,10 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
             # XXX test with DNS error - soft fail
             # XXX serverdisconnected is a soft fail
             # XXX aiodns.error.DNSError
-            # XXX equivalent to requests.exceptions.SSLerror ?? reddit.com is an example of a CDN-related SSL fail
-            # XXX when we retry, if local_addr was a list, switch to a different IP (change out the TCPConnector)
+            # XXX equivalent to requests.exceptions.SSLerror ??
+            #   reddit.com is an example of a CDN-related SSL fail
+            # XXX when we retry, if local_addr was a list, switch to a different IP
+            #   (change out the TCPConnector)
 
             # fully receive headers and body. XXX if we want to limit bytecount, do it here?
             # needs a try/except block because it can throw a subset of the exceptions listed at top
@@ -125,7 +127,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
     #print('on the way out, connector.cached_hosts is', session.connector.cached_hosts)
 
     # checks after fetch:
-    # hsts? if ssl, check strict-transport-security header, remember max-age=foo part., other stuff like includeSubDomains
+    # hsts? if ssl, check strict-transport-security header,
+    #   remember max-age=foo part., other stuff like includeSubDomains
     # did we receive cookies? was the security bit set?
     # record everything needed for warc. all headers, for example.
 
@@ -144,5 +147,3 @@ def upgrade_scheme(url):
     TODO: use HTTPSEverwhere? would have to have a fallback if https failed, which it occasionally will
     '''
     return url
-
-
