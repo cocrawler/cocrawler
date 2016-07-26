@@ -149,10 +149,10 @@ class Robots:
         # one last thing... go from bytes to a string, despite bogus utf8
         try:
             body = await response.text()
-        except UnicodeError:
+        except UnicodeError: # pragma: no cover
             # something went wrong. try again assuming utf8 and ignoring errors
             body = str(body_bytes, 'utf-8', 'ignore')
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             # something unusual went wrong. treat like a fetch error.
             self.jsonlog(schemenetloc, {'error':'robots decode threw an exception: ' + str(e),
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
@@ -170,7 +170,7 @@ class Robots:
         '''
         Did you know that some sites have a robots.txt that's a 100 megabyte video file?
         '''
-        if body_bytes.startswith(b'<'): # html or xml or something else bad
+        if body_bytes.startswith(b'<'): # html or xml or something else bad # pragma: no cover
             self.jsonlog(schemenetloc, {'error':'robots appears to be html or xml, ignoring',
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             return False
@@ -179,7 +179,7 @@ class Robots:
         # (this info doesn't appear to be recognized by libmagic?!)
         if (body_bytes.startswith(b'\xef\xbb\xbf') or
                 body_bytes.startswith(b'\xfe\xff') or
-                body_bytes.startswith(b'\xff\xfe')):
+                body_bytes.startswith(b'\xff\xfe')): # pragma: no cover
             return True
 
         # OK: file magic mimetype is 'text'
@@ -191,7 +191,7 @@ class Robots:
             return False
 
         # not OK: too big
-        if len(body_bytes) > 1000000:
+        if len(body_bytes) > 1000000: # pragma: no cover
             self.jsonlog(schemenetloc, {'error':'robots is too big, ignoring',
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             return False

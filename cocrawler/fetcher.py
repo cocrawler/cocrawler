@@ -99,18 +99,16 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
             # break only if we succeeded. 5xx = fail
             if response.status < 500:
                 break
-
-            # treat all 5xx somewhat similar to a 503: slow down and retry
-            await asyncio.sleep(10)
-            # XXX record 500 so that everyone else slows down, too
-
         # lots of different kinds, let's just remember the last one
         except Exception as e:
             last_exception = str(e)
             print('omg we failed once, exception is', last_exception)
 
-        # if the exception was thrown during reading body_bytes, there will be a response object
+        # treat all 5xx somewhat similar to a 503: slow down and retry
+        await asyncio.sleep(10)
+        # XXX record 5xx so that everyone else slows down, too
         if response:
+            # if the exception was thrown during reading body_bytes, there will be a response object
             await response.release()
         tries += 1
     else:

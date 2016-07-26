@@ -24,7 +24,7 @@ $COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.does
 echo
 echo test-failures
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml
+$COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1
 
 # remove logfiles
 #rm -f robotslog.jsonl crawllog.jsonl

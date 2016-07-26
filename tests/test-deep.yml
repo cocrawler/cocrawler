@@ -8,6 +8,7 @@ Plugins:
 Seeds:
   Hosts:
   - http://test.website/ordinary/0
+  - http://test.website/ordinary/1 # makes the robots fetch interlock fire
 
 Logging:
 #  LoggingLevel: 3
