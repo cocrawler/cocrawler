@@ -56,6 +56,8 @@ def check(config):
     if seq:
         for s in seq:
             if stat_value(s) != seq[s]:
+                if stat_value(s) is None and seq[s] == 0:
+                    continue
                 LOGGER.error('Stat %s=%s is not the expected value of %s', s, stat_value(s), seq[s])
                 exitstatus = 1
             else:
