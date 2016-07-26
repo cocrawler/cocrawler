@@ -23,4 +23,4 @@ Testing:
     fetch http code=200: 19
     URLs fetched: 20
     max urls found on a page: 3
-    robots denied: 2
+    robots denied: 1
