@@ -14,6 +14,8 @@ def generate_robots(host):
         return 'User-Agent: *\nDisallow: /\n'
     if host.startswith('404'):
         abort(404, 'No robots.txt here')
+    if host.startswith('500'):
+        abort(500, 'I don\'t know what I\'m doing!')
     if host.startswith('pdfrobots'):
         return '%PDF-1.3\n'
     return 'User-Agent: *\nDisallow: /denied/\n'

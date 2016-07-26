@@ -12,6 +12,7 @@ import robotexclusionrulesparser
 import magic
 
 import stats
+import fetcher
 
 class Robots:
     def __init__(self, session, datalayer, config):
@@ -45,6 +46,7 @@ class Robots:
 
         if robots is None:
             self.jsonlog(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
+            stats.stats_sum('robots denied', 1)
             return False
 
         if len(robots) == 0:
@@ -66,8 +68,8 @@ class Robots:
             return True
 
         self.jsonlog(schemenetloc, {'url':pathplus, 'action':'deny'})
+        stats.stats_sum('robots denied', 1)
         return False
-
 
     async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
@@ -97,36 +99,21 @@ class Robots:
             # ok, so it's not in the cache -- and the other guy's
             # fetch failed. if we just fell through there would be a
             # big race. treat this as a failure.
+            # XXX note that we have no negative caching
             print('some other fetch of robots has failed.') # XXX make this a stat
             return None
 
         self.in_progress.add(schemenetloc)
 
-        # XXX start of code that should be replaced by fetcher.fetch(allow_redirects=True)
+        response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
+            url, self.session, headers=headers, proxy=proxy, mock_url=mock_url, allow_redirects=True
+        )
 
-        tries = 0
-        error = None
-
-        while tries < self.max_tries:
-            try:
-                t0 = time.time()
-                response = await self.session.get(mock_url or url, headers=headers) # allowing redirects
-                body_bytes = await response.read()
-                apparent_elapsed = '{:.3f}'.format(time.time() - t0)
-                break
-            except Exception as e:
-                error = e
-            tries += 1
-        else:
-            self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + str(error),
+        if last_exception:
+            self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + last_exception,
                                         'action':'fetch'})
             self.in_progress.discard(schemenetloc)
-            # XXX response may or may not have been assigned!
-            await response.release()
             return None
-
-#            response, body_bytes_header_bytes, apparent_elapsed = fetcher.fetch(robots_url, session
-
 
         # if we got a 404, return an empty robots.txt
         if response.status == 404:
@@ -214,6 +201,5 @@ class Robots:
             json_log = d
             json_log['host'] = schemenetloc
             json_log['time'] = '{:.3f}'.format(time.time())
-            json_log['who'] = 'robots'
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd, flush=True)
 

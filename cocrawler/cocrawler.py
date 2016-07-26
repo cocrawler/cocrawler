@@ -150,8 +150,9 @@ class Crawler:
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
 
-        response, body_bytes, header_bytes, apparent_elapsed = await fetcher.fetch(url, self.session, headers=headers,
-                                                                           proxy=proxy, mock_url=mock_url)
+        response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
+            url, self.session, headers=headers, proxy=proxy, mock_url=mock_url
+        )
 
         json_log = {'type':'get', 'url':url, 'status':response.status,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}

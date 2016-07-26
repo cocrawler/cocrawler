@@ -76,6 +76,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
 
         try:
             t0 = time.time()
+            last_exception = None
+
             response = await session.get(mock_url or url, allow_redirects=allow_redirects, headers=headers)
 
             # XXX special sleepy 503 handling here - soft fail
@@ -110,9 +112,10 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
             await response.release()
         tries += 1
     else:
-        # we have run out of tries, exception every time
-        print('omg, we failed, the last exception is', last_exception)
-        return
+        if last_exception:
+            print('omg, we failed, the last exception is', last_exception)
+            return None, None, None, None, last_exception
+        return response, body_bytes, header_bytes, apparent_elapsed, None
 
     stats.stats_sum('URLs fetched', 1)
     LOGGER.debug('url %r came back with status %r', url, response.status)
@@ -127,7 +130,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
     # record everything needed for warc. all headers, for example.
 
 
-    return response, body_bytes, header_bytes, apparent_elapsed
+    return response, body_bytes, header_bytes, apparent_elapsed, None
 
 def upgrade_scheme(url):
     '''
