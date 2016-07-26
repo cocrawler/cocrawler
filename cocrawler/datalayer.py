@@ -32,6 +32,9 @@ class Datalayer:
     def add_seen_url(self, url):
         self.seen_urls.add(url)
 
+    # optionally stick a bloom filter in front of this
+    # user specifies size at start
+    # monitor false positive rate
     def seen_url(self, url):
         return url in self.seen_urls
 

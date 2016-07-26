@@ -6,14 +6,14 @@
 #                ProxyConnectionError -- opening connection to proxy
 #            ClientHttpProcessingError
 #                ClientRequestError -- connection error during sending request
-#                ClientResponseError -- connection error during reading respone
+#                ClientResponseError -- connection error during reading response
 #        DisconnectedError
 #            ClientDisconnectedError
 #                WSClientDisconnectedError -- deprecated
 #            ServerDisconnectedError
 #        HttpProcessingError
 #            BadHttpMessage -- 400
-#                BadStatusLine
+#                BadStatusLine "200 OK"
 #                HttpBadRequest -- 400
 #                InvalidHeader
 #                LineTooLong
@@ -50,12 +50,11 @@ LOGGER = logging.getLogger(__name__)
 # XXX should be a policy plugin
 def apply_url_policies(url, parts, config):
     headers = {}
-    proxy = config['Fetcher'].get('ProxyAll')
+    proxy = None
     mock_url = None
     mock_robots = None
 
     test_host = config['Testing'].get('TestHostmapAll')
-
     if test_host:
         headers['Host'] = parts.netloc
         mock_url = parts._replace(netloc=test_host).geturl()
@@ -66,55 +65,69 @@ def apply_url_policies(url, parts, config):
 async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_redirects=None):
     if proxy:
         proxy = aiohttp.ProxyConnector(proxy=proxy)
-        # we need to preserve the existing connector config (see cocrawler.__init__)
-        # XXX need to research how to do this
+        # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
         raise ValueError('not yet implemented')
 
-    t0_total_delay = time.time()
+    tries = 0
+    last_exception = None
+    response = None
 
-    try:
-        t0 = time.time()
-        response = await session.get(mock_url or url, allow_redirects=allow_redirects, headers=headers)
-        # XXX special sleepy 503 handling here - soft fail
-        # XXX retry handling loop here -- jsonlog count
-        # XXX test with DNS error - soft fail
-        # XXX serverdisconnected is a soft fail
-        # XXX aiodns.error.DNSError
-        # XXX equivalent to requests.exceptions.SSLerror ?? reddit.com is an example of a CDN-related SSL fail
-    except aiohttp.errors.ClientError as e:
-        stats.stats_sum('URL fetch ClientError exceptions', 1)
-        # XXX json log something at total fail
-        LOGGER.debug('fetching url %r raised %r', url, e)
-        raise
-    except aiohttp.errors.ServerDisconnectedError as e:
-        stats.stats_sum('URL fetch ServerDisconnectedError exceptions', 1)
-        # XXX json log something at total fail
-        LOGGER.debug('fetching url %r raised %r', url, e)
-        raise
-    except Exception as e:
-        stats.stats_sum('URL fetch Exception exceptions', 1)
-        # XXX json log something at total fail
-        LOGGER.debug('fetching url %r raised %r', url, e)
-        raise
+    while tries < 4: # XXX make this sub-loop configurable
 
-    # fully receive headers and body. XXX if we want to limit bytecount, do it here?
-    body_bytes = await response.read()
-    header_bytes = response.raw_headers
+        try:
+            t0 = time.time()
+            response = await session.get(mock_url or url, allow_redirects=allow_redirects, headers=headers)
+
+            # XXX special sleepy 503 handling here - soft fail
+            # XXX retry handling loop here -- jsonlog count
+            # XXX test with DNS error - soft fail
+            # XXX serverdisconnected is a soft fail
+            # XXX aiodns.error.DNSError
+            # XXX equivalent to requests.exceptions.SSLerror ?? reddit.com is an example of a CDN-related SSL fail
+            # XXX when we retry, if local_addr was a list, switch to a different IP (change out the TCPConnector)
+
+            # fully receive headers and body. XXX if we want to limit bytecount, do it here?
+            # needs a try/except block because it can throw a subset of the exceptions listed at top
+            body_bytes = await response.read()
+            header_bytes = response.raw_headers
+            apparent_elapsed = '{:.3f}'.format(time.time() - t0)
+
+            # break only if we succeeded. 5xx = fail
+            if response.status < 500:
+                break
+
+            # treat all 5xx somewhat similar to a 503: slow down and retry
+            await asyncio.sleep(10)
+            # XXX record 500 so that everyone else slows down, too
+
+        # lots of different kinds, let's just remember the last one
+        except Exception as e:
+            last_exception = str(e)
+            print('omg we failed once, exception is', last_exception)
+
+        # if the exception was thrown during reading body_bytes, the response wll
+        if response:
+            await response.release()
+        tries += 1
+    else:
+        # we have run out of tries, exception every time
+        print('omg, we failed, the last exception is', last_exception)
+        return
 
     stats.stats_sum('URLs fetched', 1)
     LOGGER.debug('url %r came back with status %r', url, response.status)
     stats.stats_sum('fetch http code=' + str(response.status), 1)
 
-    apparent_elapsed = '{:.3f}'.format(time.time() - t0)
-
-    return response, body_bytes, header_bytes, apparent_elapsed
-
+    # fish dns for host out of tcpconnector object?
+    #print('on the way out, connector.cached_hosts is', session.connector.cached_hosts)
 
     # checks after fetch:
     # hsts? if ssl, check strict-transport-security header, remember max-age=foo part., other stuff like includeSubDomains
     # did we receive cookies? was the security bit set?
-    # fish dns for host out of tcpconnector object?
     # record everything needed for warc. all headers, for example.
+
+
+    return response, body_bytes, header_bytes, apparent_elapsed
 
 def upgrade_scheme(url):
     '''

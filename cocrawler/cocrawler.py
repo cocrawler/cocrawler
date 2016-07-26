@@ -42,9 +42,21 @@ class Crawler:
             resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)
         else:
             resolver = None
+
+        proxy = config['Fetcher'].get('ProxyAll')
+        if proxy:
+            raise ValueError('proxies not yet supported')
+
         local_addr = config['Fetcher'].get('LocalAddr')
-        conn = aiohttp.connector.TCPConnector(use_dns_cache=True, resolver=resolver, local_addr=local_addr)
-        self.connector = conn # temporary XXX ?? can print cached_hosts and resolved_hosts
+        # XXX if it's a list, make up an array of TCPConnecter objects, and rotate
+        # XXX save the kwargs in case we want to make a ProxyConnector deeper down
+        conn_kwargs = {'use_dns_cache': True, 'resolver': resolver}
+        if local_addr:
+            conn_kwargs['local_addr'] = local_addr
+        conn = aiohttp.connector.TCPConnector(**conn_kwargs)
+
+        self.connector = conn
+        # can use self.session.connector to get the connectcor back ... connector.cached_hosts ...
         self.session = aiohttp.ClientSession(loop=loop, connector=conn,
                                              headers={'User-Agent': useragent})
 
@@ -115,6 +127,8 @@ class Crawler:
         return 1
 
     def close(self):
+        print('on the way out, connector.cached_hosts is')
+        print(self.connector.cached_hosts)
         stats.report()
         stats.check(self.config)
         self.session.close()

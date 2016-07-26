@@ -37,16 +37,11 @@ class Robots:
         if parts.query:
             pathplus += '?' + parts.query
 
-        if mock_robots:
-            robots_url = mock_robots
-        else:
-            robots_url = schemenetloc + '/robots.txt'
-            
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
         except KeyError:
             # extra semantics and policy inside fetch_robots: 404 returns '', etc. also inserts into cache.
-            robots = await self.fetch_robots(schemenetloc, robots_url, headers=headers, proxy=proxy)
+            robots = await self.fetch_robots(schemenetloc, mock_robots, headers=headers, proxy=proxy)
 
         if robots is None:
             self.jsonlog(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
@@ -74,10 +69,12 @@ class Robots:
         return False
 
 
-    async def fetch_robots(self, schemenetloc, robots_url, headers=None, proxy=None):
+    async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
         robotexclusionrules parser is not async, so fetch the file ourselves
         '''
+        url = schemenetloc + '/robots.txt'
+
         if proxy:
             raise ValueError('not yet implemented')
 
@@ -113,7 +110,7 @@ class Robots:
         while tries < self.max_tries:
             try:
                 t0 = time.time()
-                response = await self.session.get(robots_url, headers=headers) # allowing redirects
+                response = await self.session.get(mock_url or url, headers=headers) # allowing redirects
                 body_bytes = await response.read()
                 apparent_elapsed = '{:.3f}'.format(time.time() - t0)
                 break
@@ -127,6 +124,9 @@ class Robots:
             # XXX response may or may not have been assigned!
             await response.release()
             return None
+
+#            response, body_bytes_header_bytes, apparent_elapsed = fetcher.fetch(robots_url, session
+
 
         # if we got a 404, return an empty robots.txt
         if response.status == 404:
