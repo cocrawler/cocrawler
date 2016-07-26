@@ -63,7 +63,7 @@ def apply_url_policies(url, parts, config):
     return headers, proxy, mock_url, mock_robots
 
 async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_redirects=None):
-    if proxy:
+    if proxy: # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
         # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
         raise ValueError('not yet implemented')
@@ -107,7 +107,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
             last_exception = str(e)
             print('omg we failed once, exception is', last_exception)
 
-        # if the exception was thrown during reading body_bytes, the response wll
+        # if the exception was thrown during reading body_bytes, there will be a response object
         if response:
             await response.release()
         tries += 1

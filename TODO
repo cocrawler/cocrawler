@@ -1,5 +1,8 @@
 Short-term TODO list:
 
+coverage:
+ 302 redirect in fetcher
+
 make soft fail requeue... add a retry count
 
 PriorityQueue ! (prio, work), low prio goes first

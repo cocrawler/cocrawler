@@ -40,8 +40,8 @@ def main():
     crawler = cocrawler.Crawler(loop, conf)
 
     try:
-        loop.run_until_complete(crawler.crawl())
-    except KeyboardInterrupt:
+            loop.run_until_complete(crawler.crawl())
+    except KeyboardInterrupt: # pragma: no cover
         sys.stderr.flush()
         print('\nInterrupt\n')
 #    except Exception as e: # XXX this doesn't seem to surface anything
