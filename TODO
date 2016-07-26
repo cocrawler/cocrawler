@@ -1,9 +1,10 @@
 Short-term TODO list:
 
 coverage:
- 302 redirect in fetcher
+ 302 redirect in fetcher - robots
+ 302 redirect in fetcher - non-robots
 
-make soft fail requeue... add a retry count
+make soft fail requeue... add a retry count to queue info
 
 PriorityQueue ! (prio, work), low prio goes first
  prio = pathlength to seed ... eventually combined with rank?
