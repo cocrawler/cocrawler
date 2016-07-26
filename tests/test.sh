@@ -21,6 +21,11 @@ echo test-wide
 echo
 $COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1
 
+echo
+echo test-failures
+echo
+$COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml
+
 # remove logfiles
 #rm -f robotslog.jsonl crawllog.jsonl
 

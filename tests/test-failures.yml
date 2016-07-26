@@ -1,0 +1,22 @@
+Crawl:
+  MaxCrawledUrls: 5000 # prevent a runaway
+  UserAgent: cocrawler-test/0.01
+
+Plugins:
+  url_allowed: OnlySeeds
+
+Seeds:
+  Hosts:
+  - http://thissubdomaindoesnotresolve.cocrawler.org
+  - http://www.google.com:81/ # will never connect
+
+Logging:
+  Crawllog: crawllog.jsonl
+  Robotslog: robotslog.jsonl
+
+Testing:
+  StatsEQ:
+    fetch http code=200: 0
+    URLs fetched: 0
+    max urls found on a page: 0
+    robots denied: 2
