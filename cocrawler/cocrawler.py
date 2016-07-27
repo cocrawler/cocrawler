@@ -59,7 +59,7 @@ class Crawler:
         self.session = aiohttp.ClientSession(loop=loop, connector=conn,
                                              headers={'User-Agent': useragent})
 
-        self.q = asyncio.Queue(loop=self.loop)
+        self.q = asyncio.PriorityQueue(loop=self.loop)
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.session, self.datalayer, config)
         self.jsonlogfile = config['Logging']['Crawllog']
@@ -68,7 +68,7 @@ class Crawler:
 
         self._seeds = seeds.expand_seeds(self.config.get('Seeds', {}))
         for s in self._seeds:
-            self.add_url(s, seed=True)
+            self.add_url(0, s, seed=True)
         LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
 
         self.plugin_base = pluginbase.PluginBase(package='cocrawler.plugins')
@@ -95,7 +95,7 @@ class Crawler:
     def register_plugin(self, name, plugin_function):
         self.plugins[name] = plugin_function
 
-    def add_url(self, url, seed=False):
+    def add_url(self, priority, url, seed=False):
         # XXX canonical plugin here
         url, _ = urllib.parse.urldefrag(url) # drop the frag
         if '://' not in url: # will happen for seeds
@@ -123,7 +123,7 @@ class Crawler:
 
         LOGGER.debug('actually adding url %r', url)
         stats.stats_sum('added urls', 1)
-        self.q.put_nowait(url)
+        self.q.put_nowait((priority, url))
         self.datalayer.add_seen_url(url)
         return 1
 
@@ -136,10 +136,12 @@ class Crawler:
         if self.jsonlogfd:
             self.jsonlogfd.close()
 
-    async def fetch_and_process(self, url):
+    async def fetch_and_process(self, work):
         '''
         Fetch and process a single url.
         '''
+        priority, url = work
+
         parts = urllib.parse.urlparse(url)
         headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, parts, self.config)
 
@@ -147,7 +149,7 @@ class Crawler:
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
             # XXX treat 'no robots data' as a soft failure?
             # XXX log more particular robots fail reason here
-            json_log = {'type':'get', 'url':url, 'status':'robots', 'time':time.time()}
+            json_log = {'type':'get', 'url':url, 'priority':priority, 'status':'robots', 'time':time.time()}
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
 
@@ -159,7 +161,7 @@ class Crawler:
             # XXX do something
             pass
 
-        json_log = {'type':'get', 'url':url, 'status':response.status,
+        json_log = {'type':'get', 'url':url, 'priority':priority, 'status':response.status,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}
 
         # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
@@ -172,7 +174,7 @@ class Crawler:
             # XXX make sure it didn't redirect to itself.
             # XXX some hosts redir to themselves while setting cookies, that's an infinite loop
             json_log['redirect'] = next_url
-            if self.add_url(next_url):
+            if self.add_url(priority, next_url): # keep same priority
                 json_log['found_new_links'] = 1
             # fall through to release and json logging
 
@@ -206,7 +208,7 @@ class Crawler:
                 new_links = 0
                 for u in urls:
                     new_url = urllib.parse.urljoin(url, u)
-                    if self.add_url(new_url):
+                    if self.add_url(priority + 1, new_url):
                         new_links += 1
                 if new_links:
                     json_log['found_new_links'] = new_links
@@ -224,9 +226,9 @@ class Crawler:
         try:
             while True:
                 self.awaiting_work += 1
-                url = await self.q.get()
+                work = await self.q.get()
                 self.awaiting_work -= 1
-                await self.fetch_and_process(url)
+                await self.fetch_and_process(work)
                 self.q.task_done()
 
                 if self.remaining_url_budget is not None:
