@@ -4,7 +4,6 @@ Generic implementation of url_allowed.
 
 import urllib.parse
 import tldextract
-import unittest
 
 POLICY=None
 SEEDS=set()
@@ -89,49 +88,3 @@ def setup(parent, config):
         else:
             raise ValueError('unknown url_allowed policy of ' + str(POLICY))
 
-class TestUrlAlowed(unittest.TestCase):
-    def test_get_domain(self):
-        self.assertEqual(get_domain('http://www.bbc.co.uk'), 'bbc.co.uk')
-        self.assertEqual(get_domain('http://www.nhs.uk'), 'nhs.uk') # nhs.uk is a public suffix!
-        self.assertEqual(get_domain('http://www.example.com'), 'example.com')
-        self.assertEqual(get_domain('http://sub.example.com'), 'example.com')
-
-    def test_gethostname(self):
-        self.assertEqual(get_hostname('http://www.bbc.co.uk'), 'bbc.co.uk')
-        self.assertEqual(get_hostname('http://www.example.com'), 'example.com')
-        self.assertEqual(get_hostname('http://www.example.com:80'), 'example.com:80')
-        self.assertEqual(get_hostname('http://bbc.co.uk'), 'bbc.co.uk')
-        self.assertEqual(get_hostname('http://www.sub.example.com'), 'sub.example.com')
-        self.assertEqual(get_hostname('http://sub.example.com'), 'sub.example.com')
-
-    def test_url_allowed(self):
-        self.assertFalse(url_allowed('ftp://example.com'))
-        SEEDS.add('example.com')
-        global POLICY
-        POLICY = 'SeedsDomain'
-        self.assertTrue(url_allowed('http://example.com'))
-        self.assertTrue(url_allowed('http://sub.example.com'))
-        POLICY = 'SeedsHostname'
-        self.assertFalse(url_allowed('http://sub.example.com'))
-        POLICY = 'OnlySeeds'
-        self.assertFalse(url_allowed('http://example.com'))
-        POLICY = 'AllDomains'
-        self.assertTrue(url_allowed('http://example.com'))
-        self.assertTrue(url_allowed('http://exa2mple.com'))
-        self.assertTrue(url_allowed('http://exa3mple.com'))
-
-    def test_scheme_allowed(self):
-        self.assertTrue(scheme_allowed(urllib.parse.urlparse('http://example.com')))
-        self.assertTrue(scheme_allowed(urllib.parse.urlparse('https://example.com')))
-        self.assertFalse(scheme_allowed(urllib.parse.urlparse('ftp://example.com')))
-
-    def test_extension_allowed(self):
-        self.assertTrue(extension_allowed(urllib.parse.urlparse('https://example.com/')))
-        self.assertTrue(extension_allowed(urllib.parse.urlparse('https://example.com/thing.with.dots/')))
-        self.assertTrue(extension_allowed(urllib.parse.urlparse('https://example.com/thing.with.dots')))
-        self.assertTrue(extension_allowed(urllib.parse.urlparse('https://example.com/index.html')))
-        self.assertFalse(extension_allowed(urllib.parse.urlparse('https://example.com/foo.jpg')))
-        self.assertFalse(extension_allowed(urllib.parse.urlparse('https://example.com/foo.tar.gz')))
-
-if __name__ == '__main__':
-    unittest.main()

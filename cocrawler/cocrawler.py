@@ -78,6 +78,8 @@ class Crawler:
         self.plugin_source = self.plugin_base.make_plugin_source(searchpath=plugins_path)
         self.plugins = {}
         for plugin_name in self.plugin_source.list_plugins():
+            if plugin_name.startswith('test_'):
+                continue
             plugin = self.plugin_source.load_plugin(plugin_name)
             plugin.setup(self, config)
         LOGGER.info('Installed plugins: %s', ','.join(sorted(list(self.plugins.keys()))))
