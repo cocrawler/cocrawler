@@ -1,12 +1,12 @@
 # Install with "python -m pip install -r requirements.txt".
 
 # used by the cocrawler system
-aiohttp==0.22.1
+aiohttp==0.22.5
 aiodns==1.0.1
 pyyaml==3.11
 cchardet==1.0.0
 surt==0.3.0
-robotexclusionrulesparser==1.7.0
+robotexclusionrulesparser==1.7.1
 cachetools==1.1.6
 pluginbase==0.4
 filemagic==1.6
@@ -20,8 +20,8 @@ bottle==0.12.9
 gevent==1.1.2
 
 # used by Makefile
-coverage==4.1
+coverage==4.2
 pylint==1.6.4
-pytest==2.9.2
-pytest-cov==2.3.0
+pytest==3.0.1
+pytest-cov==2.3.1
 coveralls==1.1

@@ -174,7 +174,7 @@ class Crawler:
             # XXX make sure it didn't redirect to itself.
             # XXX some hosts redir to themselves while setting cookies, that's an infinite loop
             json_log['redirect'] = next_url
-            if self.add_url(priority, next_url): # keep same priority
+            if self.add_url(priority, next_url): # keep same priority? XXX policy
                 json_log['found_new_links'] = 1
             # fall through to release and json logging
 
@@ -192,7 +192,9 @@ class Crawler:
             # PLUGIN: post_crawl_200 by content type
             if content_type == 'text/html':
                 try:
+                    start = time.clock()
                     body = await response.text() # do not use encoding found in the headers -- policy
+                    stats.record_cpu_burn('response.text() decode', start)
                 except UnicodeDecodeError:
                     # XXX if encoding was in header, maybe I should use it?
                     body = body_bytes.decode(encoding='utf-8', errors='replace')
@@ -208,7 +210,7 @@ class Crawler:
                 new_links = 0
                 for u in urls:
                     new_url = urllib.parse.urljoin(url, u)
-                    if self.add_url(priority + 1, new_url):
+                    if self.add_url(priority + 1, new_url): # XXX if embed, priority - 1
                         new_links += 1
                 if new_links:
                     json_log['found_new_links'] = new_links

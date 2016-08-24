@@ -1,6 +1,12 @@
 Short-term TODO list:
 
-make soft fail requeue... add a retry count to queue info
+steal cosrlib/document/html/htmlencoding.py to be a better
+guesser of page encoding - it works on common crawl ...
+compare with the thing in aiohttp.response.text, which just
+uses cchardet
+ What happens when pages lie about their encoding? cosr believes it.
+
+make soft fail do a requeue... add a retry count to queue info
 
 PriorityQueue ! (prio, work), low prio goes first
  prio = pathlength to seed ... eventually combined with rank?
@@ -18,8 +24,6 @@ Polite crawling
 Save/Restore queues -- perhaps reranking the priorities?
  shorter path-to-seed might have been found, plus rank could update
 
-seed from sitemap
-
 wire in warc code -- pip warc is BSD
   doc for package does not explain how to generate good headers
 
@@ -27,9 +31,12 @@ get an example of each usecase written up -- useragent foo
 
 release version 1.0 ----------------------------------------
 
+investigate bloom filters (or cuckoo filters) to speed up seen etc.
+ e.g. in-site link filter might be something that's almost always usable
+
 re2 for regex parsing speed? difficult to install.
 
-write Apache-licensed surt module
+write Apache-licensed surt module -- what should the default policy be?!?!
 
 parser-based extraction of links and embeds - see commonsearch gumbocy
 
@@ -39,6 +46,7 @@ Datalayer-using queue-fillers
 
 helpers to fetch from IA cdx: domain count, detailed reports, guesses at irrelevant cgi args
 
+seed from sitemap
 helpers to fetch from Alexa million, quantcast million
 
 

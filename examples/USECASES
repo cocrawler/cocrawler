@@ -3,20 +3,27 @@ code. This is the definition of 1.0:
 
 * Survey crawl. Crawl the front page + embeds of a list of
 websites, e.g. Alexa top million. (No politeness needed.)
+** Data extraction follow-on: BuiltWith
+** test partner: me?
+{needs extension of url_allowed to not check embeds}
+{needs: builtwith extractors}
 
 * Single-site crawl. Crawl all of a single site, with adaptive
 politeness. (Working, no politeness yet)
+** Data extraction follow-on: Amazon prices
+** test partner: inzopa
+** test partner: archiveteam? needs warc comparison
+{needs: warc}
+{needs: html extraction, so I can count the words of content}
 
 * News crawl. Find recent news article links on Reddit, and crawl
 them.
+** test partner: archiveteam? needs warc comparison
+{needs: warc}
 
 * Internet structure crawl. Crawl the entire Internet (ok, a few 10s
 of billions of pages), looking for outgoing links.  Figure out
 "landing pages" for all sites (i.e. pages that have links from off-domain.)
 Accumulate anchortext. [Note: 100 bytes of info about 10 billion pages
 is only 1 TB ... most pages have 0 external links.]
-
-
-
-
-
+** test partner: me
