@@ -19,11 +19,13 @@ grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in rob
 echo
 echo test-wide
 echo
+# this timeout can be tiny because we only talk to a local webserver
 $COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1
 
 echo
 echo test-failures
 echo
+# don't make the timeout tiny because we actually try to talk to google.com:81
 $COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1
 
 # remove logfiles

@@ -86,7 +86,7 @@ class Robots:
             while schemenetloc in self.in_progress:
                 # XXX make this a stat? does it go off for wide when it shouldn't?
                 print('sleeping because someone beat me to the robots punch', flush=True)
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.3)
 
             # at this point robots might be in the cache... or not.
             try:
@@ -106,7 +106,7 @@ class Robots:
         self.in_progress.add(schemenetloc)
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-            url, self.session, headers=headers, proxy=proxy, mock_url=mock_url, allow_redirects=True
+            url, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url, allow_redirects=True
         )
 
         if last_exception:
@@ -148,7 +148,7 @@ class Robots:
             body = str(body_bytes, 'utf-8', 'ignore')
         except Exception as e: # pragma: no cover
             # something unusual went wrong. treat like a fetch error.
-            self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + str(e),
+            self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + repr(e),
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             self.in_progress.discard(schemenetloc)
             await response.release()

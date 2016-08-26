@@ -1,25 +1,31 @@
 Short-term TODO list:
 
+test that the big retry loop works
+ make soft fail do a requeue... add a retry count to queue info
+
 steal cosrlib/document/html/htmlencoding.py to be a better
 guesser of page encoding - it works on common crawl ...
 compare with the thing in aiohttp.response.text, which just
 uses cchardet
  What happens when pages lie about their encoding? cosr believes it.
 
-make soft fail do a requeue... add a retry count to queue info
-
 PriorityQueue ! (prio, work), low prio goes first
  prio = pathlength to seed ... eventually combined with rank?
  embed -= 1
  add in a random number between 0-1 to shake things up a bit
+
+I have a race between host_seen and the queue -- seen is set after
+a successful fetch, so a popular url will be in the queue repeatedly.
 
 plugin system revamp
 
 add css parsing and parse embeds to a mocked test
 
 Polite crawling
- affected by: 503s, slow replies, and crawl-delay in robots
+ rate affected by: 5xx esp 503s, slow replies, and crawl-delay in robots
  Try a per-host Queue with timeslot tokens? filled by main coroutine?
+ how can I figure out if the crawler is cpu bound so that slow replies can't be detected?
+ time.time() vs. time.clock() to mark cpu bound -- perhaps its own coroutine?
 
 Save/Restore queues -- perhaps reranking the priorities?
  shorter path-to-seed might have been found, plus rank could update

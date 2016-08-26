@@ -59,7 +59,11 @@ class Crawler:
         self.session = aiohttp.ClientSession(loop=loop, connector=conn,
                                              headers={'User-Agent': useragent})
 
+        # queue.PriorityQueue has no concept of 'ride along' data. Sigh.
         self.q = asyncio.PriorityQueue(loop=self.loop)
+        self.ridealong = {}
+        self.ridealongmaxid = 1
+
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.session, self.datalayer, config)
         self.jsonlogfile = config['Logging']['Crawllog']
@@ -96,7 +100,7 @@ class Crawler:
         self.plugins[name] = plugin_function
 
     def add_url(self, priority, url, seed=False):
-        # XXX canonical plugin here
+        # XXX canonical plugin here?
         url, _ = urllib.parse.urldefrag(url) # drop the frag
         if '://' not in url: # will happen for seeds
             if ':' in url:
@@ -123,7 +127,12 @@ class Crawler:
 
         LOGGER.debug('actually adding url %r', url)
         stats.stats_sum('added urls', 1)
-        self.q.put_nowait((priority, url))
+
+        work = {'url': url}
+        self.ridealong[str(self.ridealongmaxid)] = work
+        self.q.put_nowait((priority, str(self.ridealongmaxid)))
+        self.ridealongmaxid += 1
+        
         self.datalayer.add_seen_url(url)
         return 1
 
@@ -140,7 +149,11 @@ class Crawler:
         '''
         Fetch and process a single url.
         '''
-        priority, url = work
+        priority, ra = work
+        d = self.ridealong[ra]
+        url = d['url']
+        tries = d.get('tries', 0)
+        maxtries = self.config['Crawl']['MaxTries']
 
         parts = urllib.parse.urlparse(url)
         headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, parts, self.config)
@@ -154,15 +167,27 @@ class Crawler:
             return
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-            url, self.session, headers=headers, proxy=proxy, mock_url=mock_url
+            url, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url
         )
 
-        if last_exception is not None:
-            # XXX do something
-            pass
-
-        json_log = {'type':'get', 'url':url, 'priority':priority, 'status':response.status,
+        json_log = {'type':'get', 'url':url, 'priority':priority,
                     'apparent_elapsed':apparent_elapsed, 'time':time.time()}
+        if tries:
+            json_log['retry'] = tries
+
+        if last_exception is not None:
+            tries += 1
+            if tries > maxtries:
+                # XXX log something about exceeding max tries
+                # XXX remember that host had a fail
+                return
+            d['tries'] = tries
+            self.ridealong[ra] = d
+            self.q.put_nowait((priority, ra))
+            return
+        del self.ridealong[ra]
+
+        json_log['status'] = response.status
 
         # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
         # for example, add to a WARC, or post to a Kafka queue
@@ -172,7 +197,7 @@ class Crawler:
             location = response.headers.get('location')
             next_url = urllib.parse.urljoin(url, location)
             # XXX make sure it didn't redirect to itself.
-            # XXX some hosts redir to themselves while setting cookies, that's an infinite loop
+            # XXX some hosts redir to themselves while setting cookies, that's an infinite loop if we aren't accepting cookies like PHPSESSIONID
             json_log['redirect'] = next_url
             if self.add_url(priority, next_url): # keep same priority? XXX policy
                 json_log['found_new_links'] = 1
@@ -194,6 +219,7 @@ class Crawler:
                 try:
                     start = time.clock()
                     body = await response.text() # do not use encoding found in the headers -- policy
+                    # XXX consider using 'ascii' for speed, if all we want to do is regex in it
                     stats.record_cpu_burn('response.text() decode', start)
                 except UnicodeDecodeError:
                     # XXX if encoding was in header, maybe I should use it?

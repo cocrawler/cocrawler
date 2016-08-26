@@ -16,7 +16,10 @@ Seeds:
 
 Crawl:
   DepthLimit: 3
-  MaxTries: 4
+  MaxTries: 4 # outer retry loop
+  MaxSubTries: 4 # inner retry loop
+  PageTimeout: 30
+  RetryTimeout: 30
   MaxWorkers: 10
 #  MaxCrawledUrls: 11
 #  UserAgent: cocrawler/0.01

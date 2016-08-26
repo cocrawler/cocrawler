@@ -1,6 +1,8 @@
 Crawl:
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
+  PageTimeout: 2.0 # we talk to google.com:81 so don't make this too short
+  RetryTimeout: 0.3
 
 Plugins:
   url_allowed: OnlySeeds

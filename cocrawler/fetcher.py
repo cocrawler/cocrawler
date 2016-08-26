@@ -38,6 +38,7 @@ full response, proxy failure. Plus an errorstring good enough for logging.
 '''
 
 import time
+#import traceback
 
 import asyncio
 import logging
@@ -62,36 +63,46 @@ def apply_url_policies(url, parts, config):
 
     return headers, proxy, mock_url, mock_robots
 
-async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_redirects=None):
+async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None):
+
+    maxsubtries = int(config['Crawl']['MaxSubTries'])
+    pagetimeout = float(config['Crawl']['PageTimeout'])
+    retrytimeout = float(config['Crawl']['RetryTimeout'])
+
     if proxy: # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
         # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
+        # XXX we should rotate proxies every fetch in case some are borked
+        # XXX use proxy history to decide not to use some
         raise ValueError('not yet implemented')
 
-    tries = 0
+    subtries = 0
     last_exception = None
     response = None
 
-    while tries < 4: # XXX make this sub-loop configurable
+    while subtries < maxsubtries: # XXX make this sub-loop configurable
 
         try:
             t0 = time.time()
             last_exception = None
 
-            response = await session.get(mock_url or url, allow_redirects=allow_redirects, headers=headers)
+            with aiohttp.Timeout(pagetimeout):
+                response = await session.get(mock_url or url, allow_redirects=allow_redirects, headers=headers)
 
             # XXX special sleepy 503 handling here - soft fail
-            # XXX retry handling loop here -- jsonlog count
-            # XXX test with DNS error - soft fail
+            # XXX json_log tries
             # XXX serverdisconnected is a soft fail
             # XXX aiodns.error.DNSError
             # XXX equivalent to requests.exceptions.SSLerror ??
             #   reddit.com is an example of a CDN-related SSL fail
             # XXX when we retry, if local_addr was a list, switch to a different IP
             #   (change out the TCPConnector)
+            # XXX what does a proxy error look like?
+            # XXX record proxy error
 
-            # fully receive headers and body. XXX if we want to limit bytecount, do it here?
-            # needs a try/except block because it can throw a subset of the exceptions listed at top
+            # fully receive headers and body.
+            # XXX if we want to limit bytecount, do it here?
+            # XXX needs a try/except block because it can throw a subset of the exceptions listed at top
             body_bytes = await response.read()
             header_bytes = response.raw_headers
             apparent_elapsed = '{:.3f}'.format(time.time() - t0)
@@ -99,18 +110,19 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None, allow_red
             # break only if we succeeded. 5xx = fail
             if response.status < 500:
                 break
-        # lots of different kinds, let's just remember the last one
+
         except Exception as e:
-            last_exception = str(e)
+            last_exception = repr(e)
+            #traceback.print_exc()
             print('omg we failed once, url is {}, exception is {}'.format(mock_url or url, last_exception))
 
         # treat all 5xx somewhat similar to a 503: slow down and retry
-        await asyncio.sleep(10)
+        await asyncio.sleep(retrytimeout)
         # XXX record 5xx so that everyone else slows down, too
         if response:
             # if the exception was thrown during reading body_bytes, there will be a response object
             await response.release()
-        tries += 1
+        subtries += 1
     else:
         if last_exception:
             print('omg, we failed, the last exception is', last_exception)
