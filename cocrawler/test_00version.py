@@ -3,7 +3,6 @@ Misc unit tests, run first in Makefile.
 '''
 
 import sys
-import pytest
 import magic
 
 def test_python_version():

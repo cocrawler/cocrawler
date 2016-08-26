@@ -1,5 +1,3 @@
-import pytest
-
 import stats
 
 def test_max():

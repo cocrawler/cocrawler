@@ -132,19 +132,19 @@ class Crawler:
         self.ridealong[str(self.ridealongmaxid)] = work
         self.q.put_nowait((priority, str(self.ridealongmaxid)))
         self.ridealongmaxid += 1
-        
+
         self.datalayer.add_seen_url(url)
         return 1
 
     def close(self):
-        LOGGER.info('on the way out, connector.cached_hosts is {}'.format(self.connector.cached_hosts))
+        LOGGER.info('on the way out, connector.cached_hosts is %r', self.connector.cached_hosts)
         stats.report()
         stats.check(self.config)
         self.session.close()
         if self.jsonlogfd:
             self.jsonlogfd.close()
         if self.q.qsize():
-            LOGGER.error('non-zero exit qsize={}'.format(self.q.qsize()))
+            LOGGER.error('non-zero exit qsize=%d', self.q.qsize())
             stats.exitstatus = 1
 
     async def fetch_and_process(self, work):
@@ -199,7 +199,8 @@ class Crawler:
             location = response.headers.get('location')
             next_url = urllib.parse.urljoin(url, location)
             # XXX make sure it didn't redirect to itself.
-            # XXX some hosts redir to themselves while setting cookies, that's an infinite loop if we aren't accepting cookies like PHPSESSIONID
+            # XXX some hosts redir to themselves while setting cookies,
+            #  that's an infinite loop if we aren't accepting cookies like PHPSESSIONID
             json_log['redirect'] = next_url
             if self.add_url(priority, next_url): # keep same priority? XXX policy
                 json_log['found_new_links'] = 1
@@ -280,7 +281,7 @@ class Crawler:
             while True:
                 await asyncio.sleep(1)
                 workers = [w for w in workers if not w.done()]
-                LOGGER.debug('{} workers remain'.format(len(workers)))
+                LOGGER.debug('%d workers remain', len(workers))
                 if len(workers) == 0:
                     LOGGER.warning('all workers exited, finishing up.')
                     break

@@ -4,7 +4,6 @@ Stuff related to robots.txt processing
 
 import asyncio
 
-import urllib.parse
 import time
 import json
 import logging
@@ -110,7 +109,8 @@ class Robots:
         self.in_progress.add(schemenetloc)
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-            url, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url, allow_redirects=True
+            url, self.session, self.config, headers=headers, proxy=proxy,
+            mock_url=mock_url, allow_redirects=True
         )
 
         if last_exception:
@@ -202,4 +202,3 @@ class Robots:
             json_log['host'] = schemenetloc
             json_log['time'] = '{:.3f}'.format(time.time())
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd, flush=True)
-

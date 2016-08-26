@@ -1,5 +1,3 @@
-import pytest
-
 import config
 
 def test_merge_dicts():

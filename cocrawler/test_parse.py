@@ -1,5 +1,3 @@
-import pytest
-
 import parse
 
 test_html = '''
