@@ -137,13 +137,15 @@ class Crawler:
         return 1
 
     def close(self):
-        print('on the way out, connector.cached_hosts is')
-        print(self.connector.cached_hosts)
+        LOGGER.info('on the way out, connector.cached_hosts is {}'.format(self.connector.cached_hosts))
         stats.report()
         stats.check(self.config)
         self.session.close()
         if self.jsonlogfd:
             self.jsonlogfd.close()
+        if self.q.qsize():
+            LOGGER.error('non-zero exit qsize={}'.format(self.q.qsize()))
+            stats.exitstatus = 1
 
     async def fetch_and_process(self, work):
         '''
@@ -278,7 +280,7 @@ class Crawler:
             while True:
                 await asyncio.sleep(1)
                 workers = [w for w in workers if not w.done()]
-                print(len(workers), 'workers remain')
+                LOGGER.debug('{} workers remain'.format(len(workers)))
                 if len(workers) == 0:
                     LOGGER.warning('all workers exited, finishing up.')
                     break
@@ -291,8 +293,3 @@ class Crawler:
 
         for w in workers:
             w.cancel()
-
-#        print('on the way out, connector.cached_hosts is')
-#        print(self.connector.cached_hosts)
-#        print('on the way out, connector.resolved_hosts is')
-#        print(self.connector.resolved_hosts)

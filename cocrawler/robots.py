@@ -7,12 +7,15 @@ import asyncio
 import urllib.parse
 import time
 import json
+import logging
 
 import robotexclusionrulesparser
 import magic
 
 import stats
 import fetcher
+
+LOGGER = logging.getLogger(__name__)
 
 class Robots:
     def __init__(self, session, datalayer, config):
@@ -84,8 +87,9 @@ class Robots:
         # XXX this is frequently racy, according to the logfiles!
         if schemenetloc in self.in_progress:
             while schemenetloc in self.in_progress:
-                # XXX make this a stat? does it go off for wide when it shouldn't?
-                print('sleeping because someone beat me to the robots punch', flush=True)
+                # XXX make this a stat?
+                # XXX does it go off for wide when it shouldn't?
+                LOGGER.debug('sleeping because someone beat me to the robots punch')
                 await asyncio.sleep(0.3)
 
             # at this point robots might be in the cache... or not.
@@ -100,7 +104,7 @@ class Robots:
             # fetch failed. if we just fell through there would be a
             # big race. treat this as a failure.
             # XXX note that we have no negative caching
-            print('some other fetch of robots has failed.') # XXX make this a stat
+            LOGGER.debug('some other fetch of robots has failed.') # XXX make this a stat
             return None
 
         self.in_progress.add(schemenetloc)

@@ -114,7 +114,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
         except Exception as e:
             last_exception = repr(e)
             #traceback.print_exc()
-            print('omg we failed once, url is {}, exception is {}'.format(mock_url or url, last_exception))
+            LOGGER.debug('we sub-failed once, url is {}, exception is {}'.format(mock_url or url, last_exception))
 
         # treat all 5xx somewhat similar to a 503: slow down and retry
         await asyncio.sleep(retrytimeout)
@@ -125,7 +125,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
         subtries += 1
     else:
         if last_exception:
-            print('omg, we failed, the last exception is', last_exception)
+            LOGGER.debug('we failed, the last exception is', last_exception)
             return None, None, None, None, last_exception
         return response, body_bytes, header_bytes, apparent_elapsed, None
 
