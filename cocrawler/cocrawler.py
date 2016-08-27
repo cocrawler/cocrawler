@@ -72,7 +72,7 @@ class Crawler:
 
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
-        self.jsonlogfile = config['Logging']['Crawllog']
+        self.jsonlogfile = config['Logging'].get('Crawllog')
         if self.jsonlogfile:
             self.jsonlogfd = open(self.jsonlogfile, 'w')
 
@@ -95,7 +95,9 @@ class Crawler:
         LOGGER.info('Installed plugins: %s', ','.join(sorted(list(self.plugins.keys()))))
 
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
-        self.remaining_url_budget = int(self.config['Crawl'].get('MaxCrawledUrls'))
+        self.remaining_url_budget = self.config['Crawl'].get('MaxCrawledUrls')
+        if self.remaining_url_budget is not None:
+            self.remaining_url_budget = int(self.remaining_url_budget) # XXX surely there's a less ugly way to do this
         self.awaiting_work = 0
 
         LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
@@ -103,6 +105,10 @@ class Crawler:
     @property
     def seeds(self):
         return self._seeds
+
+    @property
+    def qsize(self):
+        return self.q.qsize()
 
     def register_plugin(self, name, plugin_function):
         self.plugins[name] = plugin_function
@@ -173,7 +179,8 @@ class Crawler:
             # XXX treat 'no robots data' as a soft failure?
             # XXX log more particular robots fail reason here
             json_log = {'type':'get', 'url':url, 'priority':priority, 'status':'robots', 'time':time.time()}
-            print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
+            if self.jsonlogfd:
+                print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
             return
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
@@ -256,7 +263,8 @@ class Crawler:
                 stats.stats_max('max queue size', self.q.qsize())
 
         await response.release() # No pipelining
-        print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
+        if self.jsonlogfd:
+            print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
 
     async def work(self):
         '''
@@ -291,6 +299,17 @@ class Crawler:
             for _ in range(0, count):
                 entry = self.q.get_nowait()
                 pickle.dump(entry, f)
+        return count
+
+    def loadqueues(self, filename):
+        with open(filename, 'rb') as f:
+            self.ridealongmaxid = pickle.load(f)
+            self.ridealong = pickle.load(f)
+            self.q = asyncio.PriorityQueue(loop=self.loop)
+            count = pickle.load(f)
+            for _ in range(0, count):
+                entry = pickle.load(f)
+                self.q.put_nowait(entry)
         return count
 
     async def crawl(self):

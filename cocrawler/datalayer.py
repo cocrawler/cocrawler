@@ -53,4 +53,7 @@ class Datalayer:
         with open(filename, 'wb') as f:
             pickle.dump(self.seen_urls, f)
             # don't save robots cache
-        return
+
+    def load(self, filename):
+        with open(filename, 'rb') as f:
+            self.seen_urls = pickle.load(f)

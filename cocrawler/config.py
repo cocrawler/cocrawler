@@ -25,7 +25,7 @@ Crawl:
 #  MaxCrawledUrls: 11
 
 UserAgent:
-  Style: browserplus
+  Style: laptopplus
   MyPrefix: test
   URL: http://cocrawler.com/cocrawler.html
 
@@ -46,8 +46,8 @@ Plugins:
 
 Logging:
   LoggingLevel: 2
-#  crawllog: crawllog.jsonl
-#  robotslog: robotslog.jsonl
+#  Crawllog: crawllog.jsonl
+#  Robotslog: robotslog.jsonl
 
 #Testing:
 #  TestHostmap:

@@ -1,6 +1,9 @@
 def expand_seeds(seeds):
     ret = []
 
+    if seeds is None:
+        return ret
+
     if seeds.get('Hosts', []):
         for h in seeds['Hosts']:
             ret.append(h)
