@@ -1,3 +1,4 @@
+import os
 import logging
 import yaml
 
@@ -22,7 +23,11 @@ Crawl:
   RetryTimeout: 30
   MaxWorkers: 10
 #  MaxCrawledUrls: 11
-#  UserAgent: cocrawler/0.01
+
+UserAgent:
+  Style: browserplus
+  MyPrefix: test
+  URL: http://cocrawler.com/cocrawler.html
 
 Robots:
   MaxTries: 4
@@ -73,7 +78,7 @@ def merge_dicts(a, b):
             c[k1][k2] = v
     return c
 
-def config(configfile, configlist):
+def config(configfile, configlist, confighome=True):
     '''
     Return a config dict which is the sum of all the various configurations
     '''
@@ -86,6 +91,15 @@ def config(configfile, configlist):
             config_from_file = yaml.safe_load(c)
 
     combined = merge_dicts(default, config_from_file)
+
+    homefile = os.path.expanduser('~/.cocrawler-config.yml')
+    if confighome and os.path.exists(homefile):
+        LOGGER.info('loading ~/.cocrawler-config.yml')
+        with open(homefile, 'r') as c:
+            config_from_file = yaml.safe_load(c)
+        combined = merge_dicts(combined, config_from_file)
+    elif confighome:
+        LOGGER.info('~/.cocrawler-config.yml not found')
 
     if configlist:
         for c in configlist:

@@ -16,6 +16,11 @@ Logging:
   Crawllog: crawllog.jsonl
   Robotslog: robotslog.jsonl
 
+UserAgent:
+  Style: crawler
+  MyPrefix: test-failures
+  URL: http://example.com/cocrawler.html
+
 Testing:
   StatsEQ:
     fetch http code=200: 0

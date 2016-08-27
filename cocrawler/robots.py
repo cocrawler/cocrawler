@@ -17,7 +17,8 @@ import fetcher
 LOGGER = logging.getLogger(__name__)
 
 class Robots:
-    def __init__(self, session, datalayer, config):
+    def __init__(self, robotname, session, datalayer, config):
+        self.robotname = robotname
         self.session = session
         self.datalayer = datalayer
         self.config = config
@@ -62,7 +63,7 @@ class Robots:
 #           ...
 
         start = time.clock()
-        check = self.rerp.is_allowed('CoCrawler', pathplus) # XXX proper user-agent
+        check = self.rerp.is_allowed(self.robotname, pathplus)
         stats.record_cpu_burn('robots is_allowed', start)
 
         if check:

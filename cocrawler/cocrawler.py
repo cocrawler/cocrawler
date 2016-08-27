@@ -23,8 +23,11 @@ import datalayer
 import robots
 import parse
 import fetcher
+import useragent
 
 LOGGER = logging.getLogger(__name__)
+
+__version__ = '0.01'
 
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
@@ -34,7 +37,8 @@ class Crawler:
     def __init__(self, loop, config):
         self.config = config
         self.loop = loop
-        useragent = config['Crawl']['UserAgent'] # die if not set
+
+        self.robotname, self.ua = useragent.useragent(config, __version__)
 
         ns = config['Fetcher'].get('Nameservers')
         if ns:
@@ -57,7 +61,7 @@ class Crawler:
         self.connector = conn
         # can use self.session.connector to get the connectcor back ... connector.cached_hosts ...
         self.session = aiohttp.ClientSession(loop=loop, connector=conn,
-                                             headers={'User-Agent': useragent})
+                                             headers={'User-Agent': self.ua})
 
         # queue.PriorityQueue has no concept of 'ride along' data. Sigh.
         self.q = asyncio.PriorityQueue(loop=self.loop)
@@ -65,7 +69,7 @@ class Crawler:
         self.ridealongmaxid = 1
 
         self.datalayer = datalayer.Datalayer(config)
-        self.robots = robots.Robots(self.session, self.datalayer, config)
+        self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
         self.jsonlogfile = config['Logging']['Crawllog']
         if self.jsonlogfile:
             self.jsonlogfd = open(self.jsonlogfile, 'w')
@@ -277,7 +281,7 @@ class Crawler:
         workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
         if self.remaining_url_budget is not None:
-            LOGGER.info('lead coroutine waiting until no more workers (url budget)')
+            LOGGER.info('lead coroutine waiting until no more workers (url budget seen)')
             while True:
                 await asyncio.sleep(1)
                 workers = [w for w in workers if not w.done()]

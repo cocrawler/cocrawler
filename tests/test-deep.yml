@@ -15,6 +15,11 @@ Logging:
   Crawllog: crawllog.jsonl
   Robotslog: robotslog.jsonl
 
+UserAgent:
+  Style: crawler
+  MyPrefix: test-deep
+  URL: http://example.com/cocrawler.html
+
 Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/

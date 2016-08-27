@@ -4,11 +4,12 @@
 CoCrawler web crawler, main program
 '''
 
+import os
+import sys
+
 import argparse
 import asyncio
 import logging
-
-import sys
 
 import config
 import cocrawler
@@ -17,6 +18,7 @@ import stats
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
+ARGS.add_argument('--no-confighome', action='store_true')
 ARGS.add_argument('--printdefault', action='store_true')
 
 def main():
@@ -30,9 +32,13 @@ def main():
         config.print_default()
         sys.exit(1)
 
-    conf = config.config(args.configfile, args.config)
-
     levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
+    # need to set up logging to log while reading the conf file to find out the logging level
+    # XXX maybe get this from the command-line?
+    logging.basicConfig(level=levels[2])
+
+    conf = config.config(args.configfile, args.config, confighome=not args.no_confighome)
+
     log_level = conf.get('Logging', {}).get('LoggingLevel', 3)
     logging.basicConfig(level=levels[min(log_level, len(levels)-1)])
 
