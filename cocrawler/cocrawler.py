@@ -8,6 +8,7 @@ import json
 import time
 import os
 from functools import partial
+import pickle
 
 import asyncio
 import logging
@@ -37,6 +38,7 @@ class Crawler:
     def __init__(self, loop, config):
         self.config = config
         self.loop = loop
+        self.stopping = 0
 
         self.robotname, self.ua = useragent.useragent(config, __version__)
 
@@ -95,6 +97,8 @@ class Crawler:
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
         self.remaining_url_budget = int(self.config['Crawl'].get('MaxCrawledUrls'))
         self.awaiting_work = 0
+
+        LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
 
     @property
     def seeds(self):
@@ -266,6 +270,9 @@ class Crawler:
                 await self.fetch_and_process(work)
                 self.q.task_done()
 
+                if self.stopping:
+                    raise asyncio.CancelledError
+
                 if self.remaining_url_budget is not None:
                     self.remaining_url_budget -= 1
                     if self.remaining_url_budget <= 0:
@@ -274,27 +281,50 @@ class Crawler:
         except asyncio.CancelledError:
             pass
 
+    def savequeues(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.ridealongmaxid, f)
+            pickle.dump(self.ridealong, f)
+            # directly pickling a PriorityQueue doesn't work, so, just save the tuples
+            count = self.q.qsize()
+            pickle.dump(count, f)
+            for _ in range(0, count):
+                entry = self.q.get_nowait()
+                pickle.dump(entry, f)
+        return count
+
     async def crawl(self):
         '''
         Run the crawler until it's out of work
         '''
         workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
-        if self.remaining_url_budget is not None:
-            LOGGER.info('lead coroutine waiting until no more workers (url budget seen)')
-            while True:
-                await asyncio.sleep(1)
-                workers = [w for w in workers if not w.done()]
-                LOGGER.debug('%d workers remain', len(workers))
-                if len(workers) == 0:
-                    LOGGER.warning('all workers exited, finishing up.')
-                    break
-                if self.awaiting_work == len(workers):
-                    LOGGER.warning('all workers are awaiting work, finishing up.')
-                    break
-        else:
-            LOGGER.info('lead coroutine waiting for queue to empty')
-            await self.q.join()
+        # this is now the 'main' thread
+
+        while True:
+            await asyncio.sleep(1)
+
+            if os.path.exists(os.path.expanduser('~/STOPCRAWLER.{}'.format(os.getpid()))):
+                LOGGER.warning('saw STOPCRAWLER file, stopping crawler and saving queues')
+                self.stopping = 1
+
+            workers = [w for w in workers if not w.done()]
+            LOGGER.debug('%d workers remain', len(workers))
+            if len(workers) == 0:
+                LOGGER.warning('all workers exited, finishing up.')
+                break
+
+            if self.awaiting_work == len(workers):
+                LOGGER.warning('all workers are awaiting work; finishing up.')
+                break
 
         for w in workers:
             w.cancel()
+
+        if self.stopping:
+            LOGGER.warning('saving datalayer and queues')
+            savefile = 'save.{}'.format(os.getpid())
+            self.datalayer.save(savefile + '-datalayer')
+            count = self.savequeues(savefile + '-queues')
+            LOGGER.warning('saving done, queues had %d items.', count)
+

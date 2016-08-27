@@ -13,6 +13,7 @@
 # robots cache, with timeout
 # path to seed - naive or accurate?
 
+import pickle
 #import sortedcontainers - I wish!
 import cachetools.ttl
 
@@ -47,3 +48,9 @@ class Datalayer:
 
     def read_robots_cache(self, schemenetloc):
         return self.robots[schemenetloc]
+
+    def save(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.seen_urls, f)
+            # don't save robots cache
+        return
