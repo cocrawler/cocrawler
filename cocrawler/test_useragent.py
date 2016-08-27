@@ -38,7 +38,7 @@ def test_useragent():
         robotname, ua = useragent.useragent(bad_config, version)
 
     bad_config = copy.deepcopy(config)
-    bad_config['UserAgent']['Style'] = 'error'
+    bad_config['UserAgent']['URL'] = 'http://cocrawler.com/cocrawler.html'
     with pytest.raises(ValueError):
         robotname, ua = useragent.useragent(bad_config, version)
 
