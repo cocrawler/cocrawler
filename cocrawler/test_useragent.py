@@ -5,9 +5,9 @@ import useragent
 
 def test_useragent():
 
-    config = { 'UserAgent': { 'Style': 'crawler',
-                              'MyPrefix': 'something',
-                              'URL': 'http://example.com/cocrawler.html' } }
+    config = {'UserAgent': {'Style': 'crawler',
+                            'MyPrefix': 'something',
+                            'URL': 'http://example.com/cocrawler.html'}}
 
     version = '1.0'
 

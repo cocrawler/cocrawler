@@ -31,4 +31,3 @@ def test_saveload():
     assert not dl.seen_url('example2.com')
     os.unlink(name)
     assert not os.path.exists(name)
-

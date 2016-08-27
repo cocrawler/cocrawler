@@ -3,8 +3,6 @@
 '''
 CoCrawler web crawler, main program
 '''
-
-import os
 import sys
 
 import argparse

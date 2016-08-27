@@ -96,8 +96,9 @@ class Crawler:
 
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
         self.remaining_url_budget = self.config['Crawl'].get('MaxCrawledUrls')
+        # XXX surely there's a less ugly way to do the following:
         if self.remaining_url_budget is not None:
-            self.remaining_url_budget = int(self.remaining_url_budget) # XXX surely there's a less ugly way to do this
+            self.remaining_url_budget = int(self.remaining_url_budget)
         self.awaiting_work = 0
 
         LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
@@ -346,4 +347,3 @@ class Crawler:
             self.datalayer.save(savefile + '-datalayer')
             count = self.savequeues(savefile + '-queues')
             LOGGER.warning('saving done, queues had %d items.', count)
-

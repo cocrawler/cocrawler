@@ -1,5 +1,7 @@
 Short-term TODO list:
 
+add a save/restore test of things in test.sh, need to capture pid
+
 test that the big retry loop works
  make soft fail do a requeue... add a retry count to queue info
 
