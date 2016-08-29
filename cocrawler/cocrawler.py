@@ -9,6 +9,8 @@ import time
 import os
 from functools import partial
 import pickle
+from collections import defaultdict
+from operator import itemgetter
 
 import asyncio
 import logging
@@ -80,6 +82,7 @@ class Crawler:
         for s in self._seeds:
             self.add_url(0, s, seed=True)
         LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
+        self.summarize()
 
         self.plugin_base = pluginbase.PluginBase(package='cocrawler.plugins')
         plugins_path = config.get('Plugins', {}).get('Path', [])
@@ -143,7 +146,7 @@ class Crawler:
         LOGGER.debug('actually adding url %r', url)
         stats.stats_sum('added urls', 1)
 
-        work = {'url': url}
+        work = {'url': url, 'priority': priority}
         self.ridealong[str(self.ridealongmaxid)] = work
         self.q.put_nowait((priority, str(self.ridealongmaxid)))
         self.ridealongmaxid += 1
@@ -198,8 +201,10 @@ class Crawler:
             if tries > maxtries:
                 # XXX log something about exceeding max tries
                 # XXX remember that host had a fail
+                del self.ridealong[ra]
                 return
             d['tries'] = tries
+            d['priority'] = priority
             self.ridealong[ra] = d
             self.q.put_nowait((priority, ra))
             return
@@ -290,7 +295,7 @@ class Crawler:
         except asyncio.CancelledError:
             pass
 
-    def savequeues(self, filename):
+    def save(self, filename):
         with open(filename, 'wb') as f:
             pickle.dump(self.ridealongmaxid, f)
             pickle.dump(self.ridealong, f)
@@ -302,7 +307,7 @@ class Crawler:
                 pickle.dump(entry, f)
         return count
 
-    def loadqueues(self, filename):
+    def load(self, filename):
         with open(filename, 'rb') as f:
             self.ridealongmaxid = pickle.load(f)
             self.ridealong = pickle.load(f)
@@ -313,13 +318,40 @@ class Crawler:
                 self.q.put_nowait(entry)
         return count
 
+    def summarize(self):
+        '''
+        Print a human-readable summary of what's in the queues
+        '''
+        print('{} items in the crawl queue'.format(self.q.qsize()))
+        print('{} items in the ridealong dict'.format(len(self.ridealong)))
+        urls_with_tries = 0
+        priority_count = defaultdict(int)
+        netlocs = defaultdict(int)
+        for k,v in self.ridealong.items():
+            if 'tries' in v:
+                urls_with_tries += 1
+            priority_count[v['priority']] += 1
+            url = v['url']
+            parts = urllib.parse.urlparse(url)
+            netlocs[parts.netloc] += 1
+        print('{} items in crawl queue are retries'.format(urls_with_tries))
+        print('{} different hosts in the queue'.format(len(netlocs)))
+        print('Queue counts by priority:')
+        for p in sorted(list(priority_count.keys())):
+            if priority_count[p] > 0:
+                print('  {}: {}'.format(p, priority_count[p]))
+        print('Queue counts for top 10 netlocs')
+        netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)
+        for k,v in netloc_order:
+            print('  {}: {}'.format(k, v))
+
     async def crawl(self):
         '''
         Run the crawler until it's out of work
         '''
         workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
-        # this is now the 'main' thread
+        # this is now the 'main' coroutine
 
         while True:
             await asyncio.sleep(1)
@@ -339,9 +371,12 @@ class Crawler:
                 break
 
         for w in workers:
-            w.cancel()
+            if not w.done():
+                w.cancel()
 
         if self.stopping:
+            self.summarize()
+            self.datalayer.summarize()
             LOGGER.warning('saving datalayer and queues')
             savefile = 'save.{}'.format(os.getpid())
             self.datalayer.save(savefile + '-datalayer')

@@ -57,3 +57,9 @@ class Datalayer:
     def load(self, filename):
         with open(filename, 'rb') as f:
             self.seen_urls = pickle.load(f)
+
+    def summarize(self):
+        '''
+        print a human-readable sumary of what's in the datalayer
+        '''
+        print('seen_urls count is', len(self.seen_urls))

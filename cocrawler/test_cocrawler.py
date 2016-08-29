@@ -26,13 +26,13 @@ def test_cocrawler():
 
     f = tempfile.NamedTemporaryFile(delete=False)
     name = f.name
-    crawler.savequeues(name)
+    crawler.save(name)
     assert crawler.qsize == 0
 
     crawler.add_url(0, 'http://example4.com/', seed=True)
     assert crawler.qsize == 1
 
-    crawler.loadqueues(name)
+    crawler.load(name)
 
     assert crawler.qsize == 3
 
