@@ -9,7 +9,7 @@ import os
 import cocrawler
 import config
 
-def test_cocrawler():
+def test_cocrawler(capsys):
     conf = config.config(None, None, confighome=False)
 
     # ok, we have to get around the useragent checks
@@ -38,3 +38,14 @@ def test_cocrawler():
 
     os.unlink(name)
     assert not os.path.exists(name)
+
+    # clear out the existing capture
+    out, err = capsys.readouterr()
+
+    crawler.summarize()
+
+    out, err = capsys.readouterr()
+
+    assert err == ''
+    assert len(out) >= 242 # not a very good test, but at least it is something
+

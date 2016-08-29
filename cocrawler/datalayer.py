@@ -62,4 +62,4 @@ class Datalayer:
         '''
         print a human-readable sumary of what's in the datalayer
         '''
-        print('seen_urls count is', len(self.seen_urls))
+        print('{} seen_urls'.format(len(self.seen_urls)))
