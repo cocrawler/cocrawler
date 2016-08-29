@@ -380,5 +380,5 @@ class Crawler:
             LOGGER.warning('saving datalayer and queues')
             savefile = 'save.{}'.format(os.getpid())
             self.datalayer.save(savefile + '-datalayer')
-            count = self.savequeues(savefile + '-queues')
+            count = self.save(savefile + '-queues')
             LOGGER.warning('saving done, queues had %d items.', count)
