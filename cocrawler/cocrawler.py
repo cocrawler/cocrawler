@@ -201,13 +201,15 @@ class Crawler:
         if tries:
             json_log['retry'] = tries
 
-        if last_exception is not None:
+        if last_exception is not None or response.status >= 500:
             tries += 1
             if tries > maxtries:
-                # XXX log something about exceeding max tries
-                # XXX remember that host had a fail
+                # XXX jsonlog
+                # XXX remember that this host had a fail
+                stats.stats_sum('tries completely exhausted', 1)
                 del self.ridealong[ra]
                 return
+            # XXX jsonlog
             ra_dict['tries'] = tries
             ra_dict['priority'] = priority
             self.ridealong[ra] = ra_dict

@@ -11,6 +11,7 @@ Seeds:
   Hosts:
   - http://host1.com/ordinary/0
   - http://host2.com/ordinary/3
+  - http://503.host99.com/ordinary/0 # good robots, eternal 503s on content
   Files:
   - test-wide.hosts
 
@@ -26,10 +27,12 @@ UserAgent:
 Testing:
   TestHostmapAll: 127.0.0.1:8080
   StatsEQ:
-    fetch http code=200: 21
+    fetch http code=200: 22
     fetch http code=303: 1
     fetch http code=404: 1
+    fetch http code=500: 1
+    fetch http code=503: 5
     max urls found on a page: 3
     rejected by seen_urls: 2
     robots denied: 1
-    URLs fetched: 23
+    URLs fetched: 30

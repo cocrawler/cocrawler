@@ -61,6 +61,9 @@ def generate_ordinary(name, host):
     if host.startswith('302') and name <= 0:
         print('\n\nmock-webserver: issuing ordinary redir\n\n')
         redirect('/ordinary/{}'.format(name+1))
+    if host.startswith('503'):
+        abort(503, 'Slow down, you move too fast. You got to make the morning last.\n')
+
     mylinks = links.format((name+1)%1000, (2*name)%1000)
     return header + mylinks + trailer
 

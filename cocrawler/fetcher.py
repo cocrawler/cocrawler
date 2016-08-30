@@ -80,7 +80,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
     last_exception = None
     response = None
 
-    while subtries < maxsubtries: # XXX make this sub-loop configurable
+    while subtries < maxsubtries:
 
         try:
             t0 = time.time()
@@ -118,7 +118,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             LOGGER.debug('we sub-failed once, url is %s, exception is %s',
                          mock_url or url, last_exception)
 
-        print('retrying')
+        print('retrying url={}'.format(url))
         # treat all 5xx somewhat similar to a 503: slow down and retry
         await asyncio.sleep(retrytimeout)
         # XXX record 5xx so that everyone else slows down, too
@@ -130,7 +130,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
             return None, None, None, None, last_exception
-        return response, body_bytes, header_bytes, apparent_elapsed, None
+        # fall through for the case of response.status >= 500
 
     stats.stats_sum('URLs fetched', 1)
     LOGGER.debug('url %r came back with status %r', url, response.status)

@@ -16,8 +16,8 @@ Seeds:
 #  File: seed_list.txt
 
 Crawl:
-  DepthLimit: 3
-  MaxTries: 4 # outer retry loop
+  DepthLimit: 3 # not implemented
+  MaxTries: 4 # outer retry loop XXX does not work
   MaxSubTries: 4 # inner retry loop
   PageTimeout: 30
   RetryTimeout: 30

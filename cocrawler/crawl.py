@@ -45,7 +45,8 @@ def main():
     if args.load:
         kwargs['load'] = args.load
 
-    log_level = conf.get('Logging', {}).get('LoggingLevel', 3)
+    log_level = conf['Logging']['LoggingLevel']
+    # XXX can't call this twice :/
     logging.basicConfig(level=levels[min(int(log_level), len(levels)-1)])
 
     loop = asyncio.get_event_loop()
