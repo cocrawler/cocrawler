@@ -14,8 +14,12 @@
 # path to seed - naive or accurate?
 
 import pickle
+import logging
 #import sortedcontainers - I wish!
 import cachetools.ttl
+
+LOGGER = logging.getLogger(__name__)
+__NAME__ = 'datalayer seen_urls memory'
 
 class Datalayer:
     def __init__(self, config):
@@ -49,14 +53,17 @@ class Datalayer:
     def read_robots_cache(self, schemenetloc):
         return self.robots[schemenetloc]
 
-    def save(self, filename):
-        with open(filename, 'wb') as f:
-            pickle.dump(self.seen_urls, f)
-            # don't save robots cache
+    def save(self, f):
+        pickle.dump(__NAME__, f)
+        pickle.dump(self.seen_urls, f)
+        # don't save robots cache
 
-    def load(self, filename):
-        with open(filename, 'rb') as f:
-            self.seen_urls = pickle.load(f)
+    def load(self, f):
+        name = pickle.load(f)
+        if name != __NAME__:
+            LOGGER.error('save file name does not match datalayer name: %s != %s', name, __NAME__)
+            raise ValueError
+        self.seen_urls = pickle.load(f)
 
     def summarize(self):
         '''

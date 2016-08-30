@@ -17,7 +17,9 @@ ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
 ARGS.add_argument('--no-confighome', action='store_true')
+ARGS.add_argument('--no-test', action='store_true')
 ARGS.add_argument('--printdefault', action='store_true')
+ARGS.add_argument('--load', action='store')
 
 def main():
     '''
@@ -31,17 +33,23 @@ def main():
         sys.exit(1)
 
     levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
+
     # need to set up logging to log while reading the conf file to find out the logging level
     # XXX maybe get this from the command-line?
     logging.basicConfig(level=levels[2])
-
     conf = config.config(args.configfile, args.config, confighome=not args.no_confighome)
 
+    if args.no_test and conf['Testing'].get('StatsEQ') is not None:
+        del conf['Testing']['StatsEQ']
+    kwargs = {}
+    if args.load:
+        kwargs['load'] = args.load
+
     log_level = conf.get('Logging', {}).get('LoggingLevel', 3)
-    logging.basicConfig(level=levels[min(log_level, len(levels)-1)])
+    logging.basicConfig(level=levels[min(int(log_level), len(levels)-1)])
 
     loop = asyncio.get_event_loop()
-    crawler = cocrawler.Crawler(loop, conf)
+    crawler = cocrawler.Crawler(loop, conf, **kwargs)
 
     try:
         loop.run_until_complete(crawler.crawl())

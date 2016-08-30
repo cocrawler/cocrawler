@@ -118,6 +118,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             LOGGER.debug('we sub-failed once, url is %s, exception is %s',
                          mock_url or url, last_exception)
 
+        print('retrying')
         # treat all 5xx somewhat similar to a 503: slow down and retry
         await asyncio.sleep(retrytimeout)
         # XXX record 5xx so that everyone else slows down, too

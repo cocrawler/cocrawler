@@ -9,9 +9,12 @@ python ./mock-webserver.py > /dev/null 2>&1 &
 # if COVERAGE is set, use it, else python
 if [ -z "$COVERAGE" ]; then COVERAGE=python; fi
 
+NOCH=--no-confighome
+
+echo
 echo test-deep
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-deep.yml --no-confighome
+$COVERAGE ../cocrawler/crawl.py --configfile test-deep.yml $NOCH
 # tests against the logfiles
 grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in robotslog"; exit 1)
 (grep "/denied/" crawllog.jsonl | grep -q -v '"robots"' ) && (echo "FAIL: should not have seen /denied/ in crawllog.jsonl"; exit 1)
@@ -19,12 +22,27 @@ grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in rob
 echo
 echo test-wide
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1 --no-confighome
+$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1 $NOCH
+
+echo
+echo test-wide with save and load first half
+echo
+cat test-wide.yml test-wide-save.yml > test-wide-tmp.yml
+$COVERAGE ../cocrawler/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.MaxCrawledUrls:5 --config Crawl.MaxWorkers:3 $NOCH
+rm -f test-wide-tmp.yml
+
+ls -l test-wide-save
+
+echo
+echo test wide save and load second half: load
+echo
+$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
+#rm -f test-wide-save
 
 echo
 echo test-failures
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 --no-confighome
+$COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
 
 # remove logfiles
 #rm -f robotslog.jsonl crawllog.jsonl

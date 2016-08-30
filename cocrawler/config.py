@@ -44,14 +44,18 @@ Plugins:
   - ./plugins/generic
   url_allowed: SeedsHostname
 
+Save:
+#   Name:
+#   SaveAtExit:
+   Overwrite: n
+
 Logging:
   LoggingLevel: 2
 #  Crawllog: crawllog.jsonl
 #  Robotslog: robotslog.jsonl
 
 #Testing:
-#  TestHostmap:
-#    test.website: localhost:8080
+#  TestHostmapAll: test.website: localhost:8080
 #  StatsEQ:
 #    fetch http code=200: 1000
 #    URLs fetched: 1000

@@ -18,15 +18,19 @@ def test_robotscache():
     assert dl.read_robots_cache('http://example.com') == b'THIS IS A TEST'
 
 def test_saveload():
-    f = tempfile.NamedTemporaryFile(delete=False)
-    name = f.name
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    name = tf.name
 
     dl = datalayer.Datalayer({'Robots':{'RobotsCacheSize':1, 'RobotsCacheTimeout': 1}})
     dl.add_seen_url('example.com')
     assert dl.seen_url('example.com')
-    dl.save(name)
+
+    with open(name, 'wb') as f:
+        dl.save(f)
     dl.add_seen_url('example2.com')
-    dl.load(name)
+    with open(name, 'rb') as f:
+        dl.load(f)
+
     assert dl.seen_url('example.com')
     assert not dl.seen_url('example2.com')
     os.unlink(name)

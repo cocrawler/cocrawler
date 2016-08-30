@@ -8,6 +8,8 @@ import tldextract
 POLICY=None
 SEEDS=set()
 
+# XXX make a function to canonicalize urls and hostnames for comparison purposes (a la surt)
+
 def get_domain(hostname):
     # XXX config option to set include_psl_private_domains=True ?
     #  sometimes we do want *.blogspot.com to all be different tlds
@@ -70,21 +72,21 @@ def url_allowed(url):
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))
     return False
 
+valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
+
 def setup(parent, config):
     parent.register_plugin('url_allowed', url_allowed)
-    seeds = parent.seeds
     global POLICY
     POLICY = config.get('Plugins', {})['url_allowed']
 
-    for s in seeds:
-        if POLICY == 'SeedsDomain':
-            SEEDS.add(get_domain(s))
-        elif POLICY == 'SeedsHostname':
-            SEEDS.add(get_hostname(s))
-        elif POLICY == 'OnlySeeds':
-            pass
-        elif POLICY == 'AllDomains':
-            pass
-        else:
-            raise ValueError('unknown url_allowed policy of ' + str(POLICY))
+    if POLICY not in valid_policies:
+        raise ValueError('unknown url_allowed policy of ' + str(POLICY))
 
+    if POLICY == 'SeedsDomain':
+        seeds = parent.seeds
+        for s in seeds:
+            SEEDS.add(get_domain(s))
+    elif POLICY == 'SeedsHostname':
+        seeds = parent.seeds
+        for s in seeds:
+            SEEDS.add(get_hostname(s))

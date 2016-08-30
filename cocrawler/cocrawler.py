@@ -37,7 +37,7 @@ def is_redirect(response):
     return response.status in (300, 301, 302, 303, 307)
 
 class Crawler:
-    def __init__(self, loop, config):
+    def __init__(self, loop, config, load=None):
         self.config = config
         self.loop = loop
         self.stopping = 0
@@ -78,11 +78,15 @@ class Crawler:
         if self.jsonlogfile:
             self.jsonlogfd = open(self.jsonlogfile, 'w')
 
-        self._seeds = seeds.expand_seeds(self.config.get('Seeds', {}))
-        for s in self._seeds:
-            self.add_url(0, s, seed=True)
-        LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
-        self.summarize()
+        if load is not None:
+            self.load_all(load)
+            LOGGER.info('after loading saved state, work queue is %r urls', self.q.qsize())
+        else:
+            self._seeds = seeds.expand_seeds(self.config.get('Seeds', {}))
+            for s in self._seeds:
+                self.add_url(0, s, seed=True)
+            LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
+            stats.stats_max('initial seeds', self.q.qsize())
 
         self.plugin_base = pluginbase.PluginBase(package='cocrawler.plugins')
         plugins_path = config.get('Plugins', {}).get('Path', [])
@@ -138,7 +142,7 @@ class Crawler:
             stats.stats_sum('rejected by seen_urls', 1)
             return
         if not seed and not self.plugins['url_allowed'](url):
-            #LOGGER.debug('url %r was rejected by url_allow.', url)
+            LOGGER.debug('url %r was rejected by url_allow.', url)
             stats.stats_sum('rejected by url_allowed', 1)
             return
         # end allow/deny plugin
@@ -170,9 +174,9 @@ class Crawler:
         Fetch and process a single url.
         '''
         priority, ra = work
-        d = self.ridealong[ra]
-        url = d['url']
-        tries = d.get('tries', 0)
+        ra_dict = self.ridealong[ra]
+        url = ra_dict['url']
+        tries = ra_dict.get('tries', 0)
         maxtries = self.config['Crawl']['MaxTries']
 
         parts = urllib.parse.urlparse(url)
@@ -185,6 +189,7 @@ class Crawler:
             json_log = {'type':'get', 'url':url, 'priority':priority, 'status':'robots', 'time':time.time()}
             if self.jsonlogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
+            del self.ridealong[ra]
             return
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
@@ -203,11 +208,13 @@ class Crawler:
                 # XXX remember that host had a fail
                 del self.ridealong[ra]
                 return
-            d['tries'] = tries
-            d['priority'] = priority
-            self.ridealong[ra] = d
+            ra_dict['tries'] = tries
+            ra_dict['priority'] = priority
+            self.ridealong[ra] = ra_dict
             self.q.put_nowait((priority, ra))
+            print('DEBUG requeue of url={}'.format(ra_dict['url']))
             return
+
         del self.ridealong[ra]
 
         json_log['status'] = response.status
@@ -295,28 +302,51 @@ class Crawler:
         except asyncio.CancelledError:
             pass
 
-    def save(self, filename):
-        with open(filename, 'wb') as f:
-            pickle.dump(self.ridealongmaxid, f)
-            pickle.dump(self.ridealong, f)
-            # directly pickling a PriorityQueue doesn't work, so, just save the tuples
-            count = self.q.qsize()
-            pickle.dump(count, f)
-            for _ in range(0, count):
-                entry = self.q.get_nowait()
-                pickle.dump(entry, f)
-        return count
+    def save(self, f):
+        pickle.dump('Put the XXX header here', f) # XXX date, conf file name, conf file checksum
+        pickle.dump(self.ridealongmaxid, f)
+        pickle.dump(self.ridealong, f)
+        # XXX seeds needed for some url policies :/
+        # directly pickling a PriorityQueue doesn't work, so, just save the tuples
+        count = self.q.qsize()
+        pickle.dump(count, f)
+        for _ in range(0, count):
+            entry = self.q.get_nowait()
+            pickle.dump(entry, f)
 
-    def load(self, filename):
+    def load(self, f):
+        header = pickle.load(f) # XXX check that this is a good header... log it
+        self.ridealongmaxid = pickle.load(f)
+        self.ridealong = pickle.load(f)
+        self.q = asyncio.PriorityQueue(loop=self.loop)
+        count = pickle.load(f)
+        for _ in range(0, count):
+            entry = pickle.load(f)
+            self.q.put_nowait(entry)
+
+    def get_savefilename(self):
+        savefile = self.config['Save'].get('Name', 'cocrawler-save-$$')
+        savefile = savefile.replace('$$', str(os.getpid()))
+        savefile = os.path.expanduser(os.path.expandvars(savefile))
+        if os.path.exists(savefile) and not self.config['Save'].get('Overwrite'):
+            count = 1
+            while os.path.exists(savefile + '.' + str(count)):
+                count += 1
+            savefile = savefile + '.' + str(count)
+        return savefile
+
+    def save_all(self):
+        savefile = self.get_savefilename()
+        with open(savefile, 'wb') as f:
+            self.save(f)
+            self.datalayer.save(f)
+            stats.save(f)
+
+    def load_all(self, filename):
         with open(filename, 'rb') as f:
-            self.ridealongmaxid = pickle.load(f)
-            self.ridealong = pickle.load(f)
-            self.q = asyncio.PriorityQueue(loop=self.loop)
-            count = pickle.load(f)
-            for _ in range(0, count):
-                entry = pickle.load(f)
-                self.q.put_nowait(entry)
-        return count
+            self.load(f)
+            self.datalayer.load(f)
+            stats.load(f)
 
     def summarize(self):
         '''
@@ -366,6 +396,7 @@ class Crawler:
                 LOGGER.warning('all workers exited, finishing up.')
                 break
 
+            print('checking to see if awaiting {} equals workers {}'.format(self.awaiting_work, len(workers)))
             if self.awaiting_work == len(workers):
                 LOGGER.warning('all workers are awaiting work; finishing up.')
                 break
@@ -374,11 +405,9 @@ class Crawler:
             if not w.done():
                 w.cancel()
 
-        if self.stopping:
+        if self.stopping or self.config['Save'].get('SaveAtExit'):
             self.summarize()
             self.datalayer.summarize()
             LOGGER.warning('saving datalayer and queues')
-            savefile = 'save.{}'.format(os.getpid())
-            self.datalayer.save(savefile + '-datalayer')
-            count = self.save(savefile + '-queues')
-            LOGGER.warning('saving done, queues had %d items.', count)
+            self.save_all()
+            LOGGER.warning('saving done')

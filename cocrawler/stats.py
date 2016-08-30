@@ -3,13 +3,13 @@ A trivial stats system for CoCrawler
 '''
 
 import logging
-
+import pickle
 import time
 
 LOGGER = logging.getLogger(__name__)
 
-burners = {}
 start_time = time.time()
+burners = {}
 maxes = {}
 sums = {}
 exitstatus = 0
@@ -62,3 +62,22 @@ def check(config):
                 exitstatus = 1
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, seq[s])
+
+def save(f):
+    pickle.dump('stats', f)
+    pickle.dump(start_time, f)
+    pickle.dump(burners, f)
+    pickle.dump(maxes, f)
+    pickle.dump(sums, f)
+
+def load(f):
+    if pickle.load(f) != 'stats':
+        raise ValueError('invalid stats section in savefile')
+    global start_time
+    start_time = pickle.load(f)
+    global burners
+    burners = pickle.load(f)
+    global maxes
+    maxes = pickle.load(f)
+    global sums
+    sums = pickle.load(f)

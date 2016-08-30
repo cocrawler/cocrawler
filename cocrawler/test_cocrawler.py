@@ -26,13 +26,16 @@ def test_cocrawler(capsys):
 
     f = tempfile.NamedTemporaryFile(delete=False)
     name = f.name
-    crawler.save(name)
+
+    with open(name, 'wb') as f:
+        crawler.save(f)
     assert crawler.qsize == 0
 
     crawler.add_url(0, 'http://example4.com/', seed=True)
     assert crawler.qsize == 1
 
-    crawler.load(name)
+    with open(name, 'rb') as f:
+        crawler.load(f)
 
     assert crawler.qsize == 3
 
