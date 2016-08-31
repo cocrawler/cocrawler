@@ -56,7 +56,7 @@ def apply_url_policies(url, parts, config):
     mock_robots = None
 
     test_host = config['Testing'].get('TestHostmapAll')
-    if test_host:
+    if test_host and test_host != 'n': # why don't booleans in YAML work?
         headers['Host'] = parts.netloc
         mock_url = parts._replace(netloc=test_host).geturl()
         mock_robots = parts.scheme + '://' + test_host + '/robots.txt'
@@ -86,6 +86,8 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             t0 = time.time()
             last_exception = None
 
+            # XXX make an explicit dns for hosts not in the cache, so we can track how many coroutines are stuck in dns?
+
             with aiohttp.Timeout(pagetimeout):
                 response = await session.get(mock_url or url,
                                              allow_redirects=allow_redirects, headers=headers)
@@ -111,6 +113,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             # break only if we succeeded. 5xx = fail
             if response.status < 500:
                 break
+            print('retrying url={} code={}'.format(url, response.status))
 
         except Exception as e:
             last_exception = repr(e)
@@ -118,7 +121,6 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             LOGGER.debug('we sub-failed once, url is %s, exception is %s',
                          mock_url or url, last_exception)
 
-        print('retrying url={}'.format(url))
         # treat all 5xx somewhat similar to a 503: slow down and retry
         await asyncio.sleep(retrytimeout)
         # XXX record 5xx so that everyone else slows down, too

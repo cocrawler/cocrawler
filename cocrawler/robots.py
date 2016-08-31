@@ -29,6 +29,8 @@ class Robots:
         self.jsonlogfile = self.config.get('Logging', {}).get('Robotslog')
         if self.jsonlogfile:
             self.jsonlogfd = open(self.jsonlogfile, 'w')
+        else:
+            self.jsonlogfd = None
 
     async def check(self, url, parts, headers=None, proxy=None, mock_robots=None):
         schemenetloc = parts.scheme + '://' + parts.netloc
@@ -169,7 +171,8 @@ class Robots:
         '''
         Did you know that some sites have a robots.txt that's a 100 megabyte video file?
         '''
-        if body_bytes.startswith(b'<'): # html or xml or something else bad # pragma: no cover
+        # Not OK: html or xml or something else bad
+        if body_bytes.startswith(b'<'): # pragma: no cover
             self.jsonlog(schemenetloc, {'error':'robots appears to be html or xml, ignoring',
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             return False
@@ -181,9 +184,9 @@ class Robots:
                 body_bytes.startswith(b'\xff\xfe')): # pragma: no cover
             return True
 
-        # OK: file magic mimetype is 'text'
+        # OK: file magic mimetype is 'text' or similar
         mime_type = self.magic.id_buffer(body_bytes)
-        if not mime_type.startswith('text'):
+        if not (mime_type.startswith('text') or mime_type == 'application/x-empty') :
             self.jsonlog(schemenetloc, {'error':
                                         'robots has unexpected mimetype {}, ignoring'.format(mime_type),
                                         'action':'fetch', 'apparent_elapsed':apparent_elapsed})

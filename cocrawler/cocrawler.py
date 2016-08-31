@@ -77,6 +77,8 @@ class Crawler:
         self.jsonlogfile = config['Logging'].get('Crawllog')
         if self.jsonlogfile:
             self.jsonlogfd = open(self.jsonlogfile, 'w')
+        else:
+            self.jsonlogfd = None
 
         if load is not None:
             self.load_all(load)
@@ -373,7 +375,7 @@ class Crawler:
             if priority_count[p] > 0:
                 print('  {}: {}'.format(p, priority_count[p]))
         print('Queue counts for top 10 netlocs')
-        netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)
+        netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)[0:10]
         for k,v in netloc_order:
             print('  {}: {}'.format(k, v))
 

@@ -13,11 +13,11 @@ default_yaml = '''
 Seeds:
 #  Hosts:
 #  - http://xkcd.com/
-#  File: seed_list.txt
+#  Files: seed_list.txt
 
 Crawl:
   DepthLimit: 3 # not implemented
-  MaxTries: 4 # outer retry loop XXX does not work
+  MaxTries: 4 # outer retry loop
   MaxSubTries: 4 # inner retry loop
   PageTimeout: 30
   RetryTimeout: 30
@@ -54,7 +54,8 @@ Logging:
 #  Crawllog: crawllog.jsonl
 #  Robotslog: robotslog.jsonl
 
-#Testing:
+Testing:
+  TestHostmapAll: n
 #  TestHostmapAll: test.website: localhost:8080
 #  StatsEQ:
 #    fetch http code=200: 1000
@@ -91,8 +92,13 @@ def config(configfile, configlist, confighome=True):
 
     config_from_file = {}
     if configfile:
-        with open(configfile, 'r') as c:
-            config_from_file = yaml.safe_load(c)
+        LOGGER.info('loading {}'.format(configfile))
+        try:
+            with open(configfile, 'r') as c:
+                config_from_file = yaml.safe_load(c)
+        except FileNotFoundError:
+            LOGGER.error('configfile %s not found', configfile)
+            exit(1)
 
     combined = merge_dicts(default, config_from_file)
 
