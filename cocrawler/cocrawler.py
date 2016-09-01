@@ -86,7 +86,7 @@ class Crawler:
         else:
             self._seeds = seeds.expand_seeds(self.config.get('Seeds', {}))
             for s in self._seeds:
-                self.add_url(0, s, seed=True)
+                self.add_url(1, s, seed=True)
             LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
             stats.stats_max('initial seeds', self.q.qsize())
 
@@ -153,6 +153,8 @@ class Crawler:
         stats.stats_sum('added urls', 1)
 
         work = {'url': url, 'priority': priority}
+        if seed:
+            work['seed'] = True
         self.ridealong[str(self.ridealongmaxid)] = work
         self.q.put_nowait((priority, str(self.ridealongmaxid)))
         self.ridealongmaxid += 1
@@ -161,9 +163,9 @@ class Crawler:
         return 1
 
     def close(self):
-        LOGGER.info('on the way out, connector.cached_hosts is %r', self.connector.cached_hosts)
         stats.report()
         stats.check(self.config)
+        stats.coroutine_report()
         self.session.close()
         if self.jsonlogfd:
             self.jsonlogfd.close()
@@ -176,9 +178,9 @@ class Crawler:
         Fetch and process a single url.
         '''
         priority, ra = work
-        ra_dict = self.ridealong[ra]
-        url = ra_dict['url']
-        tries = ra_dict.get('tries', 0)
+        work = self.ridealong[ra]
+        url = work['url']
+        tries = work.get('tries', 0)
         maxtries = self.config['Crawl']['MaxTries']
 
         parts = urllib.parse.urlparse(url)
@@ -195,7 +197,7 @@ class Crawler:
             return
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-            url, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url
+            url, parts, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url
         )
 
         json_log = {'type':'get', 'url':url, 'priority':priority,
@@ -212,11 +214,10 @@ class Crawler:
                 del self.ridealong[ra]
                 return
             # XXX jsonlog
-            ra_dict['tries'] = tries
-            ra_dict['priority'] = priority
-            self.ridealong[ra] = ra_dict
+            work['tries'] = tries
+            work['priority'] = priority
+            self.ridealong[ra] = work
             self.q.put_nowait((priority, ra))
-            print('DEBUG requeue of url={}'.format(ra_dict['url']))
             return
 
         del self.ridealong[ra]
@@ -234,7 +235,7 @@ class Crawler:
             # XXX some hosts redir to themselves while setting cookies,
             #  that's an infinite loop if we aren't accepting cookies like PHPSESSIONID
             json_log['redirect'] = next_url
-            if self.add_url(priority, next_url): # keep same priority? XXX policy
+            if self.add_url(priority+1, next_url): # XXX policy, add an option to track redirs and be +0
                 json_log['found_new_links'] = 1
             # fall through to release and json logging
 
@@ -404,6 +405,8 @@ class Crawler:
             if self.awaiting_work == len(workers):
                 LOGGER.warning('all workers are awaiting work; finishing up.')
                 break
+
+            stats.coroutine_report()
 
         for w in workers:
             if not w.done():

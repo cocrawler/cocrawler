@@ -10,6 +10,7 @@ import logging
 
 import robotexclusionrulesparser
 import magic
+import urllib.parse
 
 import stats
 import fetcher
@@ -34,20 +35,17 @@ class Robots:
 
     async def check(self, url, parts, headers=None, proxy=None, mock_robots=None):
         schemenetloc = parts.scheme + '://' + parts.netloc
-        if parts.path:
-            pathplus = parts.path
+
+        if mock_robots:
+            mock_robots_parts = urllib.parse.urlparse(mock_robots)
         else:
-            pathplus = '/'
-        if parts.params:
-            pathplus += ';' + parts.params
-        if parts.query:
-            pathplus += '?' + parts.query
+            mock_robots_parts = parts
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
         except KeyError:
             # extra semantics and policy inside fetch_robots: 404 returns '', etc. also inserts into cache.
-            robots = await self.fetch_robots(schemenetloc, mock_robots, headers=headers, proxy=proxy)
+            robots = await self.fetch_robots(schemenetloc, mock_robots, mock_robots_parts, headers=headers, proxy=proxy)
 
         if robots is None:
             self.jsonlog(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
@@ -63,6 +61,14 @@ class Robots:
 
 #        if self.rerp.sitemaps:
 #           ...
+        if parts.path:
+            pathplus = parts.path
+        else:
+            pathplus = '/'
+        if parts.params:
+            pathplus += ';' + parts.params
+        if parts.query:
+            pathplus += '?' + parts.query
 
         start = time.clock()
         check = self.rerp.is_allowed(self.robotname, pathplus)
@@ -76,7 +82,7 @@ class Robots:
         stats.stats_sum('robots denied', 1)
         return False
 
-    async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
+    async def fetch_robots(self, schemenetloc, mock_url, parts, headers=None, proxy=None):
         '''
         robotexclusionrules parser is not async, so fetch the file ourselves
         '''
@@ -92,7 +98,8 @@ class Robots:
                 # XXX make this a stat?
                 # XXX does it go off for wide when it shouldn't?
                 LOGGER.debug('sleeping because someone beat me to the robots punch')
-                await asyncio.sleep(0.3)
+                with stats.coroutine_state('robots collision sleep'):
+                    await asyncio.sleep(0.3)
 
             # at this point robots might be in the cache... or not.
             try:
@@ -112,7 +119,7 @@ class Robots:
         self.in_progress.add(schemenetloc)
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-            url, self.session, self.config, headers=headers, proxy=proxy,
+            url, parts, self.session, self.config, headers=headers, proxy=proxy,
             mock_url=mock_url, allow_redirects=True
         )
 

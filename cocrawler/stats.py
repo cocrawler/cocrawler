@@ -5,13 +5,15 @@ A trivial stats system for CoCrawler
 import logging
 import pickle
 import time
+from contextlib import contextmanager
 
 LOGGER = logging.getLogger(__name__)
 
 start_time = time.time()
-burners = {}
 maxes = {}
 sums = {}
+burners = {}
+coroutine_states = {}
 exitstatus = 0
 
 def stats_max(name, value):
@@ -26,6 +28,22 @@ def record_cpu_burn(name, start):
     burn['count'] = burn.get('count', 0) + 1
     burn['time'] = burn.get('time', 0.0) + elapsed
     burners[name] = burn
+
+@contextmanager
+def coroutine_state(k):
+    # the documentation for generators leaves something to be desired
+    coroutine_states[k] = coroutine_states.get(k,0) + 1
+    LOGGER.debug('coroutine entering state %s', k)
+    try:
+        yield
+    finally:
+        LOGGER.debug('coroutine exiting state %s', k)
+        coroutine_states[k] -= 1
+
+def coroutine_report():
+    LOGGER.info('Coroutine report:')
+    for k in sorted(list(coroutine_states.keys())):
+        LOGGER.info('  %s: %d', k, coroutine_states[k])
 
 def report():
     LOGGER.info('Stats report:')

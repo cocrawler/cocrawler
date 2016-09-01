@@ -50,7 +50,7 @@ Save:
    Overwrite: n
 
 Logging:
-  LoggingLevel: 2
+  Make this a dict:
 #  Crawllog: crawllog.jsonl
 #  Robotslog: robotslog.jsonl
 

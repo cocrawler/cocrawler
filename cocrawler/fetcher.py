@@ -1,26 +1,3 @@
-#        ClientError
-#            ClientConnectionError -- socket-related stuff
-#                ClientOSError(ClientConnectionError, builtins.OSError) -- errno is set
-#                ClientTimeoutError(ClientConnectionError, concurrent.futures._base.TimeoutError)
-#                FingerprintMismatch -- SSL-related
-#                ProxyConnectionError -- opening connection to proxy
-#            ClientHttpProcessingError
-#                ClientRequestError -- connection error during sending request
-#                ClientResponseError -- connection error during reading response
-#        DisconnectedError
-#            ClientDisconnectedError
-#                WSClientDisconnectedError -- deprecated
-#            ServerDisconnectedError
-#        HttpProcessingError
-#            BadHttpMessage -- 400
-#                BadStatusLine "200 OK"
-#                HttpBadRequest -- 400
-#                InvalidHeader
-#                LineTooLong
-#            HttpMethodNotAllowed -- 405
-#            HttpProxyError -- anything other than success starting to talk to the proxy
-#            WSServerHandshakeError -- websocket-related
-
 '''
 async fetching of urls.
 
@@ -38,7 +15,8 @@ full response, proxy failure. Plus an errorstring good enough for logging.
 '''
 
 import time
-#import traceback
+import traceback
+import urllib
 
 import asyncio
 import logging
@@ -63,7 +41,35 @@ def apply_url_policies(url, parts, config):
 
     return headers, proxy, mock_url, mock_robots
 
-async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None):
+async def prefetch_dns(parts, mock_url, session):
+    if mock_url is None:
+        netlocparts = parts.netloc.split(':', maxsplit=1)
+    else:
+        mockurlparts = urllib.parse.urlparse(mock_url)
+        netlocparts = mockurlparts.netloc.split(':', maxsplit=1)
+    host = netlocparts[0]
+    try:
+        port = int(netlocparts[1])
+    except IndexError:
+        port = 80
+
+    answer = None
+    iplist = []
+
+    if (host, port) not in session.connector.cached_hosts:
+        with stats.coroutine_state('fetcher DNS lookup'):
+            # if this raises an exception, it's caught in the caller
+            answer = await session.connector._resolve_host(host, port)
+    else:
+        answer = session.connector.cached_hosts[(host, port)]
+
+    for a in answer:
+        iplist.append(a['host'])
+
+    print('DEBUG: ips for host {} are {}'.format(host, iplist))
+    return iplist
+
+async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None):
 
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
@@ -79,6 +85,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
     subtries = 0
     last_exception = None
     response = None
+    iplist = []
 
     while subtries < maxsubtries:
 
@@ -86,11 +93,14 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             t0 = time.time()
             last_exception = None
 
-            # XXX make an explicit dns for hosts not in the cache, so we can track how many coroutines are stuck in dns?
+            if len(iplist) == 0:
+                iplist = await prefetch_dns(parts, mock_url, session)
 
-            with aiohttp.Timeout(pagetimeout):
-                response = await session.get(mock_url or url,
-                                             allow_redirects=allow_redirects, headers=headers)
+            with stats.coroutine_state('fetcher fetching'):
+                with aiohttp.Timeout(pagetimeout):
+                    response = await session.get(mock_url or url,
+                                                 allow_redirects=allow_redirects,
+                                                 headers=headers)
 
             # XXX special sleepy 503 handling here - soft fail
             # XXX json_log tries
@@ -116,17 +126,48 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
             print('retrying url={} code={}'.format(url, response.status))
 
         except Exception as e:
+
+#        ClientError
+#            ClientConnectionError -- socket-related stuff
+#                ClientOSError(ClientConnectionError, builtins.OSError) -- errno is set
+#                ClientTimeoutError(ClientConnectionError, concurrent.futures._base.TimeoutError)
+#                FingerprintMismatch -- SSL-related
+#                ProxyConnectionError -- opening connection to proxy
+#            ClientHttpProcessingError
+#                ClientRequestError -- connection error during sending request
+#                ClientResponseError -- connection error during reading response
+#        DisconnectedError
+#            ClientDisconnectedError
+#                WSClientDisconnectedError -- deprecated
+#            ServerDisconnectedError
+#        HttpProcessingError
+#            BadHttpMessage -- 400
+#                BadStatusLine "200 OK"
+#                HttpBadRequest -- 400
+#                InvalidHeader
+#                LineTooLong
+#            HttpMethodNotAllowed -- 405
+#            HttpProxyError -- anything other than success starting to talk to the proxy
+#            WSServerHandshakeError -- websocket-related
+
+            # actually seen:
+            #  aiodns.error.DNSError
+            #  asyncio.TimeoutError
+
             last_exception = repr(e)
-            #traceback.print_exc()
+            traceback.print_exc()
             LOGGER.debug('we sub-failed once, url is %s, exception is %s',
                          mock_url or url, last_exception)
 
-        # treat all 5xx somewhat similar to a 503: slow down and retry
-        await asyncio.sleep(retrytimeout)
-        # XXX record 5xx so that everyone else slows down, too
         if response:
             # if the exception was thrown during reading body_bytes, there will be a response object
             await response.release()
+
+        # treat all 5xx somewhat similar to a 503: slow down and retry
+        # XXX record 5xx so that everyone else slows down, too
+        with stats.coroutine_state('fetcher retry sleep'):
+            await asyncio.sleep(retrytimeout)
+
         subtries += 1
     else:
         if last_exception:
@@ -147,7 +188,7 @@ async def fetch(url, session, config, headers=None, proxy=None, mock_url=None, a
     # did we receive cookies? was the security bit set?
     # record everything needed for warc. all headers, for example.
 
-
+    # XXX do something with iplist
     return response, body_bytes, header_bytes, apparent_elapsed, None
 
 def upgrade_scheme(url):

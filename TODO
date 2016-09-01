@@ -1,10 +1,5 @@
 Short-term TODO list:
 
-add a save/restore test of things in test.sh, need to capture pid
-
-test that the big retry loop works
- make soft fail do a requeue... add a retry count to queue info
-
 steal cosrlib/document/html/htmlencoding.py to be a better
 guesser of page encoding - it works on common crawl ...
 compare with the thing in aiohttp.response.text, which just
@@ -15,9 +10,8 @@ PriorityQueue ! (prio, work), low prio goes first
  prio = pathlength to seed ... eventually combined with rank?
  embed -= 1
  add in a random number between 0-1 to shake things up a bit
-
-I have a race between host_seen and the queue -- seen is set after
-a successful fetch, so a popular url will be in the queue repeatedly.
+  right now the queue advances in order due to the ridealong id being a linear increment
+  could switch to a random ridealong id?
 
 plugin system revamp
 
