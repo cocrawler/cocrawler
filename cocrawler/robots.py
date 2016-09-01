@@ -141,7 +141,10 @@ class Robots:
             return None
 
         if not self.is_plausible_robots(schemenetloc, body_bytes, apparent_elapsed):
-            # treat as empty
+            # policy: treat as empty
+            self.jsonlog(schemenetloc,
+                         {'warning':'saw an implausible robots.txt, treating as empty',
+                          'action':'fetch', 'apparent_elapsed':apparent_elapsed})
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
             await response.release()
