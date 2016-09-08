@@ -1,4 +1,5 @@
 Crawl:
+  MaxDepth: 100000
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
 
