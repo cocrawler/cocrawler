@@ -16,7 +16,7 @@ Seeds:
 #  Files: seed_list.txt
 
 Crawl:
-  DepthLimit: 3 # not implemented
+  MaxDepth: 3
   MaxTries: 4 # outer retry loop
   MaxSubTries: 4 # inner retry loop
   PageTimeout: 30
@@ -51,8 +51,11 @@ Save:
 
 Logging:
   Make this a dict:
+# note that the following files are all opened for append, for
+# restart purposes. Might change to unique filenames?
 #  Crawllog: crawllog.jsonl
 #  Robotslog: robotslog.jsonl
+#  LogRejectedAddUrl: rejectedaddurl.log
 
 Testing:
   TestHostmapAll: n

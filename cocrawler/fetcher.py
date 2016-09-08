@@ -65,8 +65,6 @@ async def prefetch_dns(parts, mock_url, session):
 
     for a in answer:
         iplist.append(a['host'])
-
-    print('DEBUG: ips for host {} are {}'.format(host, iplist))
     return iplist
 
 async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None):
@@ -151,8 +149,10 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
 #            WSServerHandshakeError -- websocket-related
 
             # actually seen:
-            #  aiodns.error.DNSError
+            #  aiodns.error.DNSError - answer had no data
             #  asyncio.TimeoutError
+            #  ClientResponseError - about.com robots {should be redir to www}, duowan.com robots {should be redir and then 404}
+            #  ClientOSError - cntv.cn/robots.txt, errno=113 "No route to host"
 
             last_exception = repr(e)
             traceback.print_exc()
@@ -188,7 +188,9 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     # did we receive cookies? was the security bit set?
     # record everything needed for warc. all headers, for example.
 
-    # XXX do something with iplist
+    # XXX do something with iplist, but only if we just fetched it. e.g. WARC
+    # elsewise it's from the cache and there's no need to repeat it?
+
     return response, body_bytes, header_bytes, apparent_elapsed, None
 
 def upgrade_scheme(url):

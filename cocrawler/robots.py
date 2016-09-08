@@ -29,7 +29,7 @@ class Robots:
         self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
         self.jsonlogfile = self.config.get('Logging', {}).get('Robotslog')
         if self.jsonlogfile:
-            self.jsonlogfd = open(self.jsonlogfile, 'w')
+            self.jsonlogfd = open(self.jsonlogfile, 'a')
         else:
             self.jsonlogfd = None
 

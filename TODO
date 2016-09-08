@@ -1,5 +1,17 @@
 Short-term TODO list:
 
+status page
+web-delivered status
+qps of 200 text/html + last 10
+qps of dns lookups + last 10
+qps of raw robots.txt lookups + last 10
+perhaps make the qps a js graph
+copy of configuration files
+dump more of this at exit or save
+fill out form to find last 10 for any paydomain
+
+ability to add seeds while crawler is running?
+
 steal cosrlib/document/html/htmlencoding.py to be a better
 guesser of page encoding - it works on common crawl ...
 compare with the thing in aiohttp.response.text, which just

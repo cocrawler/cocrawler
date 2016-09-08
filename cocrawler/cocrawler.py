@@ -76,9 +76,14 @@ class Crawler:
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
         self.jsonlogfile = config['Logging'].get('Crawllog')
         if self.jsonlogfile:
-            self.jsonlogfd = open(self.jsonlogfile, 'w')
+            self.jsonlogfd = open(self.jsonlogfile, 'a')
         else:
             self.jsonlogfd = None
+        self.rejectedaddurl = config['Logging'].get('LogRejectedAddUrl')
+        if self.rejectedaddurl:
+            self.rejectedaddurlfd = open(self.rejectedaddurl, 'a')
+        else:
+            self.rejectedaddurlfd = None
 
         if load is not None:
             self.load_all(load)
@@ -123,7 +128,11 @@ class Crawler:
     def register_plugin(self, name, plugin_function):
         self.plugins[name] = plugin_function
 
-    def add_url(self, priority, url, seed=False):
+    def log_rejected_add_url(self, url):
+        if self.rejectedaddurlfd:
+            print(url, file=self.rejectedaddurlfd)
+
+    def add_url(self, priority, url, seed=False, seedredirs=None):
         # XXX canonical plugin here?
         url, _ = urllib.parse.urldefrag(url) # drop the frag
         if '://' not in url: # will happen for seeds
@@ -140,12 +149,19 @@ class Crawler:
 
         # XXX allow/deny plugin modules go here
         # seen url - could also be "seen recently enough"
+
+        if priority > int(self.config['Crawl']['MaxDepth']):
+            stats.stats_sum('rejected by MaxDepth', 1)
+            self.log_rejected_add_url(url)
+            return
         if self.datalayer.seen_url(url):
             stats.stats_sum('rejected by seen_urls', 1)
+            self.log_rejected_add_url(url)
             return
         if not seed and not self.plugins['url_allowed'](url):
             LOGGER.debug('url %r was rejected by url_allow.', url)
             stats.stats_sum('rejected by url_allowed', 1)
+            self.log_rejected_add_url(url)
             return
         # end allow/deny plugin
 
@@ -213,7 +229,7 @@ class Crawler:
                 stats.stats_sum('tries completely exhausted', 1)
                 del self.ridealong[ra]
                 return
-            # XXX jsonlog
+            # XXX jsonlog this soft fails
             work['tries'] = tries
             work['priority'] = priority
             self.ridealong[ra] = work
@@ -231,11 +247,30 @@ class Crawler:
             headers = response.headers
             location = response.headers.get('location')
             next_url = urllib.parse.urljoin(url, location)
-            # XXX make sure it didn't redirect to itself.
-            # XXX some hosts redir to themselves while setting cookies,
-            #  that's an infinite loop if we aren't accepting cookies like PHPSESSIONID
+            priority += 1
+
+            # XXX make sure it didn't redirect to itself
+            # (although some hosts redir to themselves while setting cookies)
+            # XXX need surt-surt comparison and seen_url check
+
             json_log['redirect'] = next_url
-            if self.add_url(priority+1, next_url): # XXX policy, add an option to track redirs and be +0
+
+            kwargs = {}
+            if 'seed' in work:
+                if 'seedredirs' in work:
+                    work['seedredirs'] += 1
+                else:
+                    work['seedredirs'] = 1
+                if work['seedredirs'] > 2: # XXX make a policy option
+                    del work['seed']
+                    del work['seedredirs']
+                else:
+                    kwargs['seed'] = work['seed']
+                    kwargs['seedredirs'] = work['seedredirs']
+                    priority -= 1 # XXX make a policy option
+                    json_log['seedredirs'] = work['seedredirs']
+
+            if self.add_url(priority+1, next_url, **kwargs):
                 json_log['found_new_links'] = 1
             # fall through to release and json logging
 
@@ -407,6 +442,9 @@ class Crawler:
                 break
 
             stats.coroutine_report()
+
+            # XXX clear the DNS cache every few hours; currently the
+            # in-memory one is kept for the entire crawler run
 
         for w in workers:
             if not w.done():
