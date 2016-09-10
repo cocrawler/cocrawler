@@ -4,10 +4,14 @@
 #database layer spec
 
 # host database
-#   counters: urls seen, ...
+#   counters: unique urls seen, urls crawled, incoming C's, hostrank info
+#   data: landing pages and their anchortext? or in the url db
 # url database
+#   seen urls can be a bloom filter
+#    one of the ones in pypi does % error, 10 billion @ 0.1% was 17 gigabytes
 #   surt url, last-crawl-date, ranking counters
-# per-host crawl frontiers ordered by rank
+#    can minimize size by only recording details for externally linked urls
+# per-host crawl frontiers ordered by rank?
 #   lossy? refresh by iterating over url database
 #   python Queue is single-process and not ranked
 # robots cache, with timeout

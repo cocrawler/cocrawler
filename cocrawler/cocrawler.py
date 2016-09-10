@@ -343,11 +343,11 @@ class Crawler:
             pass
 
     def save(self, f):
+        # XXX make this more self-describing
         pickle.dump('Put the XXX header here', f) # XXX date, conf file name, conf file checksum
         pickle.dump(self.ridealongmaxid, f)
         pickle.dump(self.ridealong, f)
-        # XXX seeds needed for some url policies :/
-        # directly pickling a PriorityQueue doesn't work, so, just save the tuples
+        pickle.dump(self._seeds, f)
         count = self.q.qsize()
         pickle.dump(count, f)
         for _ in range(0, count):
@@ -358,6 +358,8 @@ class Crawler:
         header = pickle.load(f) # XXX check that this is a good header... log it
         self.ridealongmaxid = pickle.load(f)
         self.ridealong = pickle.load(f)
+        self._seeds = pickle.load(f)
+        # XXX load seeds
         self.q = asyncio.PriorityQueue(loop=self.loop)
         count = pickle.load(f)
         for _ in range(0, count):

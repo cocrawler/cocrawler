@@ -1,7 +1,7 @@
 '''
 Parse links in html and css pages.
 
-XXX also need a gumbocy alternative
+XXX also need a gumbocy version
 '''
 
 import re
@@ -11,7 +11,7 @@ import stats
 
 def find_html_links(html):
     '''
-    Find the outgoing links in html
+    Find the outgoing links and embeds in html
     '''
 
     start = time.clock()
@@ -21,8 +21,8 @@ def find_html_links(html):
 
 def find_html_links_and_embeds(html):
     '''
-    Find links in html, divided among links and embeds. More expensive
-    than just getting unclassified links
+    Find links in html, divided among links and embeds.
+    More expensive than just getting unclassified links.
     '''
 
     start = time.clock()
@@ -39,7 +39,9 @@ def find_html_links_and_embeds(html):
     links_body = set(re.findall(r'''\shref=['"]?([^\s'"<>]+)''', body, re.I))
     stats.record_cpu_burn('find_html_links_and_embeds re', start)
 
-    return links_body, embeds_head.union(embeds_body)
+    embeds = embeds_head.union(embeds_body)
+
+    return links_body, embeds
 
 def find_css_links(css):
     '''
