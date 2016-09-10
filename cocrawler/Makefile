@@ -19,3 +19,6 @@ test_coverage: clean_coverage
 	(cd ../tests; COVERAGE='coverage run -a --source=../cocrawler/' ./test.sh)
 	coverage combine ../tests/.coverage .coverage
 	coverage report
+
+run_parsers:
+	python ./run_parsers.py ~/public_html/
