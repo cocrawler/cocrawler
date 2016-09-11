@@ -55,9 +55,8 @@ class Robots:
         if len(robots) == 0:
             return True
 
-        start = time.clock()
-        self.rerp.parse(robots) # cache this parse?
-        stats.record_cpu_burn('robots parse', start)
+        with stats.record_burn('robots parse', url=schemenetloc):
+            self.rerp.parse(robots) # cache this parse?
 
 #        if self.rerp.sitemaps:
 #           ...
@@ -70,9 +69,8 @@ class Robots:
         if parts.query:
             pathplus += '?' + parts.query
 
-        start = time.clock()
-        check = self.rerp.is_allowed(self.robotname, pathplus)
-        stats.record_cpu_burn('robots is_allowed', start)
+        with stats.record_burn('robots is_allowed', url=schemenetloc):
+            check = self.rerp.is_allowed(self.robotname, pathplus)
 
         if check:
             # don't log success

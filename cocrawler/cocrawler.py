@@ -288,10 +288,9 @@ class Crawler:
             # PLUGIN: post_crawl_200 by content type
             if content_type == 'text/html':
                 try:
-                    start = time.clock()
-                    body = await response.text() # do not use encoding found in the headers -- policy
-                    # XXX consider using 'ascii' for speed, if all we want to do is regex in it
-                    stats.record_cpu_burn('response.text() decode', start)
+                    with stats.record_burn('response.text() decode', url=url):
+                        body = await response.text() # do not use encoding found in the headers -- policy
+                        # XXX consider using 'ascii' for speed, if all we want to do is regex in it
                 except UnicodeDecodeError:
                     # XXX if encoding was in header, maybe I should use it?
                     body = body_bytes.decode(encoding='utf-8', errors='replace')
@@ -299,7 +298,7 @@ class Crawler:
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds
                 # should have an option to run this in a separate process or fork,
                 #  so as to not cpu burn in the main process
-                urls = parse.find_html_links(body)
+                urls = parse.find_html_links(body, url=url)
                 LOGGER.debug('parsing content of url %r returned %r links', url, len(urls))
                 json_log['found_links'] = len(urls)
                 stats.stats_max('max urls found on a page', len(urls))

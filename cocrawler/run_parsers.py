@@ -13,8 +13,8 @@ import stats
 import parse
 
 def parse_all(name, string):
-    links1 = parse.find_html_links(string)
-    links2, embeds2 = parse.find_html_links_and_embeds(string)
+    links1 = parse.find_html_links(string, url=name)
+    links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)
 
     all2 = links2.union(embeds2)
 
@@ -33,7 +33,7 @@ for d in sys.argv[1:]:
                 expanded = os.path.join(root, name)
                 #print('{}:'.format(expanded))
                 with open(expanded, 'r', errors='ignore') as f:
-                    parse_all(name, f.read())
+                    parse_all(expanded, f.read())
 
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])

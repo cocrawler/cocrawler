@@ -7,6 +7,8 @@ import pickle
 import time
 from contextlib import contextmanager
 
+from sortedcontainers import SortedSet
+
 LOGGER = logging.getLogger(__name__)
 
 start_time = time.time()
@@ -22,12 +24,32 @@ def stats_max(name, value):
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
 
-def record_cpu_burn(name, start):
+def mynegsplitter(string):
+    _, value = string.rsplit(':', maxsplit=1)
+    return -float(value)
+
+def record_cpu_burn(name, start, url=None):
     elapsed = time.clock() - start
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
     burn['time'] = burn.get('time', 0.0) + elapsed
+
+    # are we exceptional? 10x current average
+    if elapsed > burn['time']/burn['count'] * 10:
+        if 'list' not in burn:
+            burn['list'] = SortedSet(key=mynegsplitter)
+        url = url or 'none'
+        burn['list'].add(url + ':' + str(elapsed))
+
     burners[name] = burn
+
+@contextmanager
+def record_burn(name, url=None):
+    try:
+        start = time.clock()
+        yield
+    finally:
+        record_cpu_burn(name, start, url=url)
 
 @contextmanager
 def coroutine_state(k):
@@ -55,6 +77,12 @@ def report():
     LOGGER.info('CPU burn report:')
     for key, burn in sorted(burners.items(), key=lambda x: x[1]['time'], reverse=True):
         LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, burn['count'], burn['time'])
+        if burn.get('list'):
+            LOGGER.info('    biggest burners')
+            first10 = burn['list'][0:min(len(burn['list']), 10)]
+            for url in first10:
+                u, e = url.rsplit(':', maxsplit=1)
+                LOGGER.info('      %s: %.3f cpu seconds.', u, float(e))
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
