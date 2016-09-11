@@ -1,7 +1,7 @@
 Short-term TODO list:
 
-status page -- no, status REST calls so it hooks to a dashboard like
-https://github.com/christabor/flask_jsondash
+status REST calls
+ hook up to dashboard like https://github.com/christabor/flask_jsondash
 qps of 200 text/html + last 10
 qps of dns lookups + last 10
 qps of raw robots.txt lookups + last 10
@@ -11,13 +11,7 @@ slow burners
 slow domains
 dump more of this at exit or save
 
-make burners a context manager
-  add url for slow burners report
-
-write a thing to traverse a directory and parse all the html files in
-it. Use all the availbale parsers, compare the yield of urls
-and embeds, and execution times.
- find a html torture test?
+find a html torture test? hm not so googlable
 
 ability to add seeds while crawler is running?
  also alter anything in config

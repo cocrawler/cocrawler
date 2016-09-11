@@ -82,7 +82,7 @@ def report():
             first10 = burn['list'][0:min(len(burn['list']), 10)]
             for url in first10:
                 u, e = url.rsplit(':', maxsplit=1)
-                LOGGER.info('      %s: %.3f cpu seconds.', u, float(e))
+                LOGGER.info('      %.3fs: %s', float(e), u)
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
