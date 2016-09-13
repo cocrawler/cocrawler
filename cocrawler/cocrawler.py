@@ -11,6 +11,7 @@ from functools import partial
 import pickle
 from collections import defaultdict
 from operator import itemgetter
+import random
 
 import asyncio
 import logging
@@ -134,6 +135,12 @@ class Crawler:
 
     def add_url(self, priority, url, seed=False, seedredirs=None):
         # XXX canonical plugin here?
+        # XXX learnings from Django https://github.com/django/django/blob/master/django/utils/http.py#L287
+        #   urlparse screwup: reject startswith('///')...
+        #   ??? reject scheme without netloc http:///foo ??? at least test that urljoin() does the right thing
+        #   chrome: reject starting with control chars.
+        #   strip whitespace. what about interior not-url-encoded whitespace?
+        #  seems that Chrome is a lot more permissive than other browsers :/
         url, _ = urllib.parse.urldefrag(url) # drop the frag
         if '://' not in url: # will happen for seeds
             if ':' in url:
@@ -172,7 +179,14 @@ class Crawler:
         if seed:
             work['seed'] = True
         self.ridealong[str(self.ridealongmaxid)] = work
-        self.q.put_nowait((priority, str(self.ridealongmaxid)))
+
+        # to randomize fetches, and sub-prioritize embeds
+        if work.get('embed'):
+            rand = 0.0
+        else:
+            rand = random.uniform(0, 0.99999)
+
+        self.q.put_nowait((priority, rand, str(self.ridealongmaxid)))
         self.ridealongmaxid += 1
 
         self.datalayer.add_seen_url(url)
@@ -193,7 +207,7 @@ class Crawler:
         '''
         Fetch and process a single url.
         '''
-        priority, ra = work
+        priority, rand, ra = work
         work = self.ridealong[ra]
         url = work['url']
         tries = work.get('tries', 0)
@@ -233,7 +247,7 @@ class Crawler:
             work['tries'] = tries
             work['priority'] = priority
             self.ridealong[ra] = work
-            self.q.put_nowait((priority, ra))
+            self.q.put_nowait((priority, rand, ra))
             return
 
         del self.ridealong[ra]

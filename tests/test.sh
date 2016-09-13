@@ -5,6 +5,8 @@ set -e
 
 # start a webserver
 python ./mock-webserver.py > /dev/null 2>&1 &
+# give it a chance to bind
+sleep 1
 
 # if COVERAGE is set, use it, else python
 if [ -z "$COVERAGE" ]; then COVERAGE=python; fi
@@ -18,11 +20,13 @@ $COVERAGE ../cocrawler/crawl.py --configfile test-deep.yml $NOCH
 # tests against the logfiles
 grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in robotslog"; exit 1)
 (grep "/denied/" crawllog.jsonl | grep -q -v '"robots"' ) && (echo "FAIL: should not have seen /denied/ in crawllog.jsonl"; exit 1)
+rm -f robotslog.jsonl crawllog.jsonl
 
 echo
 echo test-wide
 echo
 $COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1 $NOCH
+rm -f robotslog.jsonl crawllog.jsonl
 
 echo
 echo test-wide with save and load first half
@@ -37,15 +41,14 @@ echo
 echo test wide save and load second half: load
 echo
 $COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
-#rm -f test-wide-save
+rm -f test-wide-save
+rm -f robotslog.jsonl crawllog.jsonl
 
 echo
 echo test-failures
 echo
 $COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
-
-# remove logfiles
-#rm -f robotslog.jsonl crawllog.jsonl
+rm -f robotslog.jsonl crawllog.jsonl
 
 # tear down the webserver. fails in travis, so ignore
 kill %1 || true

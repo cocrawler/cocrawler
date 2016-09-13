@@ -67,7 +67,7 @@ async def prefetch_dns(parts, mock_url, session):
         iplist.append(a['host'])
     return iplist
 
-async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None):
+async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
 
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
@@ -175,9 +175,9 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
             return None, None, None, None, last_exception
         # fall through for the case of response.status >= 500
 
-    stats.stats_sum('URLs fetched', 1)
-    LOGGER.debug('url %r came back with status %r', url, response.status)
-    stats.stats_sum('fetch http code=' + str(response.status), 1)
+    if stats_me:
+        stats.stats_sum('URLs fetched', 1)
+        stats.stats_sum('fetch http code=' + str(response.status), 1)
 
     # fish dns for host out of tcpconnector object? requires (host, port)
     #print('on the way out, connector.cached_hosts is', session.connector.cached_hosts)

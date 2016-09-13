@@ -4,8 +4,11 @@
 #database layer spec
 
 # host database
-#   counters: unique urls seen, urls crawled, incoming C's, hostrank info
+#   counters: urls crawled, urls in queue, seen urls, hostrank info like unique incoming C's
 #   data: landing pages and their anchortext? or in the url db
+#   politeness: current value, last 3 maxes, last N outcomes
+#    outcome: 5xx, 4xx, 200, slow-200
+#    remember the averages for last 10,100,1000,10k,100k,1mm fetches
 # url database
 #   seen urls can be a bloom filter
 #    one of the ones in pypi does % error, 10 billion @ 0.1% was 17 gigabytes

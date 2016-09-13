@@ -43,12 +43,14 @@ class Robots:
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
+            stats.stats_sum('robots cache hit', 1)
         except KeyError:
             # extra semantics and policy inside fetch_robots: 404 returns '', etc. also inserts into cache.
             robots = await self.fetch_robots(schemenetloc, mock_robots, mock_robots_parts, headers=headers, proxy=proxy)
 
         if robots is None:
             self.jsonlog(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
+            stats.stats_sum('robots denied - robots not found', 1)
             stats.stats_sum('robots denied', 1)
             return False
 
@@ -73,7 +75,7 @@ class Robots:
             check = self.rerp.is_allowed(self.robotname, pathplus)
 
         if check:
-            # don't log success
+            stats.stats_sum('robots allowed', 1)
             return True
 
         self.jsonlog(schemenetloc, {'url':pathplus, 'action':'deny'})
@@ -118,7 +120,7 @@ class Robots:
 
         response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
             url, parts, self.session, self.config, headers=headers, proxy=proxy,
-            mock_url=mock_url, allow_redirects=True
+            mock_url=mock_url, allow_redirects=True, stats_me=False
         )
 
         if last_exception:
