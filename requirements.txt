@@ -11,7 +11,7 @@ cachetools==1.1.6
 pluginbase==0.4
 filemagic==1.6
 tldextract==2.0.1
-sortedcontainers
+sortedcontainers==1.5.3
 
 # used to maintain this file
 pur==3.0.7
