@@ -22,6 +22,7 @@ from collections import namedtuple
 import asyncio
 import logging
 import aiohttp
+import aiodns
 
 import stats
 
@@ -130,8 +131,6 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                 break
             print('retrying url={} code={}'.format(url, response.status))
 
-        except Exception as e:
-
 #        ClientError
 #            ClientConnectionError -- socket-related stuff
 #                ClientOSError(ClientConnectionError, builtins.OSError) -- errno is set
@@ -161,9 +160,16 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
             #  ClientResponseError - about.com robots {should be redir to www}, duowan.com robots {should be redir and then 404}
             #  ClientOSError - cntv.cn/robots.txt, errno=113 "No route to host"
 
+        except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
+                aiodns.error.DNSError, asyncio.TimeoutError) as e:
             last_exception = repr(e)
-            traceback.print_exc()
             LOGGER.debug('we sub-failed once, url is %s, exception is %s',
+                         mock_url or url, last_exception)
+        except Exception as e:
+            last_exception = repr(e)
+            print('UNKNOWN EXCEPTION SEEN in the fetcher')
+            traceback.print_exc()
+            LOGGER.debug('we sub-failed once WITH UNKNOWN EXCEPTION, url is %s, exception is %s',
                          mock_url or url, last_exception)
 
         if response:

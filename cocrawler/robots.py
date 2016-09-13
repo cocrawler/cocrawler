@@ -164,6 +164,7 @@ class Robots:
             body = str(f.body_bytes, 'utf-8', 'ignore')
         except Exception as e: # pragma: no cover
             # something unusual went wrong. treat like a fetch error.
+            # (could be a broken tcp session etc.) XXX use list from cocrawler.py
             self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + repr(e),
                                         'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
             self.in_progress.discard(schemenetloc)

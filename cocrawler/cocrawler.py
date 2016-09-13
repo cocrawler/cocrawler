@@ -307,6 +307,7 @@ class Crawler:
                         # XXX consider using 'ascii' for speed, if all we want to do is regex in it
                 except UnicodeDecodeError:
                     # XXX if encoding was in header, maybe I should use it?
+                    # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds

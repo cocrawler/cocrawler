@@ -51,7 +51,7 @@ def main():
         loop.run_until_complete(crawler.crawl())
     except KeyboardInterrupt: # pragma: no cover
         sys.stderr.flush()
-        print('\nInterrupt\n')
+        print('\nInterrupt. Exiting cleanly.\n')
 #    except Exception as e: # XXX this doesn't seem to surface anything
 #        print('exception consumed: {}'.format(e))
     finally:

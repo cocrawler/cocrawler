@@ -131,8 +131,8 @@ def config(configfile, configlist, confighome=True):
                 for x in xpath:
                     temp = combined[x]
                 temp[key] = rhs
-            except Exception as e:
-                LOGGER.error('invalid config of %s, exception was %r', c, e)
+            except KeyError:
+                LOGGER.error('invalid config of %s, c)
                 continue
 
     return combined
