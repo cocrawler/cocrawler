@@ -17,6 +17,7 @@ full response, proxy failure. Plus an errorstring good enough for logging.
 import time
 import traceback
 import urllib
+from collections import namedtuple
 
 import asyncio
 import logging
@@ -65,6 +66,10 @@ async def prefetch_dns(parts, mock_url, session):
 
     for a in answer:
         iplist.append(a['host'])
+
+    # XXX check if the ip is a private one (10/8, 196.168/16, loopback, etc and don't go there)
+    #  we should still log the IP to warc even if private
+    # XXX log ip to warc here?
     return iplist
 
 async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
@@ -72,6 +77,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
     retrytimeout = float(config['Crawl']['RetryTimeout'])
+
+    ret = namedtuple('fetcher_return', ['response', 'body_bytes', 'header_bytes', 'apparent_elapsed', 'last_exception'])
 
     if proxy: # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
@@ -172,7 +179,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     else:
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
-            return None, None, None, None, last_exception
+            return ret(None, None, None, None, last_exception)
+            #return None, None, None, None, last_exception
         # fall through for the case of response.status >= 500
 
     if stats_me:
@@ -191,7 +199,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     # XXX do something with iplist, but only if we just fetched it. e.g. WARC
     # elsewise it's from the cache and there's no need to repeat it?
 
-    return response, body_bytes, header_bytes, apparent_elapsed, None
+    return ret(response, body_bytes, header_bytes, apparent_elapsed, None)
+    #return response, body_bytes, header_bytes, apparent_elapsed, None
 
 def upgrade_scheme(url):
     '''

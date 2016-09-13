@@ -226,16 +226,18 @@ class Crawler:
             del self.ridealong[ra]
             return
 
-        response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
+        # XXX response.release asap. btw response.text does one for you
+        #response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
+        f = await fetcher.fetch(
             url, parts, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url
         )
 
         json_log = {'type':'get', 'url':url, 'priority':priority,
-                    'apparent_elapsed':apparent_elapsed, 'time':time.time()}
+                    'apparent_elapsed':f.apparent_elapsed, 'time':time.time()}
         if tries:
             json_log['retry'] = tries
 
-        if last_exception is not None or response.status >= 500:
+        if f.last_exception is not None or f.response.status >= 500:
             tries += 1
             if tries > maxtries:
                 # XXX jsonlog
@@ -252,14 +254,14 @@ class Crawler:
 
         del self.ridealong[ra]
 
-        json_log['status'] = response.status
+        json_log['status'] = f.response.status
 
         # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
         # for example, add to a WARC, or post to a Kafka queue
 
-        if is_redirect(response):
-            headers = response.headers
-            location = response.headers.get('location')
+        if is_redirect(f.response):
+            headers = f.response.headers
+            location = f.response.headers.get('location')
             next_url = urllib.parse.urljoin(url, location)
             priority += 1
 
@@ -289,9 +291,9 @@ class Crawler:
             # fall through to release and json logging
 
         # if 200, parse urls out of body
-        if response.status == 200:
-            headers = response.headers
-            content_type = response.headers.get('content-type')
+        if f.response.status == 200:
+            headers = f.response.headers
+            content_type = f.response.headers.get('content-type')
             if content_type:
                 content_type, _ = cgi.parse_header(content_type)
             else:
@@ -303,11 +305,11 @@ class Crawler:
             if content_type == 'text/html':
                 try:
                     with stats.record_burn('response.text() decode', url=url):
-                        body = await response.text() # do not use encoding found in the headers -- policy
+                        body = await f.response.text() # do not use encoding found in the headers -- policy
                         # XXX consider using 'ascii' for speed, if all we want to do is regex in it
                 except UnicodeDecodeError:
                     # XXX if encoding was in header, maybe I should use it?
-                    body = body_bytes.decode(encoding='utf-8', errors='replace')
+                    body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds
                 # should have an option to run this in a separate process or fork,
@@ -328,7 +330,7 @@ class Crawler:
                 LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
                 stats.stats_max('max queue size', self.q.qsize())
 
-        await response.release() # No pipelining
+        await f.response.release()
         if self.jsonlogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
 

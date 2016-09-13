@@ -118,63 +118,65 @@ class Robots:
 
         self.in_progress.add(schemenetloc)
 
-        response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
+        #XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
+        #response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
+        f = await fetcher.fetch(
             url, parts, self.session, self.config, headers=headers, proxy=proxy,
             mock_url=mock_url, allow_redirects=True, stats_me=False
         )
 
-        if last_exception:
-            self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + last_exception,
+        if f.last_exception:
+            self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + f.last_exception,
                                         'action':'fetch'})
             self.in_progress.discard(schemenetloc)
             return None
 
         # if we got a 404, return an empty robots.txt
-        if response.status == 404:
+        if f.response.status == 404:
             self.jsonlog(schemenetloc, {'error':'got a 404, treating as empty robots',
-                                        'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                                        'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
-            await response.release()
+            await f.response.release()
             return ''
 
         # if we got a non-200, some should be empty and some should be None (XXX Policy)
-        if str(response.status).startswith('4') or str(response.status).startswith('5'):
+        if str(f.response.status).startswith('4') or str(f.response.status).startswith('5'):
             self.jsonlog(schemenetloc,
-                         {'error':'got an unexpected status of {}, treating as deny'.format(response.status),
-                          'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                         {'error':'got an unexpected status of {}, treating as deny'.format(f.response.status),
+                          'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
             self.in_progress.discard(schemenetloc)
-            await response.release()
+            await f.response.release()
             return None
 
-        if not self.is_plausible_robots(schemenetloc, body_bytes, apparent_elapsed):
+        if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.apparent_elapsed):
             # policy: treat as empty
             self.jsonlog(schemenetloc,
                          {'warning':'saw an implausible robots.txt, treating as empty',
-                          'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                          'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
-            await response.release()
+            await f.response.release()
             return ''
 
         # one last thing... go from bytes to a string, despite bogus utf8
         try:
-            body = await response.text()
+            body = await f.response.text()
         except UnicodeError: # pragma: no cover
             # something went wrong. try again assuming utf8 and ignoring errors
-            body = str(body_bytes, 'utf-8', 'ignore')
+            body = str(f.body_bytes, 'utf-8', 'ignore')
         except Exception as e: # pragma: no cover
             # something unusual went wrong. treat like a fetch error.
             self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + repr(e),
-                                        'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                                        'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
             self.in_progress.discard(schemenetloc)
-            await response.release()
+            await f.response.release()
             return None
 
-        await response.release()
+        await f.response.release()
         self.datalayer.cache_robots(schemenetloc, body)
         self.in_progress.discard(schemenetloc)
-        self.jsonlog(schemenetloc, {'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+        self.jsonlog(schemenetloc, {'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
         return body
 
     def is_plausible_robots(self, schemenetloc, body_bytes, apparent_elapsed):
