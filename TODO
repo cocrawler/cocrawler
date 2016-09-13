@@ -17,17 +17,11 @@ ability to add seeds while crawler is running?
  also alter anything in config
 
 steal cosrlib/document/html/htmlencoding.py to be a better
-guesser of page encoding - it works on common crawl ...
-compare with the thing in aiohttp.response.text, which just
-uses cchardet
- What happens when pages lie about their encoding? cosr believes it.
-
-PriorityQueue ! (prio, work), low prio goes first
- prio = pathlength to seed ... eventually combined with rank?
- add in a random number between 0-1 to shake things up a bit
-  right now the queue advances in order due to the ridealong id being a linear increment
-  random ID means that we won't crawl a set of discovered linkes all together
-  don't randomize embeds, we want them to go in clusters.
+  guesser of page encoding - it works on common crawl ...
+  compare with the thing in aiohttp.response.text, which just
+   uses cchardet
+  What happens when pages lie about their encoding? cosr believes it.
+  in many cases I'd rather ignore the encoding 
 
 plugin system revamp
 
