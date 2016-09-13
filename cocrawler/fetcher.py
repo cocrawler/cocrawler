@@ -180,15 +180,11 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
             return ret(None, None, None, None, last_exception)
-            #return None, None, None, None, last_exception
         # fall through for the case of response.status >= 500
 
     if stats_me:
         stats.stats_sum('URLs fetched', 1)
         stats.stats_sum('fetch http code=' + str(response.status), 1)
-
-    # fish dns for host out of tcpconnector object? requires (host, port)
-    #print('on the way out, connector.cached_hosts is', session.connector.cached_hosts)
 
     # checks after fetch:
     # hsts? if ssl, check strict-transport-security header,
@@ -196,11 +192,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     # did we receive cookies? was the security bit set?
     # record everything needed for warc. all headers, for example.
 
-    # XXX do something with iplist, but only if we just fetched it. e.g. WARC
-    # elsewise it's from the cache and there's no need to repeat it?
-
     return ret(response, body_bytes, header_bytes, apparent_elapsed, None)
-    #return response, body_bytes, header_bytes, apparent_elapsed, None
 
 def upgrade_scheme(url):
     '''

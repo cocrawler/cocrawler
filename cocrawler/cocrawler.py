@@ -227,10 +227,8 @@ class Crawler:
             return
 
         # XXX response.release asap. btw response.text does one for you
-        #response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-        f = await fetcher.fetch(
-            url, parts, self.session, self.config, headers=headers, proxy=proxy, mock_url=mock_url
-        )
+        f = await fetcher.fetch(url, parts, self.session, self.config,
+                                headers=headers, proxy=proxy, mock_url=mock_url)
 
         json_log = {'type':'get', 'url':url, 'priority':priority,
                     'apparent_elapsed':f.apparent_elapsed, 'time':time.time()}

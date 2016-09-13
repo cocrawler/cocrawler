@@ -119,11 +119,8 @@ class Robots:
         self.in_progress.add(schemenetloc)
 
         #XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
-        #response, body_bytes, header_bytes, apparent_elapsed, last_exception = await fetcher.fetch(
-        f = await fetcher.fetch(
-            url, parts, self.session, self.config, headers=headers, proxy=proxy,
-            mock_url=mock_url, allow_redirects=True, stats_me=False
-        )
+        f = await fetcher.fetch(url, parts, self.session, self.config,
+                                headers=headers, proxy=proxy, mock_url=mock_url, allow_redirects=True, stats_me=False)
 
         if f.last_exception:
             self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + f.last_exception,
