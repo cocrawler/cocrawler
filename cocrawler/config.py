@@ -132,7 +132,7 @@ def config(configfile, configlist, confighome=True):
                     temp = combined[x]
                 temp[key] = rhs
             except KeyError:
-                LOGGER.error('invalid config of %s, c)
+                LOGGER.error('invalid config of %s', c)
                 continue
 
     return combined
