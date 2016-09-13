@@ -1,21 +1,20 @@
-'''
-Accumulate a stream of values over powers of ten, i.e.,
-here's the {average,max,min} of the last 10 values, the last
-100 values, the last 1k, 10k, 100k, 1mm values.
-
-For laziness reasons, only the first 10 value is immediately
-updated; the others only change every 10th, 100th, etc.
-'''
-
 def average(l):
     if len(l) > 0:
         return sum(l)/len(l)
     else:
         return 0
 
-functions = {'average': average, 'max': max, 'min': min}
+functions = {'average': average, 'max': max, 'min': min, 'sum': sum}
 
-class Accumulator:
+class EventAccumulator:
+    '''
+    Accumulate a stream of values over powers of ten, i.e.,
+    here's the {average,max,min} of the last 10 values, the last
+    100 values, the last 1k, 10k, 100k, 1mm values.
+
+    For laziness reasons, only the first 10 value is immediately
+    updated; the others only change every 10th, 100th, etc.
+    '''
     def __init__(self, levels=6, function='average'):
         self.levels = levels
         if function in functions:
@@ -59,3 +58,9 @@ class Accumulator:
                 ret.append(last)
         return ret
 
+#class TimeAccumulator:
+#    '''
+#    Accumulate event counts by time, over the past second, 10 seconds, minute,
+#    10 minutes, hour, day, month. Kind of like an in-memory RRD.
+#    '''
+#    def __init__(self, levels=6, function='sum'):

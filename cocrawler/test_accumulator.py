@@ -2,8 +2,8 @@ from pytest import approx
 
 import accumulator
 
-def test_accumulator():
-    A = accumulator.Accumulator()
+def test_event_accumulator():
+    A = accumulator.EventAccumulator()
     assert A.read() == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     A.accumulate(1)
@@ -27,15 +27,15 @@ def test_accumulator():
     [A.accumulate(x) for x in (2.0,)*100]
     assert A.read() == [2.0, approx(1.99), approx(1.99), approx(1.99), approx(1.99), approx(1.99)]
 
-    A = accumulator.Accumulator()
+    A = accumulator.EventAccumulator()
     [A.accumulate(x) for x in range(0, 110)]
     assert A.read() == [104.5, 49.5, 49.5, 49.5, 49.5, 49.5]
 
-    A = accumulator.Accumulator()
+    A = accumulator.EventAccumulator()
     [A.accumulate(x) for x in range(0, 1100)]
     assert A.read() == [1094.5, 1049.5, 499.5, 499.5, 499.5, 499.5]
 
-    A = accumulator.Accumulator(function='max')
+    A = accumulator.EventAccumulator(function='max')
     A.accumulate(1.0)
     assert A.read() == [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     A.accumulate(2.0)
