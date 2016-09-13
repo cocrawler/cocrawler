@@ -4,7 +4,7 @@ python:
   - "3.5.1"
   - "3.5.2"
   - "3.5"
-  - "3.6-dev"
+#  - "3.6-dev" # also broken for a while
 #  - "nightly" # broken for several nights in a row
 
 install: "pip install -r requirements.txt"
