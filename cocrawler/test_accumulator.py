@@ -49,5 +49,10 @@ def test_event_accumulator():
     [A.accumulate(1.0) for x in range(0, 20)]
     assert A.read() == [1.0, 2.0, 2.0, 2.0, 2.0, 2.0]
 
-
-
+def test_event_accumulator_debug(capsys):
+    A = accumulator.EventAccumulator(function='max')
+    A.accumulate(1.0, debug=True)
+    out, err = capsys.readouterr()
+    assert len(out) > 85 # not a very good test!
+    assert len(out) < 200 # not a very good test!
+    assert err == ''

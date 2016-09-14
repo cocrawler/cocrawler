@@ -26,8 +26,9 @@ class EventAccumulator:
         for l in range(0, self.levels):
             self.data.append([])
 
-    def accumulate(self, value):
+    def accumulate(self, value, debug=False):
         value = float(value)
+        orig = value
         for l in range(0, self.levels):
             self.data[l].append(value)
             if len(self.data[l]) == 1:
@@ -37,7 +38,8 @@ class EventAccumulator:
                 self.data[l] = [ value ]
             else:
                 break
-        #self.debug()
+        if debug:
+            self.debug(orig)
 
     def debug(self, orig):
         print('Debug: data is now')
