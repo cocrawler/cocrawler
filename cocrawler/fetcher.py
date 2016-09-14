@@ -79,7 +79,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     pagetimeout = float(config['Crawl']['PageTimeout'])
     retrytimeout = float(config['Crawl']['RetryTimeout'])
 
-    ret = namedtuple('fetcher_return', ['response', 'body_bytes', 'header_bytes', 'apparent_elapsed', 'last_exception'])
+    ret = namedtuple('fetcher_return', ['response', 'body_bytes', 'header_bytes',
+                                        't_first_byte', 't_last_byte', 'last_exception'])
 
     if proxy: # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
@@ -107,6 +108,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                     response = await session.get(mock_url or url,
                                                  allow_redirects=allow_redirects,
                                                  headers=headers)
+            t_first_byte = '{:.3f}'.format(time.time() - t0)
 
             # XXX special sleepy 503 handling here - soft fail
             # XXX json_log tries
@@ -121,10 +123,9 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
 
             # fully receive headers and body.
             # XXX if we want to limit bytecount, do it here?
-            # XXX needs a try/except block because it can throw a subset of the exceptions listed at top
             body_bytes = await response.read()
             header_bytes = response.raw_headers
-            apparent_elapsed = '{:.3f}'.format(time.time() - t0)
+            t_last_byte = '{:.3f}'.format(time.time() - t0)
 
             # break only if we succeeded. 5xx = fail
             if response.status < 500:
@@ -185,7 +186,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     else:
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
-            return ret(None, None, None, None, last_exception)
+            return ret(None, None, None, None, None, last_exception)
         # fall through for the case of response.status >= 500
 
     if stats_me:
@@ -198,7 +199,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     # did we receive cookies? was the security bit set?
     # record everything needed for warc. all headers, for example.
 
-    return ret(response, body_bytes, header_bytes, apparent_elapsed, None)
+    return ret(response, body_bytes, header_bytes, t_first_byte, t_last_byte, None)
 
 def upgrade_scheme(url):
     '''

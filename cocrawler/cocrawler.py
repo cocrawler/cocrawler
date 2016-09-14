@@ -231,7 +231,7 @@ class Crawler:
                                 headers=headers, proxy=proxy, mock_url=mock_url)
 
         json_log = {'type':'get', 'url':url, 'priority':priority,
-                    'apparent_elapsed':f.apparent_elapsed, 'time':time.time()}
+                    't_first_byte':f.t_first_byte, 'time':time.time()}
         if tries:
             json_log['retry'] = tries
 

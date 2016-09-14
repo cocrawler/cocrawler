@@ -131,7 +131,7 @@ class Robots:
         # if we got a 404, return an empty robots.txt
         if f.response.status == 404:
             self.jsonlog(schemenetloc, {'error':'got a 404, treating as empty robots',
-                                        'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
+                                        'action':'fetch', 't_first_byte':f.t_first_byte})
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
             await f.response.release()
@@ -141,16 +141,16 @@ class Robots:
         if str(f.response.status).startswith('4') or str(f.response.status).startswith('5'):
             self.jsonlog(schemenetloc,
                          {'error':'got an unexpected status of {}, treating as deny'.format(f.response.status),
-                          'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
+                          'action':'fetch', 't_first_byte':f.t_first_byte})
             self.in_progress.discard(schemenetloc)
             await f.response.release()
             return None
 
-        if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.apparent_elapsed):
+        if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte):
             # policy: treat as empty
             self.jsonlog(schemenetloc,
                          {'warning':'saw an implausible robots.txt, treating as empty',
-                          'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
+                          'action':'fetch', 't_first_byte':f.t_first_byte})
             self.datalayer.cache_robots(schemenetloc, '')
             self.in_progress.discard(schemenetloc)
             await f.response.release()
@@ -166,7 +166,7 @@ class Robots:
             # something unusual went wrong. treat like a fetch error.
             # (could be a broken tcp session etc.) XXX use list from cocrawler.py
             self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + repr(e),
-                                        'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
+                                        'action':'fetch', 't_first_byte':f.t_first_byte})
             self.in_progress.discard(schemenetloc)
             await f.response.release()
             return None
@@ -174,17 +174,17 @@ class Robots:
         await f.response.release()
         self.datalayer.cache_robots(schemenetloc, body)
         self.in_progress.discard(schemenetloc)
-        self.jsonlog(schemenetloc, {'action':'fetch', 'apparent_elapsed':f.apparent_elapsed})
+        self.jsonlog(schemenetloc, {'action':'fetch', 't_first_byte':f.t_first_byte})
         return body
 
-    def is_plausible_robots(self, schemenetloc, body_bytes, apparent_elapsed):
+    def is_plausible_robots(self, schemenetloc, body_bytes, t_first_byte):
         '''
         Did you know that some sites have a robots.txt that's a 100 megabyte video file?
         '''
         # Not OK: html or xml or something else bad
         if body_bytes.startswith(b'<'): # pragma: no cover
             self.jsonlog(schemenetloc, {'error':'robots appears to be html or xml, ignoring',
-                                        'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                                        'action':'fetch', 't_first_byte':t_first_byte})
             return False
 
         # OK: BOM, it signals a text file ... utf8 or utf16 be/le
@@ -199,13 +199,13 @@ class Robots:
         if not (mime_type.startswith('text') or mime_type == 'application/x-empty') :
             self.jsonlog(schemenetloc, {'error':
                                         'robots has unexpected mimetype {}, ignoring'.format(mime_type),
-                                        'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                                        'action':'fetch', 't_first_byte':t_first_byte})
             return False
 
         # not OK: too big
         if len(body_bytes) > 1000000: # pragma: no cover
             self.jsonlog(schemenetloc, {'error':'robots is too big, ignoring',
-                                        'action':'fetch', 'apparent_elapsed':apparent_elapsed})
+                                        'action':'fetch', 't_first_byte':t_first_byte})
             return False
 
         return True
