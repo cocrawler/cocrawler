@@ -108,24 +108,24 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                     response = await session.get(mock_url or url,
                                                  allow_redirects=allow_redirects,
                                                  headers=headers)
-            t_first_byte = '{:.3f}'.format(time.time() - t0)
+                t_first_byte = '{:.3f}'.format(time.time() - t0)
 
-            # XXX special sleepy 503 handling here - soft fail
-            # XXX json_log tries
-            # XXX serverdisconnected is a soft fail
-            # XXX aiodns.error.DNSError
-            # XXX equivalent to requests.exceptions.SSLerror ??
-            #   reddit.com is an example of a CDN-related SSL fail
-            # XXX when we retry, if local_addr was a list, switch to a different IP
-            #   (change out the TCPConnector)
-            # XXX what does a proxy error look like?
-            # XXX record proxy error
+                # XXX special sleepy 503 handling here - soft fail
+                # XXX json_log tries
+                # XXX serverdisconnected is a soft fail
+                # XXX aiodns.error.DNSError
+                # XXX equivalent to requests.exceptions.SSLerror ??
+                #   reddit.com is an example of a CDN-related SSL fail
+                # XXX when we retry, if local_addr was a list, switch to a different IP
+                #   (change out the TCPConnector)
+                # XXX what does a proxy error look like?
+                # XXX record proxy error
 
-            # fully receive headers and body.
-            # XXX if we want to limit bytecount, do it here?
-            body_bytes = await response.read()
-            header_bytes = response.raw_headers
-            t_last_byte = '{:.3f}'.format(time.time() - t0)
+                # fully receive headers and body.
+                # XXX if we want to limit bytecount, do it here?
+                body_bytes = await response.read()
+                header_bytes = response.raw_headers
+                t_last_byte = '{:.3f}'.format(time.time() - t0)
 
             # break only if we succeeded. 5xx = fail
             if response.status < 500:
