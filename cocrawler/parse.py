@@ -16,7 +16,7 @@ def find_html_links(html, url=None):
     '''
     with stats.record_burn('find_html_links re', url=url):
         ret = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
-    return ret
+    return ret, set()
 
 def find_html_links_and_embeds(html, url=None):
     '''
@@ -47,4 +47,4 @@ def find_css_links(css, url=None):
     with stats.record_burn('find_css_links re', url=url):
         ret = set(re.findall(r'''\surl\(\s?['"]?([^\s'"<>()]+)''', css, re.I))
 
-    return ret
+    return ret, set()

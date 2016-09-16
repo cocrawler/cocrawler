@@ -313,7 +313,7 @@ class Crawler:
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds
                 # should have an option to run this in a separate process or fork,
                 #  so as to not cpu burn in the main process
-                urls = parse.find_html_links(body, url=url)
+                urls, _ = parse.find_html_links(body, url=url)
                 LOGGER.debug('parsing content of url %r returned %r links', url, len(urls))
                 json_log['found_links'] = len(urls)
                 stats.stats_max('max urls found on a page', len(urls))

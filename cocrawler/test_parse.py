@@ -46,8 +46,9 @@ href=foo2.htm></a>
 '''
 
 def test_html_parse():
-    links = parse.find_html_links(test_html)
+    links, embeds = parse.find_html_links(test_html)
     assert len(links) == 5
+    assert len(embeds) == 0
     assert 'foo3.html' in links # space?
     assert 'foo.gif' in links # space?
 
@@ -74,6 +75,7 @@ url( images/foo3.png )
 '''
 
 def test_css_parse():
-    links = parse.find_css_links(test_css)
+    links, embeds = parse.find_css_links(test_css)
     assert len(links) == 3
+    assert len(embeds) == 0
     assert 'images/foo3.png' in links # space?

@@ -13,7 +13,7 @@ import stats
 import parse
 
 def parse_all(name, string):
-    links1 = parse.find_html_links(string, url=name)
+    links1, embeds1 = parse.find_html_links(string, url=name)
     links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)
 
     all2 = links2.union(embeds2)
