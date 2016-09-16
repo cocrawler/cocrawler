@@ -14,6 +14,7 @@ from operator import itemgetter
 import random
 
 import asyncio
+from concurrent.futures import ProcessPoolExecutor
 import logging
 import aiohttp
 import aiohttp.resolver
@@ -41,6 +42,7 @@ class Crawler:
     def __init__(self, loop, config, load=None):
         self.config = config
         self.loop = loop
+        self.executor = ProcessPoolExecutor(2) # XXX config me
         self.stopping = 0
 
         self.robotname, self.ua = useragent.useragent(config, __version__)
@@ -194,6 +196,7 @@ class Crawler:
 
     def close(self):
         stats.report()
+        parse.report()
         stats.check(self.config)
         stats.coroutine_report()
         self.session.close()
@@ -313,7 +316,8 @@ class Crawler:
                 # PLUGIN post_crawl_200_find_urls -- links and/or embeds
                 # should have an option to run this in a separate process or fork,
                 #  so as to not cpu burn in the main process
-                urls, _ = parse.find_html_links(body, url=url)
+                #urls, _ = parse.find_html_links(body, url=url)
+                urls, _ = await parse.find_html_links_async(body, self.executor, self.loop, url=url)
                 LOGGER.debug('parsing content of url %r returned %r links', url, len(urls))
                 json_log['found_links'] = len(urls)
                 stats.stats_max('max urls found on a page', len(urls))
@@ -339,9 +343,14 @@ class Crawler:
         '''
         try:
             while True:
-                self.awaiting_work += 1
-                work = await self.q.get()
-                self.awaiting_work -= 1
+                try:
+                    work = self.q.get_nowait()
+                except asyncio.queues.QueueEmpty:
+                    # this is racy with the test for all workers awaiting.
+                    # putting it here makes sure the race is rarely run.
+                    self.awaiting_work += 1
+                    work = await self.q.get()
+                    self.awaiting_work -= 1
                 await self.fetch_and_process(work)
                 self.q.task_done()
 
@@ -453,8 +462,11 @@ class Crawler:
                 break
 
             print('checking to see if awaiting {} equals workers {}'.format(self.awaiting_work, len(workers)))
-            if self.awaiting_work == len(workers):
-                LOGGER.warning('all workers are awaiting work; finishing up.')
+            if self.awaiting_work == len(workers) and self.q.qsize() == 0:
+                # this is a little racy with how awaiting work is set and the queue is read
+                # while we're in this join we aren't looking for STOPCRAWLER etc
+                LOGGER.warning('all workers appear idle, executing join')
+                await self.q.join()
                 break
 
             stats.coroutine_report()

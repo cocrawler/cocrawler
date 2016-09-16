@@ -23,7 +23,7 @@ UserAgent:
 
 Testing:
   StatsEQ:
+    fetch URLs: 0
     fetch http code=200: 0
-    URLs fetched: 0
     max urls found on a page: 0
     robots denied: 2

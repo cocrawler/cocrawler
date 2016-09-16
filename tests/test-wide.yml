@@ -27,10 +27,10 @@ UserAgent:
 Testing:
   TestHostmapAll: 127.0.0.1:8080
   StatsEQ:
+    fetch URLs: 17
     fetch http code=200: 11
     fetch http code=303: 1
     fetch http code=503: 5
     max urls found on a page: 3
     rejected by seen_urls: 2
     robots denied: 1
-    URLs fetched: 17

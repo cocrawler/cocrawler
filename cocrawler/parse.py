@@ -4,15 +4,51 @@ Parse links in html and css pages.
 XXX also need a gumbocy version
 '''
 
+import logging
+import asyncio
 import re
+import functools
+import time
 
 import stats
+
+LOGGER = logging.getLogger(__name__)
+
+async def find_html_links_async(html, executor, loop, url=None):
+    stats.stats_sum('parser html bytes', len(html))
+
+    fhl = functools.partial(find_html_links, html, url=url)
+    wrap = functools.partial(stats_cpu_wrap, fhl, 'parser cpu time')
+
+    f = asyncio.ensure_future(loop.run_in_executor(executor, wrap))
+    with stats.coroutine_state('find_html_links asyncer'):
+        l, e, s = await f
+
+    for key in s.get('stats', {}):
+        stats.stats_sum(key, s['stats'][key])
+
+    return l, e
+
+def stats_cpu_wrap(partial, name):
+    c0 = time.clock()
+    ret = list(partial())
+    ret.append({'stats': {name: time.clock() - c0}})
+    return ret 
+
+def report():
+    b = stats.stat_value('parser html bytes')
+    c = stats.stat_value('parser cpu time')
+    LOGGER.info('Parser thread report:')
+    if c is not None and c > 0:
+        LOGGER.info('  Parser parsed {:.1f} MB/cpu-second'.format(b / c / 1000000))
+
+# ----------------------------------------------------------------------
 
 def find_html_links(html, url=None):
     '''
     Find the outgoing links and embeds in html
 
-    On a 3.4ghz x86 core, this takes 20 milliseconds per megabyte
+    On a 3.4ghz x86 core, this runs at 50 megabytes/sec (20ms per MB)
     '''
     with stats.record_burn('find_html_links re', url=url):
         ret = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))

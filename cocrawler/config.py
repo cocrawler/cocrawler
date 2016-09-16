@@ -62,7 +62,7 @@ Testing:
 #  TestHostmapAll: test.website: localhost:8080
 #  StatsEQ:
 #    fetch http code=200: 1000
-#    URLs fetched: 1000
+#    fetch URLs: 1000
 #    max urls found on a page: 3
 
 '''

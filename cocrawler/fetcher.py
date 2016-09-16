@@ -95,7 +95,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     iplist = []
 
     while subtries < maxsubtries:
-
+        subtries += 1
         try:
             t0 = time.time()
             last_exception = None
@@ -105,6 +105,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
 
             with stats.coroutine_state('fetcher fetching'):
                 with aiohttp.Timeout(pagetimeout):
+                    response = None # is this needed?
                     response = await session.get(mock_url or url,
                                                  allow_redirects=allow_redirects,
                                                  headers=headers)
@@ -123,66 +124,38 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
 
                     # fully receive headers and body.
                     # XXX if we want to limit bytecount, do it here?
-                    body_bytes = await response.read()
-                    header_bytes = response.raw_headers
+                    body_bytes = await response.read() # this does a release if an exception is not thrown
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
+                    header_bytes = response.raw_headers
 
-            # break only if we succeeded. 5xx = fail
+            # break only if we succeeded. 5xx = retry, exception = retry
             if response.status < 500:
                 break
-            print('retrying url={} code={}'.format(url, response.status))
 
-#        ClientError
-#            ClientConnectionError -- socket-related stuff
-#                ClientOSError(ClientConnectionError, builtins.OSError) -- errno is set
-#                ClientTimeoutError(ClientConnectionError, concurrent.futures._base.TimeoutError)
-#                FingerprintMismatch -- SSL-related
-#                ProxyConnectionError -- opening connection to proxy
-#            ClientHttpProcessingError
-#                ClientRequestError -- connection error during sending request
-#                ClientResponseError -- connection error during reading response
-#        DisconnectedError
-#            ClientDisconnectedError
-#                WSClientDisconnectedError -- deprecated
-#            ServerDisconnectedError
-#        HttpProcessingError
-#            BadHttpMessage -- 400
-#                BadStatusLine "200 OK"
-#                HttpBadRequest -- 400
-#                InvalidHeader
-#                LineTooLong
-#            HttpMethodNotAllowed -- 405
-#            HttpProxyError -- anything other than success starting to talk to the proxy
-#            WSServerHandshakeError -- websocket-related
-
-            # actually seen:
-            #  aiodns.error.DNSError - answer had no data
-            #  asyncio.TimeoutError
-            #  ClientResponseError - about.com robots {should be redir to www}, duowan.com robots {should be redir and then 404}
-            #  ClientOSError - cntv.cn/robots.txt, errno=113 "No route to host"
+            print('will retry a {} for {}'.format(response.status, url))
 
         except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
                 aiodns.error.DNSError, asyncio.TimeoutError) as e:
             last_exception = repr(e)
-            LOGGER.debug('we sub-failed once, url is %s, exception is %s',
-                         mock_url or url, last_exception)
+            LOGGER.debug('we sub-failed once, url is %s, exception is %s', url, last_exception)
+            LOGGER.debug('elapsed is %.3f', time.time() - t0) # XXX
+            if response is not None:
+                response.release()
         except Exception as e:
             last_exception = repr(e)
             print('UNKNOWN EXCEPTION SEEN in the fetcher')
             traceback.print_exc()
             LOGGER.debug('we sub-failed once WITH UNKNOWN EXCEPTION, url is %s, exception is %s',
-                         mock_url or url, last_exception)
-
-        if response:
-            # if the exception was thrown during reading body_bytes, there will be a response object
-            await response.release()
+                         url, last_exception)
+            if response is not None:
+                response.release()
 
         # treat all 5xx somewhat similar to a 503: slow down and retry
-        # XXX record 5xx so that everyone else slows down, too
+        # also doing this slow down for any exception
+        # XXX record 5xx so that everyone else slows down, too (politeness)
         with stats.coroutine_state('fetcher retry sleep'):
             await asyncio.sleep(retrytimeout)
 
-        subtries += 1
     else:
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
@@ -190,7 +163,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
         # fall through for the case of response.status >= 500
 
     if stats_me:
-        stats.stats_sum('URLs fetched', 1)
+        stats.stats_sum('fetch URLs', 1)
         stats.stats_sum('fetch http code=' + str(response.status), 1)
 
     # checks after fetch:

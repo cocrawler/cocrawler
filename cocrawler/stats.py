@@ -56,11 +56,9 @@ def record_burn(name, url=None):
 def coroutine_state(k):
     # the documentation for generators leaves something to be desired
     coroutine_states[k] = coroutine_states.get(k,0) + 1
-    LOGGER.debug('coroutine entering state %s', k)
     try:
         yield
     finally:
-        LOGGER.debug('coroutine exiting state %s', k)
         coroutine_states[k] -= 1
 
 def coroutine_report():
@@ -90,10 +88,12 @@ def report():
     elapsedc = time.clock() - start_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Elapsed cpu time is %.3f seconds', elapsedc)
-    if sums.get('URLs fetched', 0) and elapsed > 0:
-        LOGGER.info('  Crawl rate is %d pages/second', int(sums['URLs fetched']/elapsed))
-    if sums.get('URLs fetched', 0) and elapsedc > 0:
-        LOGGER.info('  Crawl rate is %d pages/cpu-second', int(sums['URLs fetched']/elapsedc))
+    if elapsed > 0:
+        LOGGER.info('  Main thread cpu {:.1f}%'.format(elapsedc/elapsed*100))
+    if sums.get('fetch URLs', 0) and elapsed > 0:
+        LOGGER.info('  Crawl rate is %d pages/second', int(sums['fetch URLs']/elapsed))
+    if sums.get('fetch URLs', 0) and elapsedc > 0:
+        LOGGER.info('  Crawl rate is %d pages/main-thread-cpu-second', int(sums['fetch URLs']/elapsedc))
 
 def stat_value(name):
     if name in sums:
