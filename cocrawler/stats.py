@@ -12,6 +12,7 @@ from sortedcontainers import SortedSet
 LOGGER = logging.getLogger(__name__)
 
 start_time = time.time()
+start_cpu = time.clock()
 maxes = {}
 sums = {}
 burners = {}
@@ -86,9 +87,13 @@ def report():
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
+    elapsedc = time.clock() - start_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
+    LOGGER.info('  Elapsed cpu time is %.3f seconds', elapsedc)
     if sums.get('URLs fetched', 0) and elapsed > 0:
         LOGGER.info('  Crawl rate is %d pages/second', int(sums['URLs fetched']/elapsed))
+    if sums.get('URLs fetched', 0) and elapsedc > 0:
+        LOGGER.info('  Crawl rate is %d pages/cpu-second', int(sums['URLs fetched']/elapsedc))
 
 def stat_value(name):
     if name in sums:
