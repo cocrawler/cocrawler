@@ -10,6 +10,11 @@ extract urls, detecting facets like facebook opengraph, checking urls against
 blocklists, etc. Then pass back everything in a big json thingie.
 
 TODO: propagate stats back to the parent?
+
+So far this service is way too slow -- maybe 7 MB/elapsed second. I
+don't think it helps that we have to go str -> bytes -> str, over the
+loopback, all that crap. Straight passing through memory (like
+multiprocessing does) has got to be faster.
 '''
 
 import os
