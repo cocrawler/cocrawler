@@ -12,9 +12,10 @@ pluginbase==0.4
 filemagic==1.6
 tldextract==2.0.1
 sortedcontainers==1.5.3
+psutil==4.3.1
 
 # used to maintain this file
-pur==3.0.7
+pur==4.0.0
 
 # used by the mock webserver
 bottle==0.12.9
