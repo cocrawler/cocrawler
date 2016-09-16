@@ -1,2 +1,2 @@
 [report]
-omit = test_*, run_parsers.py
+omit = test_*, run_parsers.py, parser-server.py, run_burners.py, burners.py, pdeathsig.py
