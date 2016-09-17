@@ -23,7 +23,6 @@ class Robots:
         self.session = session
         self.datalayer = datalayer
         self.config = config
-        self.rerp = robotexclusionrulesparser.RobotExclusionRulesParser()
         self.max_tries = self.config.get('Robots', {}).get('MaxTries')
         self.in_progress = set()
         self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
@@ -54,13 +53,7 @@ class Robots:
             stats.stats_sum('robots denied', 1)
             return False
 
-        if len(robots) == 0:
-            return True
-
-        with stats.record_burn('robots parse', url=schemenetloc):
-            self.rerp.parse(robots) # cache this parse?
-
-#        if self.rerp.sitemaps:
+#        if robots.sitemaps:
 #           ...
         if parts.path:
             pathplus = parts.path
@@ -72,7 +65,7 @@ class Robots:
             pathplus += '?' + parts.query
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
-            check = self.rerp.is_allowed(self.robotname, pathplus)
+            check = robots.is_allowed(self.robotname, pathplus)
 
         if check:
             stats.stats_sum('robots allowed', 1)
@@ -132,12 +125,15 @@ class Robots:
         if f.response.status == 404:
             self.jsonlog(schemenetloc, {'error':'got a 404, treating as empty robots',
                                         'action':'fetch', 't_first_byte':f.t_first_byte})
-            self.datalayer.cache_robots(schemenetloc, '')
+            parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
+            parsed.parse('')
+            self.datalayer.cache_robots(schemenetloc, parsed)
             self.in_progress.discard(schemenetloc)
             await f.response.release()
-            return ''
+            return parsed
 
         # if we got a non-200, some should be empty and some should be None (XXX Policy)
+        # this implements only None (deny)
         if str(f.response.status).startswith('4') or str(f.response.status).startswith('5'):
             self.jsonlog(schemenetloc,
                          {'error':'got an unexpected status of {}, treating as deny'.format(f.response.status),
@@ -151,10 +147,12 @@ class Robots:
             self.jsonlog(schemenetloc,
                          {'warning':'saw an implausible robots.txt, treating as empty',
                           'action':'fetch', 't_first_byte':f.t_first_byte})
-            self.datalayer.cache_robots(schemenetloc, '')
+            parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
+            parsed.parse('')
+            self.datalayer.cache_robots(schemenetloc, parsed)
             self.in_progress.discard(schemenetloc)
             await f.response.release()
-            return ''
+            return parsed
 
         # one last thing... go from bytes to a string, despite bogus utf8
         try:
@@ -171,11 +169,13 @@ class Robots:
             await f.response.release()
             return None
 
-        await f.response.release()
-        self.datalayer.cache_robots(schemenetloc, body)
+        with stats.record_burn('robots parse', url=schemenetloc):
+            parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
+            parsed.parse(body)
+        self.datalayer.cache_robots(schemenetloc, parsed)
         self.in_progress.discard(schemenetloc)
         self.jsonlog(schemenetloc, {'action':'fetch', 't_first_byte':f.t_first_byte})
-        return body
+        return parsed
 
     def is_plausible_robots(self, schemenetloc, body_bytes, t_first_byte):
         '''

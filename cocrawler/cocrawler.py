@@ -219,7 +219,9 @@ class Crawler:
         parts = urllib.parse.urlparse(url)
         headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, parts, self.config)
 
-        if not await self.robots.check(url, parts, headers=headers, proxy=proxy, mock_robots=mock_robots):
+        with stats.coroutine_state('fetching/checking robots'):
+            r = await self.robots.check(url, parts, headers=headers, proxy=proxy, mock_robots=mock_robots)
+        if not r:
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
             # XXX treat 'no robots data' as a soft failure?
             # XXX log more particular robots fail reason here

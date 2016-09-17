@@ -54,8 +54,8 @@ class Datalayer:
     # so it may need replacing if someone wants to do a survey crawl
     # XXX may need to become async so other implemtations can do an outcall?
 
-    def cache_robots(self, schemenetloc, contents):
-        self.robots[schemenetloc] = contents
+    def cache_robots(self, schemenetloc, parsed):
+        self.robots[schemenetloc] = parsed
 
     def read_robots_cache(self, schemenetloc):
         return self.robots[schemenetloc]
