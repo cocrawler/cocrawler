@@ -4,7 +4,7 @@
 set -e
 
 # start a webserver
-python ./mock-webserver.py > /dev/null 2>&1 &
+(python -u ./mock-webserver.py 2>&1 | grep -v '" 200 ') &
 # give it a chance to bind
 sleep 1
 
