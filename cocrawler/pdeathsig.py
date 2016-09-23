@@ -4,7 +4,7 @@ to install it. This is a minimal workaround.
 '''
 
 import sys
-import ctypes
+import ctypes.util
 
 libc = ctypes.CDLL(ctypes.util.find_library('c'))
 PR_SET_DEATHSIG=1

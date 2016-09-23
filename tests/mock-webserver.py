@@ -8,6 +8,10 @@ from bottle import route, run, request, abort, redirect
 import os
 import random
 import sys
+import signal
+
+#sys.path.insert(-1, os.path.normpath(os.path.join(__file__, "../../cocrawler/")))
+#import pdeathsig
 
 def generate_robots(host):
     if host.startswith('robotsdenyall'):
@@ -119,6 +123,9 @@ def code(code):
 def trap(name):
     host = request.get_header('Host')
     return generate_trap(name, host)
+
+# not useful, because of the & in test.sh
+#pdeathsig.set_pdeathsig(signal.SIGTERM)
 
 port = os.getenv('PORT') or 8080
 run(host='localhost', port=port)
