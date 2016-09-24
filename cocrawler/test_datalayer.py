@@ -46,4 +46,3 @@ def test_summarize(capsys):
 
     assert len(err) == 0
     assert out.startswith('2 seen_urls')
-

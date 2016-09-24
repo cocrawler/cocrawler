@@ -95,7 +95,7 @@ def config(configfile, configlist, confighome=True):
 
     config_from_file = {}
     if configfile:
-        LOGGER.info('loading {}'.format(configfile))
+        LOGGER.info('loading %s', configfile)
         try:
             with open(configfile, 'r') as c:
                 config_from_file = yaml.safe_load(c)

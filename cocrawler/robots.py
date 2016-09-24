@@ -7,10 +7,10 @@ import asyncio
 import time
 import json
 import logging
+import urllib.parse
 
 import robotexclusionrulesparser
 import magic
-import urllib.parse
 
 import stats
 import fetcher
@@ -45,7 +45,8 @@ class Robots:
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
             # extra semantics and policy inside fetch_robots: 404 returns '', etc. also inserts into cache.
-            robots = await self.fetch_robots(schemenetloc, mock_robots, mock_robots_parts, headers=headers, proxy=proxy)
+            robots = await self.fetch_robots(schemenetloc, mock_robots, mock_robots_parts,
+                                             headers=headers, proxy=proxy)
 
         if robots is None:
             self.jsonlog(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
@@ -113,8 +114,8 @@ class Robots:
 
         #XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
         f = await fetcher.fetch(url, parts, self.session, self.config,
-                                headers=headers, proxy=proxy, mock_url=mock_url, allow_redirects=True, stats_me=False)
-
+                                headers=headers, proxy=proxy, mock_url=mock_url,
+                                allow_redirects=True, stats_me=False)
         if f.last_exception:
             self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + f.last_exception,
                                         'action':'fetch'})
@@ -196,7 +197,7 @@ class Robots:
 
         # OK: file magic mimetype is 'text' or similar
         mime_type = self.magic.id_buffer(body_bytes)
-        if not (mime_type.startswith('text') or mime_type == 'application/x-empty') :
+        if not (mime_type.startswith('text') or mime_type == 'application/x-empty'):
             self.jsonlog(schemenetloc, {'error':
                                         'robots has unexpected mimetype {}, ignoring'.format(mime_type),
                                         'action':'fetch', 't_first_byte':t_first_byte})

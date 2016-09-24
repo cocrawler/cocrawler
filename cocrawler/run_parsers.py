@@ -13,7 +13,7 @@ import stats
 import parse
 
 def parse_all(name, string):
-    links1, embeds1 = parse.find_html_links(string, url=name)
+    links1, _ = parse.find_html_links(string, url=name)
     links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)
 
     all2 = links2.union(embeds2)
@@ -31,7 +31,6 @@ for d in sys.argv[1:]:
         for name in files:
             if name.endswith('.html') or name.endswith('.htm'):
                 expanded = os.path.join(root, name)
-                #print('{}:'.format(expanded))
                 with open(expanded, 'r', errors='ignore') as f:
                     parse_all(expanded, f.read())
 

@@ -23,7 +23,7 @@ class EventAccumulator:
             raise ValueError('Invalid function name, valid ones are: ' + ''.join(functions.keys()))
 
         self.data = []
-        for l in range(0, self.levels):
+        for _ in range(0, self.levels):
             self.data.append([])
 
     def accumulate(self, value, debug=False):
@@ -35,7 +35,7 @@ class EventAccumulator:
                 self.data[l].append(value) # only at startup
             if len(self.data[l]) > 10:
                 value = self.function(self.data[l][1:])
-                self.data[l] = [ value ]
+                self.data[l] = [value]
             else:
                 break
         if debug:

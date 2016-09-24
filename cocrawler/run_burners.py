@@ -10,11 +10,9 @@ import asyncio
 import sys
 import os
 import logging
-import json
 import time
 
 import stats
-import parse
 import burners
 
 async def parse_all(name, string, b):
@@ -30,7 +28,8 @@ async def parse_all(name, string, b):
     ret2 = await b.post('find_html_links_and_embeds', string)
     elapsed = time.time() - t0
     if elapsed > 0:
-        print('find_html_links_and_embeds is {:.3f} MB/s elapsed'.format(len(string) / 1024. / 1024. / elapsed))
+        print('find_html_links_and_embeds is {:.3f} MB/s elapsed'.format(
+            len(string) / 1024. / 1024. / elapsed))
 
     links1 = set(ret1.get('links', []))
     links2, embeds2 = set(ret2.get('links', [])), set(ret2.get('embeds', []))
@@ -79,7 +78,7 @@ for d in sys.argv[1:]:
     else:
         if os.path.isfile(d):
             q.put_nowait(d)
-            
+
 loop.run_until_complete(all_work())
 
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]

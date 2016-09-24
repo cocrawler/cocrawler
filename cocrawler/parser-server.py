@@ -10,8 +10,9 @@ there's an odd way that people can exploit us.
 import argparse
 import sys
 
-from gevent import monkey; monkey.patch_all()
-from bottle import route, run, BaseRequest, request, post
+from gevent import monkey
+monkey.patch_all()
+from bottle import route, run, BaseRequest, request, post, abort
 BaseRequest.MEMFILE_MAX = 1024 * 1024 * 1024
 
 import parse
@@ -30,7 +31,7 @@ def do_action(host, name, data):
     r1, r2 = actions[name](data.data)
     r1 = list(r1)
     r2 = list(r2)
-    return { 'verb': name, 'answer': {'links': r1, 'embeds': r2}}
+    return {'verb': name, 'answer': {'links': r1, 'embeds': r2}}
 
 # bottle stuff ------------------------------------------------------------
 

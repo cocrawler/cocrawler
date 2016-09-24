@@ -51,4 +51,3 @@ def test_cocrawler(capsys):
 
     assert err == ''
     assert len(out) >= 242 # not a very good test, but at least it is something
-

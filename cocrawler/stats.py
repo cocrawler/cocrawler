@@ -55,7 +55,7 @@ def record_burn(name, url=None):
 @contextmanager
 def coroutine_state(k):
     # the documentation for generators leaves something to be desired
-    coroutine_states[k] = coroutine_states.get(k,0) + 1
+    coroutine_states[k] = coroutine_states.get(k, 0) + 1
     try:
         yield
     finally:

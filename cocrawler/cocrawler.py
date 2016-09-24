@@ -138,11 +138,14 @@ class Crawler:
             print(url, file=self.rejectedaddurlfd)
 
     def add_url(self, priority, url, seed=False, seedredirs=None):
-        url, _ = urls.safe_url_canonicalization(url) # XXX eventually do something with the frag
+        url, _ = urls.safe_url_canonicalization(url)
+        # XXX eventually do something with the frag
 
         # XXX optionally generate additional urls plugin here
         # e.g. any amazon url with an AmazonID should add_url() the base product page
         # and a non-homepage should add the homepage
+        # and a homepage add should add soft404 detection
+        # and ...
 
         # XXX allow/deny plugin modules go here
         if priority > int(self.config['Crawl']['MaxDepth']):
@@ -303,7 +306,8 @@ class Crawler:
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
                 links, embeds = await parse.find_html_links_async(body, self.executor, self.loop, url=url)
-                LOGGER.debug('parsing content of url %r returned %d links, %d embeds', url, len(links), len(embeds))
+                LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
+                             url, len(links), len(embeds))
                 json_log['found_links'] = len(links) + len(embeds)
                 stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
@@ -410,7 +414,7 @@ class Crawler:
         urls_with_tries = 0
         priority_count = defaultdict(int)
         netlocs = defaultdict(int)
-        for k,v in self.ridealong.items():
+        for k, v in self.ridealong.items():
             if 'tries' in v:
                 urls_with_tries += 1
             priority_count[v['priority']] += 1
@@ -425,7 +429,7 @@ class Crawler:
                 print('  {}: {}'.format(p, priority_count[p]))
         print('Queue counts for top 10 netlocs')
         netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)[0:10]
-        for k,v in netloc_order:
+        for k, v in netloc_order:
             print('  {}: {}'.format(k, v))
 
     async def crawl(self):
