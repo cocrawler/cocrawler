@@ -29,6 +29,7 @@ import robots
 import parse
 import fetcher
 import useragent
+import urls
 
 LOGGER = logging.getLogger(__name__)
 
@@ -137,32 +138,13 @@ class Crawler:
             print(url, file=self.rejectedaddurlfd)
 
     def add_url(self, priority, url, seed=False, seedredirs=None):
-        # XXX canonical plugin here?
-        # XXX learnings from Django https://github.com/django/django/blob/master/django/utils/http.py#L287
-        #   urlparse screwup: reject startswith('///')...
-        #   ??? reject scheme without netloc http:///foo ??? at least test that urljoin() does the right thing
-        #   chrome: reject starting with control chars.
-        #   strip whitespace. what about interior not-url-encoded whitespace?
-        #  seems that Chrome is a lot more permissive than other browsers :/
-        url, _ = urllib.parse.urldefrag(url) # drop the frag
-        if '://' not in url: # will happen for seeds
-            if ':' in url:
-                return # things like mailto: ...
-            url = 'http://' + url
-        # https://en.wikipedia.org/wiki/URL_normalization -- good discussion
-        # drop trailing ?
-        # drop trailing #
-        # drop meaningless cgi args?
-        # uses HSTS to upgrade to https:
-        #  https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
-        # use HTTPSEverwhere? would have to have a fallback if https failed
+        url, _ = urls.safe_url_canonicalization(url)
 
         # XXX optionally generate additional urls plugin here
         # e.g. any amazon url with an AmazonID should add_url() the base product page
+        # and a non-homepage should add the homepage
 
         # XXX allow/deny plugin modules go here
-        # seen url - could also be "seen recently enough"
-
         if priority > int(self.config['Crawl']['MaxDepth']):
             stats.stats_sum('rejected by MaxDepth', 1)
             self.log_rejected_add_url(url)
