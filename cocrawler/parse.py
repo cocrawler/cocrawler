@@ -9,8 +9,10 @@ import asyncio
 import re
 import functools
 import time
+import urllib.parse
 
 import stats
+import urls
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,12 +48,21 @@ def report():
 
 def find_html_links(html, url=None):
     '''
-    Find the outgoing links and embeds in html
+    Find the outgoing links and embeds in html. If url passed in, urljoin to it.
 
     On a 3.4ghz x86 core, this runs at 50 megabytes/sec (20ms per MB)
     '''
-    with stats.record_burn('find_html_links re', url=url):
-        ret = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
+    with stats.record_burn('find_html_links re', url=url): # this with is currently a noop
+        links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
+
+    with stats.record_burn('find_html_links cleanjoin', url=url): # this with is currently a noop
+        ret = set()
+        for u in links:
+            u = urls.clean_webpage_links(u)
+            if url is not None:
+                u = urllib.parse.urljoin(url, u)
+            ret.add(u)
+
     return ret, set()
 
 def find_html_links_and_embeds(html, url=None):

@@ -138,7 +138,7 @@ class Crawler:
             print(url, file=self.rejectedaddurlfd)
 
     def add_url(self, priority, url, seed=False, seedredirs=None):
-        url, _ = urls.safe_url_canonicalization(url)
+        url, _ = urls.safe_url_canonicalization(url) # XXX eventually do something with the frag
 
         # XXX optionally generate additional urls plugin here
         # e.g. any amazon url with an AmazonID should add_url() the base product page
@@ -302,20 +302,19 @@ class Crawler:
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
-                # PLUGIN post_crawl_200_find_urls -- links and/or embeds
-                # should have an option to run this in a separate process or fork,
-                #  so as to not cpu burn in the main process
-                #urls, _ = parse.find_html_links(body, url=url)
-                urls, _ = await parse.find_html_links_async(body, self.executor, self.loop, url=url)
-                LOGGER.debug('parsing content of url %r returned %r links', url, len(urls))
-                json_log['found_links'] = len(urls)
-                stats.stats_max('max urls found on a page', len(urls))
+                links, embeds = await parse.find_html_links_async(body, self.executor, self.loop, url=url)
+                LOGGER.debug('parsing content of url %r returned %d links, %d embeds', url, len(links), len(embeds))
+                json_log['found_links'] = len(links) + len(embeds)
+                stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
                 new_links = 0
-                for u in urls:
-                    new_url = urllib.parse.urljoin(url, u)
-                    if self.add_url(priority + 1, new_url): # XXX if embed, priority - 1
+                for u in links:
+                    if self.add_url(priority + 1, u):
                         new_links += 1
+                for u in embeds:
+                    if self.add_url(priority - 1, u):
+                        new_links += 1
+
                 if new_links:
                     json_log['found_new_links'] = new_links
                 # XXX plugin for links and new links - post to Kafka, etc
