@@ -23,7 +23,6 @@ def generate_robots(host):
     if host.startswith('302'):
         # unfortunately, we can't use a fake hostname here.
         # XXX figure out how to get this constant out of here... header?
-        print('\n\nmock-webserver: issuing robots redir\n\n')
         redirect('http://127.0.0.1:8080/robots.txt.302')
     if host.startswith('pdfrobots'):
         return '%PDF-1.3\n'
@@ -63,7 +62,6 @@ trailer = '''
 def generate_ordinary(name, host):
     # send 302.foo/ordinary/0 to 302.foo/ordinary/1, which will not be a redirect
     if host.startswith('302') and name <= 0:
-        print('\n\nmock-webserver: issuing ordinary redir\n\n')
         redirect('/ordinary/{}'.format(name+1))
     if host.startswith('503'):
         abort(503, 'Slow down, you move too fast. You got to make the morning last.\n')

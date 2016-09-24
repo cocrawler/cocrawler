@@ -103,6 +103,7 @@ def stat_value(name):
 
 def check(config):
     seq = config.get('Testing', {}).get('StatsEQ', {})
+    sge = config.get('Testing', {}).get('StatsGE', {})
     global exitstatus
     if seq:
         for s in seq:
@@ -113,6 +114,15 @@ def check(config):
                 exitstatus = 1
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, seq[s])
+    if sge:
+        for s in sge:
+            if stat_value(s) < sge[s]:
+                if stat_value(s) is None and sge[s] == 0:
+                    continue
+                LOGGER.error('Stat %s of %s is not >= %s', s, stat_value(s), sge[s])
+                exitstatus = 1
+            else:
+                LOGGER.debug('Stat %s=%s is the expected value', s, sge[s])
 
 def save(f):
     pickle.dump('stats', f)
