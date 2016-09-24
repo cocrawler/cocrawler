@@ -1,9 +1,24 @@
 Short-term TODO list:
 
-hook up to AccumulateEvent for politeness
-do something with t_last_byte?
-compute cpu-boundedness? do we believe our own timers?
+hook up to AccumulateEvent for politeness - 5xx
+  do something real with t_{first,last}_byte? - slow replies as failures
+    alternately monitor simultaneous connections? slower => wider => hits limit
+    do need to learn that amazon replies slowly but can go super-wide
+  compute cpu-boundedness?
+    do we believe our own timers?
+    did we screw up trying to farm out burn to other processes?
 
+Multiprocessing for burners like html parsing.
+  Cheapest regex is 20ms/mb -- or 50kbytes in 1ms, or 50 MB/s
+  published example: 2 billion pages in 3 months is 256qps = 200 megabits, pagesize=100kb
+  I'd like to crawl @ 1 gigbit on a small number of servers, 1 core driving the bus each.
+  4ms max budget, so I'd like to be able to farm out parses that take 1 millsecond.
+  does 3.6 have an improved multiprocessing module? no.
+WIP -- looks like this is way slow, 7MB/s and 50% cpu usage for large transactions
+
+url-add injects homepage of domain and soft404 detection - test on top 1k sites
+ ride-along post-fetch soft404 processing
+ build database of soft404 phrases 
 
 AccumulateTime for qps graphs
 
@@ -31,14 +46,14 @@ wire in warc code -- pip warc is BSD
 
 status REST calls
  hook up to dashboard like https://github.com/christabor/flask_jsondash
-qps of 200 text/html + last 10
-qps of dns lookups + last 10
-qps of raw robots.txt lookups + last 10
-coroutine counts
-copy of configuration files
-slow burners
-slow domains
-dump more of this at exit or save
+ qps of 200 text/html + last 10
+ qps of dns lookups + last 10
+ qps of raw robots.txt lookups + last 10
+ coroutine counts
+ copy of configuration files
+ slow burners
+ slow domains
+ dump more of this at exit or save
 
 find a html torture test? hm not so googlable
 
