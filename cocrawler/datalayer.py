@@ -44,10 +44,11 @@ class Datalayer:
     def add_seen_url(self, url):
         self.seen_urls.add(url)
 
-    # optionally stick a bloom filter in front of this
-    # user specifies size at start
-    # monitor false positive rate
     def seen_url(self, url):
+        # do this with a honking bloom filter?
+        # surt the url?
+        # notice when an url without cgi args is popular, maybe probe to
+        # see if we can guess tracking args vs real ones.
         return url in self.seen_urls
 
     # collections.TTLCache is built on collections.OrderedDict and not sortedcontainers :-(
