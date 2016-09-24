@@ -101,7 +101,10 @@ def stat_value(name):
     if name in maxes:
         return maxes[name]
 
-def check(config):
+def check(config, no_test=False):
+    if no_test:
+        return
+
     seq = config.get('Testing', {}).get('StatsEQ', {})
     sge = config.get('Testing', {}).get('StatsGE', {})
     global exitstatus

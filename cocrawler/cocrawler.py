@@ -39,11 +39,12 @@ def is_redirect(response):
     return response.status in (300, 301, 302, 303, 307)
 
 class Crawler:
-    def __init__(self, loop, config, load=None):
+    def __init__(self, loop, config, load=None, no_test=False):
         self.config = config
         self.loop = loop
         self.executor = ProcessPoolExecutor(2) # XXX config me
         self.stopping = 0
+        self.no_test = no_test
 
         self.robotname, self.ua = useragent.useragent(config, __version__)
 
@@ -148,9 +149,12 @@ class Crawler:
             if ':' in url:
                 return # things like mailto: ...
             url = 'http://' + url
+        # https://en.wikipedia.org/wiki/URL_normalization -- good discussion
+        # drop trailing ?
+        # drop trailing #
         # drop meaningless cgi args?
         # uses HSTS to upgrade to https:
-        #https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
+        #  https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
         # use HTTPSEverwhere? would have to have a fallback if https failed
 
         # XXX optionally generate additional urls plugin here
@@ -197,7 +201,7 @@ class Crawler:
     def close(self):
         stats.report()
         parse.report()
-        stats.check(self.config)
+        stats.check(self.config, no_test=self.no_test)
         stats.coroutine_report()
         self.session.close()
         if self.jsonlogfd:
@@ -270,6 +274,7 @@ class Crawler:
 
             # XXX make sure it didn't redirect to itself
             # (although some hosts redir to themselves while setting cookies)
+            # XXX another case: directories: example.com/dir -> exmaple.com/dir/
             # XXX need surt-surt comparison and seen_url check
 
             json_log['redirect'] = next_url

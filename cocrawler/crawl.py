@@ -38,11 +38,11 @@ def main():
 
     conf = config.config(args.configfile, args.config, confighome=not args.no_confighome)
 
-    if args.no_test and conf['Testing'].get('StatsEQ') is not None:
-        del conf['Testing']['StatsEQ']
     kwargs = {}
     if args.load:
         kwargs['load'] = args.load
+    if args.no_test:
+        kwargs['no_test'] = True
 
     loop = asyncio.get_event_loop()
     crawler = cocrawler.Crawler(loop, conf, **kwargs)
