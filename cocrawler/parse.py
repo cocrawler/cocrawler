@@ -61,6 +61,7 @@ def find_html_links(html, url=None):
             u = urls.clean_webpage_links(u)
             if url is not None:
                 u = urllib.parse.urljoin(url, u)
+            u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
             ret.add(u)
 
     return ret, set()

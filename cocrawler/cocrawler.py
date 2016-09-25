@@ -138,8 +138,10 @@ class Crawler:
             print(url, file=self.rejectedaddurlfd)
 
     def add_url(self, priority, url, seed=False, seedredirs=None):
-        url, _ = urls.safe_url_canonicalization(url)
         # XXX eventually do something with the frag
+
+        if seed:
+            url = urls.special_seed_handling(url)
 
         # XXX optionally generate additional urls plugin here
         # e.g. any amazon url with an AmazonID should add_url() the base product page
@@ -248,18 +250,20 @@ class Crawler:
 
         json_log['status'] = f.response.status
 
-        # PLUGIN: post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
-        # for example, add to a WARC, or post to a Kafka queue
-
         if is_redirect(f.response):
             headers = f.response.headers
             location = f.response.headers.get('location')
+            location = urls.clean_webpage_links(location)
             next_url = urllib.parse.urljoin(url, location)
+            next_url_canon = urls.safe_url_canonicalization(next_url)
             priority += 1
 
             # XXX make sure it didn't redirect to itself
-            # (although some hosts redir to themselves while setting cookies)
-            # XXX another case: directories: example.com/dir -> exmaple.com/dir/
+            #  e.g. only a capitalization change in hostname
+            #  e.g. only a capitalization change in the path - could be real, should allow even if seen before
+            #  e.g. only adding/removing www. - mark in last-k data structure for pre-processing
+            # some hosts redir to exactly themselves while setting cookies, e.g. nyt
+            # another case: directories: example.com/dir -> exmaple.com/dir/ and vice versa
             # XXX need surt-surt comparison and seen_url check
 
             json_log['redirect'] = next_url
@@ -279,7 +283,7 @@ class Crawler:
                     priority -= 1 # XXX make a policy option
                     json_log['seedredirs'] = work['seedredirs']
 
-            if self.add_url(priority+1, next_url, **kwargs):
+            if self.add_url(priority+1, next_url, **kwargs): # XXX add more policy regarding priorities
                 json_log['found_new_links'] = 1
             # fall through to release and json logging
 
@@ -295,6 +299,8 @@ class Crawler:
             json_log['content_type'] = content_type
             stats.stats_sum('content-type=' + content_type, 1)
             # PLUGIN: post_crawl_200 by content type
+            # post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
+            # for example, add to a WARC, or post to a Kafka queue
             if content_type == 'text/html':
                 try:
                     with stats.record_burn('response.text() decode', url=url):
