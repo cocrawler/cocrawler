@@ -48,6 +48,9 @@ def special_seed_handling(url):
         url = urllib.parse.urlunparse(parts)
     return url
 
+valid_hex = set('%02x' % i for i in range(256))
+valid_hex.update(set('%02X' % i for i in range(256)))
+
 def safe_url_canonicalization(url):
     '''
     Do everything to the url which shouldn't possibly hurt its semantics
@@ -59,7 +62,7 @@ def safe_url_canonicalization(url):
     pieces = url.split('%')
     url = pieces.pop(0)
     for p in pieces:
-        if len(p) > 1:
+        if len(p) > 1 and p[:2] in valid_hex:
             p = p[:2].upper() + p[2:]
         url += '%' + p
 
@@ -71,7 +74,7 @@ def safe_url_canonicalization(url):
 
     # TODO:
     #  decode unnecessary quotes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E
-    #  encode necessary quotees -- need to take the str to bytes first -- different list for each part
+    #  encode necessary quotes -- need to take the str to bytes first -- different list for each part
 
     if fragment is not '':
         fragment = '#' + fragment

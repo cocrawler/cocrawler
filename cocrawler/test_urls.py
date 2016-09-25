@@ -45,3 +45,4 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com#!frag') == ('http://example.com', '#!frag')
     assert urls.safe_url_canonicalization('http://example.com/#frag') == ('http://example.com/', '#frag')
     assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == ('http://example.com/?foo=bar', '#frag')
+    assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
