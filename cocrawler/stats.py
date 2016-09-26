@@ -38,7 +38,7 @@ def record_cpu_burn(name, start, url=None):
     # are we exceptional? 10x current average
     if elapsed > burn['time']/burn['count'] * 10:
         if 'list' not in burn:
-            burn['list'] = SortedSet(key=mynegsplitter)
+            burn['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
         url = url or 'none'
         burn['list'].add(url + ':' + str(elapsed))
 
@@ -85,7 +85,10 @@ def report():
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
-    elapsedc = time.clock() - start_cpu
+    elapsedc = time.clock() - start_cpu # includes all threds
+    parser_cpu = stat_value('parser cpu time')
+    if parser_cpu:
+        elapsedc -= parser_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Elapsed cpu time is %.3f seconds', elapsedc)
     if elapsed > 0:

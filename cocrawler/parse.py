@@ -40,9 +40,9 @@ def stats_cpu_wrap(partial, name):
 def report():
     b = stats.stat_value('parser html bytes')
     c = stats.stat_value('parser cpu time')
-    LOGGER.info('Parser thread report:')
+    LOGGER.info('Burner thread report:')
     if c is not None and c > 0:
-        LOGGER.info('  Parser parsed %.1f MB/cpu-second', b / c / 1000000)
+        LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)
 
 # ----------------------------------------------------------------------
 
