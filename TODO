@@ -10,15 +10,19 @@ hook up to AccumulateEvent for politeness - 5xx
 
 Multiprocessing for burners like html parsing.
   Cheapest regex is 20ms/mb -- or 50kbytes in 1ms, or 50 MB/s
-  published example: 2 billion pages in 3 months is 256qps = 200 megabits, pagesize=100kb
+  published example: 2 nodes, 2 billion pages in 3 months; 256qps = 200 megabits, pagesize=100kb
   I'd like to crawl @ 1 gigbit on a small number of servers, 1 core driving the bus each.
-  4ms max budget, so I'd like to be able to farm out parses that take 1 millsecond.
-  does 3.6 have an improved multiprocessing module? no.
-WIP -- looks like this is way slow, 7MB/s and 50% cpu usage for large transactions
 
 url-add injects homepage of domain and soft404 detection - test on top 1k sites
  ride-along post-fetch soft404 processing
  build database of soft404 phrases 
+
+Space Saving Heavy Hitters
+  http://www.cse.ust.hk/~raywong/comp5331/References/EfficientComputationOfFrequentAndTop-kElementsInDataStreams.pdf
+  nice because it estimates the error! on read-back, can drop poorly-estimated values
+  HH also called "top k"
+Hierarchical Heavy Hitters to figure out hot paths in every host
+  https://arxiv.org/pdf/1102.5540v2.pdf
 
 AccumulateTime for qps graphs
 
@@ -40,9 +44,8 @@ wire in warc code -- pip warc is BSD
      have a WARC-Warcinfo-ID field for every record (note: Heretrix does not do this)
     recommended: at crawl end
      stuff final logfiles etc in a new warc as resource records
-     yeah, may have to segment this warc file
+     yeah, may have to segment this warc file if logs are large
      create a metadata record that has a manifest of all warcs created in the crawl
-
 
 status REST calls
  hook up to dashboard like https://github.com/christabor/flask_jsondash
@@ -89,6 +92,10 @@ cpu bound or not
 get an example of each usecase written up
 
 release version 1.0 ----------------------------------------
+
+chck out uvloop / httptools -- seems like uvloop+aiohttp might not
+have any speedup for me? Although discussion on aiohttp github says
+that it's unlikely to be much of a speedup for other than microbenchmarks.
 
 investigate bloom filters (or cuckoo filters) to speed up seen etc.
  e.g. in-site link filter might be something that's almost always usable
