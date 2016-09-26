@@ -14,6 +14,8 @@ Seeds:
 #  Hosts:
 #  - http://xkcd.com/
 #  Files: seed_list.txt
+  SeedRedirsFree: 1
+  SeedRedirCount: 2
 
 Crawl:
   MaxDepth: 3

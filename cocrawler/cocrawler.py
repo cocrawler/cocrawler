@@ -274,13 +274,14 @@ class Crawler:
                     work['seedredirs'] += 1
                 else:
                     work['seedredirs'] = 1
-                if work['seedredirs'] > 2: # XXX make a policy option
+                if work['seedredirs'] > self.config['Seeds'].get('SeedRedirsCount', 0):
                     del work['seed']
                     del work['seedredirs']
                 else:
                     kwargs['seed'] = work['seed']
                     kwargs['seedredirs'] = work['seedredirs']
-                    priority -= 1 # XXX make a policy option
+                    if self.config['SeedRedirsFree']:
+                        priority -= 1
                     json_log['seedredirs'] = work['seedredirs']
 
             if self.add_url(priority+1, next_url, **kwargs): # XXX add more policy regarding priorities
