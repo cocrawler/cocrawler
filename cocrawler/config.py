@@ -25,6 +25,7 @@ Crawl:
   RetryTimeout: 30
   MaxWorkers: 10
 #  MaxCrawledUrls: 11
+  BurnerThreads: 2
 
 UserAgent:
   Style: laptopplus
@@ -57,7 +58,7 @@ Logging:
 # restart purposes. Might change to unique filenames?
 #  Crawllog: crawllog.jsonl
 #  Robotslog: robotslog.jsonl
-#  LogRejectedAddUrl: rejectedaddurl.log
+#  RejectedAddUrllog: rejectedaddurl.log
 
 Testing:
   TestHostmapAll: n

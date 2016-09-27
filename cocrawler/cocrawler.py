@@ -43,7 +43,7 @@ class Crawler:
     def __init__(self, loop, config, load=None, no_test=False):
         self.config = config
         self.loop = loop
-        self.executor = ProcessPoolExecutor(2) # XXX config me
+        self.executor = ProcessPoolExecutor(config['Crawl']['BurnerThreads'])
         self.stopping = 0
         self.no_test = no_test
 
@@ -66,25 +66,22 @@ class Crawler:
         if local_addr:
             conn_kwargs['local_addr'] = local_addr
         conn = aiohttp.connector.TCPConnector(**conn_kwargs)
-
         self.connector = conn
-        # can use self.session.connector to get the connectcor back ... connector.cached_hosts ...
         self.session = aiohttp.ClientSession(loop=loop, connector=conn,
                                              headers={'User-Agent': self.ua})
 
-        # queue.PriorityQueue has no concept of 'ride along' data. Sigh.
         self.q = asyncio.PriorityQueue(loop=self.loop)
         self.ridealong = {}
-        self.ridealongmaxid = 1
+        self.ridealongmaxid = 1 # XXX switch this to using url_canon
 
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
-        self.jsonlogfile = config['Logging'].get('Crawllog')
-        if self.jsonlogfile:
-            self.jsonlogfd = open(self.jsonlogfile, 'a')
+        self.crawllog = config['Logging'].get('Crawllog')
+        if self.crawllog:
+            self.crawllogfd = open(self.crawllog, 'a')
         else:
-            self.jsonlogfd = None
-        self.rejectedaddurl = config['Logging'].get('LogRejectedAddUrl')
+            self.crawllogfd = None
+        self.rejectedaddurl = config['Logging'].get('RejectedAddUrllog')
         if self.rejectedaddurl:
             self.rejectedaddurlfd = open(self.rejectedaddurl, 'a')
         else:
@@ -191,8 +188,8 @@ class Crawler:
         stats.check(self.config, no_test=self.no_test)
         stats.coroutine_report()
         self.session.close()
-        if self.jsonlogfd:
-            self.jsonlogfd.close()
+        if self.crawllogfd:
+            self.crawllogfd.close()
         if self.q.qsize():
             LOGGER.error('non-zero exit qsize=%d', self.q.qsize())
             stats.exitstatus = 1
@@ -217,8 +214,8 @@ class Crawler:
             # XXX treat 'no robots data' as a soft failure?
             # XXX log more particular robots fail reason here
             json_log = {'type':'get', 'url':url, 'priority':priority, 'status':'robots', 'time':time.time()}
-            if self.jsonlogfd:
-                print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
+            if self.crawllogfd:
+                print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             del self.ridealong[ra]
             return
 
@@ -333,8 +330,8 @@ class Crawler:
                 stats.stats_max('max queue size', self.q.qsize())
 
         await f.response.release()
-        if self.jsonlogfd:
-            print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd)
+        if self.crawllogfd:
+            print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
 
     async def work(self):
         '''

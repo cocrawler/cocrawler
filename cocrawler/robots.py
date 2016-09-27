@@ -26,11 +26,11 @@ class Robots:
         self.max_tries = self.config.get('Robots', {}).get('MaxTries')
         self.in_progress = set()
         self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
-        self.jsonlogfile = self.config.get('Logging', {}).get('Robotslog')
-        if self.jsonlogfile:
-            self.jsonlogfd = open(self.jsonlogfile, 'a')
+        self.robotslog = self.config.get('Logging', {}).get('Robotslog')
+        if self.robotslog:
+            self.robotslogfd = open(self.robotslog, 'a')
         else:
-            self.jsonlogfd = None
+            self.robotslogfd = None
 
     async def check(self, url, parts, headers=None, proxy=None, mock_robots=None):
         schemenetloc = parts.scheme + '://' + parts.netloc
@@ -212,8 +212,8 @@ class Robots:
         return True
 
     def jsonlog(self, schemenetloc, d):
-        if self.jsonlogfd:
+        if self.robotslogfd:
             json_log = d
             json_log['host'] = schemenetloc
             json_log['time'] = '{:.3f}'.format(time.time())
-            print(json.dumps(json_log, sort_keys=True), file=self.jsonlogfd, flush=True)
+            print(json.dumps(json_log, sort_keys=True), file=self.robotslogfd, flush=True)
