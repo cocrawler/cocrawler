@@ -135,7 +135,7 @@ class Crawler:
             print(url, file=self.rejectedaddurlfd)
 
     def add_url(self, priority, url, seed=False, seedredirs=None):
-        # XXX eventually do something with the frag
+        # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
         if seed:
             url = urls.special_seed_handling(url)
@@ -231,12 +231,12 @@ class Crawler:
         if f.last_exception is not None or f.response.status >= 500:
             tries += 1
             if tries > maxtries:
-                # XXX jsonlog
-                # XXX remember that this host had a fail
+                # XXX jsonlog hard fail
+                # XXX remember that this host had a hard fail
                 stats.stats_sum('tries completely exhausted', 1)
                 del self.ridealong[ra]
                 return
-            # XXX jsonlog this soft fails
+            # XXX jsonlog this soft fail?
             work['tries'] = tries
             work['priority'] = priority
             self.ridealong[ra] = work
