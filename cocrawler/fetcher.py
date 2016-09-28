@@ -17,6 +17,7 @@ full response, proxy failure. Plus an errorstring good enough for logging.
 import time
 import traceback
 import urllib
+import ipaddress
 from collections import namedtuple
 
 import asyncio
@@ -66,11 +67,13 @@ async def prefetch_dns(parts, mock_url, session):
         answer = session.connector.cached_hosts[(host, port)]
 
     for a in answer:
-        iplist.append(a['host'])
-
-    # XXX check if the ip is a private one (10/8, 196.168/16, loopback, etc and don't go there)
-    #  we should still log the IP to warc even if private
-    # XXX log ip to warc here?
+        ip = a['host']
+        # XXX log DNS result to warc here?
+        #  we should still log the IP to warc even if private
+        if mock_url is None and ipaddress.ip_address(ip).is_private:
+            LOGGER.info('host %s has private ip of %s, ignoring', host, ip)
+            continue
+        iplist.append(ip)
     return iplist
 
 async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
