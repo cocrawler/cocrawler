@@ -1,3 +1,6 @@
+import time
+import sys
+
 import stats
 
 def test_max():
@@ -13,3 +16,38 @@ def test_sum():
     stats.stats_sum('foo2', 5)
     assert stats.stat_value('foo2') == 8
     assert stats.stat_value('bar2') == 2
+
+def test_burn():
+    with stats.record_burn('foo', 'http://example.com/'):
+        t0 = time.clock()
+        while time.clock() < t0 + 0.2:
+            pass
+
+    assert stats.burners['foo']['count'] == 1
+    assert stats.burners['foo']['time'] > 0 and stats.burners['foo']['time'] < 0.3
+    assert 'list' not in stats.burners['foo']
+
+    stats.update_cpu_burn('foo', 3, 3.0, set())
+    assert stats.burners['foo']['count'] == 4
+    assert stats.burners['foo']['time'] > 3.0 and stats.burners['foo']['time'] < 3.3
+    assert len(stats.burners['foo']['list']) == 0
+
+def test_update():
+    # I suppose the contents of stats.* depends on what order the tests are run in.
+    # Looks like tests outside this file add data to stats.*, too
+    l = stats.raw()
+    m, s, b = l
+    m = m.copy()
+    s = s.copy()
+    b = b.copy()
+    stats.update(l)
+
+    # hard to avoid being overly-intimate with the data structure to test it
+    for k in m:
+        assert m[k] == stats.stat_value(k)
+        break
+    for k in s:
+        assert s[k]*2 == stats.stat_value(k)
+        break
+    # no test for b, yet
+

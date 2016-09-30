@@ -29,7 +29,7 @@ def mynegsplitter(string):
     _, value = string.rsplit(':', maxsplit=1)
     return -float(value)
 
-def record_cpu_burn(name, start, url=None):
+def _record_cpu_burn(name, start, url=None):
     elapsed = time.clock() - start
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
@@ -44,13 +44,20 @@ def record_cpu_burn(name, start, url=None):
 
     burners[name] = burn
 
+def update_cpu_burn(name, count, time, l):
+    burn = burners.get(name, {})
+    burn['count'] = burn.get('count', 0) + count
+    burn['time'] = burn.get('time', 0.0) + time
+    burn['list'] = l.union(burn.get('list', set()))
+    burners[name] = burn
+
 @contextmanager
 def record_burn(name, url=None):
     try:
         start = time.clock()
         yield
     finally:
-        record_cpu_burn(name, start, url=url)
+        _record_cpu_burn(name, start, url=url)
 
 @contextmanager
 def coroutine_state(k):
@@ -129,6 +136,23 @@ def check(config, no_test=False):
                 exitstatus = 1
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, sge[s])
+
+def raw():
+    '''
+    Return a list of stuff suitable to feeding to stats.update() in a different thread.
+    '''
+    return maxes, sums, burners
+
+def update(l):
+    m, s, b = l
+    for k in m:
+        stats_max(k, m[k])
+    for k in s:
+        print('before update, stats sum of', k, 'is', stat_value(k))
+        stats_sum(k, s[k])
+        print('after update, stats sum of', k, 'is', stat_value(k))
+    for k in b:
+        update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list', set()))
 
 def save(f):
     pickle.dump('stats', f)
