@@ -45,6 +45,15 @@ def apply_url_policies(url, parts, config):
     return headers, proxy, mock_url, mock_robots
 
 async def prefetch_dns(parts, mock_url, session):
+    '''
+    So that we can track DNS transactions, and log them, we try to make sure
+    DNS answers are in the cache before we try to fetcn an URL.
+
+    TODO: Note that this TCPCOnnector's cache never expires, so we need to clear it occasionally.
+
+    TODO: https://developers.google.com/speed/public-dns/docs/dns-over-https -- optional plugin?
+    Note comments about google crawler at https://developers.google.com/speed/public-dns/docs/performance
+    '''
     if mock_url is None:
         netlocparts = parts.netloc.split(':', maxsplit=1)
     else:

@@ -60,8 +60,8 @@ class Crawler:
             raise ValueError('proxies not yet supported')
 
         local_addr = config['Fetcher'].get('LocalAddr')
-        # XXX if it's a list, make up an array of TCPConnecter objects, and rotate
-        # XXX save the kwargs in case we want to make a ProxyConnector deeper down
+        # TODO: if local_addr is a list, make up an array of TCPConnecter objects, and rotate
+        # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
         conn_kwargs = {'use_dns_cache': True, 'resolver': resolver}
         if local_addr:
             conn_kwargs['local_addr'] = local_addr
@@ -72,7 +72,7 @@ class Crawler:
 
         self.q = asyncio.PriorityQueue(loop=self.loop)
         self.ridealong = {}
-        self.ridealongmaxid = 1 # XXX switch this to using url_canon
+        self.ridealongmaxid = 1 # XXX switch this to using url_canon as the id
 
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
