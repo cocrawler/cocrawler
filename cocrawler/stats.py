@@ -97,7 +97,7 @@ def report():
     if parser_cpu:
         elapsedc -= parser_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
-    LOGGER.info('  Elapsed cpu time is %.3f seconds', elapsedc)
+    LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
     if elapsed > 0:
         LOGGER.info('  Main thread cpu {:.1f}%'.format(elapsedc/elapsed*100))
     if sums.get('fetch URLs', 0) and elapsed > 0:
@@ -110,6 +110,8 @@ def stat_value(name):
         return sums[name]
     if name in maxes:
         return maxes[name]
+    if name in burners:
+        return burners[name].get('time', 0)
 
 def check(config, no_test=False):
     if no_test:

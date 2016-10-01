@@ -39,7 +39,7 @@ def stats_cpu_wrap(partial, name):
 
 def report():
     b = stats.stat_value('parser html bytes')
-    c = stats.stat_value('parser cpu time')
+    c = stats.stat_value('burner thread parser total cpu time')
     LOGGER.info('Burner thread report:')
     if c is not None and c > 0:
         LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)
@@ -52,6 +52,8 @@ def find_html_links(html, url=None):
 
     On a 3.4ghz x86 core, this runs at 50 megabytes/sec (20ms per MB)
     '''
+    stats.stats_sum('parser html bytes', len(html))
+
     with stats.record_burn('find_html_links re', url=url): # this with is currently a noop
         links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
 
@@ -63,6 +65,8 @@ def find_html_links_and_embeds(html, url=None):
     Find links in html, divided among links and embeds.
     More expensive than just getting unclassified links - 38 milliseconds/megabyte @ 3.4 ghz x86
     '''
+    stats.stats_sum('parser html bytes', len(html))
+
     with stats.record_burn('find_html_links_and_embeds re', url=url):
         try:
             head, body = html.split('<body>', maxsplit=1)
@@ -85,7 +89,6 @@ def find_css_links(css, url=None):
     '''
     Finds the links embedded in css files
     '''
-
     with stats.record_burn('find_css_links re', url=url):
         ret = set(re.findall(r'''\surl\(\s?['"]?([^\s'"<>()]+)''', css, re.I))
 
