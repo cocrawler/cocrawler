@@ -82,5 +82,5 @@ def report():
         LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)
 
     t, c = stats.burn_values('find_html_links url_clean_join')
-    if c is not None and c > 0:
+    if c is not None and c > 0 and t is not None and t > 0:
         LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
