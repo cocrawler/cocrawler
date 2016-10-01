@@ -35,8 +35,8 @@ def _record_cpu_burn(name, start, url=None):
     burn['count'] = burn.get('count', 0) + 1
     burn['time'] = burn.get('time', 0.0) + elapsed
 
-    # are we exceptional? 10x current average
-    if elapsed > burn['time']/burn['count'] * 10:
+    # are we exceptional? 10x current average and significant
+    if elapsed > burn['time']/burn['count'] * 10 and elapsed > 0.015:
         if 'list' not in burn:
             burn['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
         url = url or 'none'
@@ -71,7 +71,8 @@ def coroutine_state(k):
 def coroutine_report():
     LOGGER.info('Coroutine report:')
     for k in sorted(list(coroutine_states.keys())):
-        LOGGER.info('  %s: %d', k, coroutine_states[k])
+        if coroutine_states[k] > 0:
+            LOGGER.info('  %s: %d', k, coroutine_states[k])
 
 def report():
     LOGGER.info('Stats report:')
@@ -92,7 +93,7 @@ def report():
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
-    elapsedc = time.clock() - start_cpu # includes all threds
+    elapsedc = time.clock() - start_cpu # includes all threads
     parser_cpu = stat_value('parser cpu time')
     if parser_cpu:
         elapsedc -= parser_cpu
