@@ -7,44 +7,12 @@ XXX also need a gumbocy version
 import logging
 import asyncio
 import re
-import functools
-import time
 import urllib.parse
 
 import stats
 import urls
 
 LOGGER = logging.getLogger(__name__)
-
-async def find_html_links_async(html, executor, loop, url=None):
-    stats.stats_sum('parser html bytes', len(html))
-
-    fhl = functools.partial(find_html_links, html, url=url)
-    wrap = functools.partial(stats_cpu_wrap, fhl, 'parser cpu time')
-
-    f = asyncio.ensure_future(loop.run_in_executor(executor, wrap))
-    with stats.coroutine_state('find_html_links asyncer'):
-        l, e, s = await f
-
-    for key in s.get('stats', {}):
-        stats.stats_sum(key, s['stats'][key])
-
-    return l, e
-
-def stats_cpu_wrap(partial, name):
-    c0 = time.clock()
-    ret = list(partial())
-    ret.append({'stats': {name: time.clock() - c0}})
-    return ret
-
-def report():
-    b = stats.stat_value('parser html bytes')
-    c = stats.stat_value('burner thread parser total cpu time')
-    LOGGER.info('Burner thread report:')
-    if c is not None and c > 0:
-        LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)
-
-# ----------------------------------------------------------------------
 
 def find_html_links(html, url=None):
     '''
@@ -106,3 +74,9 @@ def url_clean_join(links, url=None):
 
     return ret
 
+def report():
+    b = stats.stat_value('parser html bytes')
+    c = stats.stat_value('burner thread parser total cpu time')
+    LOGGER.info('Burner thread report:')
+    if c is not None and c > 0:
+        LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)

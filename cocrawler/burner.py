@@ -18,8 +18,9 @@ class Burner:
     '''
     Use threads for cpu-burning stuff, monitored by async coroutines.
 
-    XXX todo explore what sized work should burn vs. directly executing
-    10 ms? 1ms? 0.1ms? there's cpu overhead to using a burner
+    On my test machine, it takes about 0.5 milliseconds in the main async
+    thread for a single call to the burner thread. That was without any
+    affinity.
 
     TODO: CPU affinity?
     '''
