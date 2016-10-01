@@ -309,7 +309,12 @@ class Crawler:
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
-                links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url))
+                if len(body) > 20000: # 20 MB/s, 0.5ms overhead
+                    links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url))
+                else:
+                    with stats.coroutine_state('await parser'):
+                        links, embeds = parse.find_html_links(body, url=url)
+
                 LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
                              url, len(links), len(embeds))
                 json_log['found_links'] = len(links) + len(embeds)
