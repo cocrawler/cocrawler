@@ -26,6 +26,7 @@ Crawl:
   MaxWorkers: 10
 #  MaxCrawledUrls: 11
   BurnerThreads: 2
+  ParseInBurnerSize: 20000
 
 UserAgent:
   Style: laptopplus
