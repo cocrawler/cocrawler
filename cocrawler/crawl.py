@@ -52,6 +52,7 @@ def main():
     except KeyboardInterrupt:
         sys.stderr.flush()
         print('\nInterrupt. Exiting cleanly.\n')
+        crawler.cancel_workers()
     finally:
         crawler.close()
         # apparently this is needed for full aiohttp cleanup

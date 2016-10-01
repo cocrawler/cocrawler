@@ -153,6 +153,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
             LOGGER.debug('elapsed is %.3f', time.time() - t0) # XXX
             if response is not None:
                 response.release()
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             last_exception = repr(e)
             print('UNKNOWN EXCEPTION SEEN in the fetcher')

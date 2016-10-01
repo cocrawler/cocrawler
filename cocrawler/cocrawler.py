@@ -182,6 +182,11 @@ class Crawler:
         self.datalayer.add_seen_url(url)
         return 1
 
+    def cancel_workers(self):
+        for w in self.workers:
+            if not w.done():
+                w.cancel()
+
     def close(self):
         stats.report()
         parse.report()
@@ -445,7 +450,7 @@ class Crawler:
         '''
         Run the crawler until it's out of work
         '''
-        workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
+        self.workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
         # this is now the 'main' coroutine
 
@@ -456,14 +461,14 @@ class Crawler:
                 LOGGER.warning('saw STOPCRAWLER file, stopping crawler and saving queues')
                 self.stopping = 1
 
-            workers = [w for w in workers if not w.done()]
-            LOGGER.debug('%d workers remain', len(workers))
-            if len(workers) == 0:
+            self.workers = [w for w in self.workers if not w.done()]
+            LOGGER.debug('%d workers remain', len(self.workers))
+            if len(self.workers) == 0:
                 LOGGER.warning('all workers exited, finishing up.')
                 break
 
-            print('checking to see if awaiting {} equals workers {}'.format(self.awaiting_work, len(workers)))
-            if self.awaiting_work == len(workers) and self.q.qsize() == 0:
+            print('checking to see if awaiting {} equals workers {}'.format(self.awaiting_work, len(self.workers)))
+            if self.awaiting_work == len(self.workers) and self.q.qsize() == 0:
                 # this is a little racy with how awaiting work is set and the queue is read
                 # while we're in this join we aren't looking for STOPCRAWLER etc
                 LOGGER.warning('all workers appear idle, executing join')
@@ -475,9 +480,7 @@ class Crawler:
             # XXX clear the DNS cache every few hours; currently the
             # in-memory one is kept for the entire crawler run
 
-        for w in workers:
-            if not w.done():
-                w.cancel()
+        self.cancel_workers()
 
         if self.stopping or self.config['Save'].get('SaveAtExit'):
             self.summarize()
