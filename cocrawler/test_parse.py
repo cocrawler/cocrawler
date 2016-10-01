@@ -55,6 +55,8 @@ def test_html_parse():
     links, embeds = parse.find_html_links_and_embeds(test_html)
     assert len(links) == 3
     assert len(embeds) == 2
+    assert 'foo3.html' in links # space?
+    assert 'foo.gif' in embeds # space?
 
     links, embeds = parse.find_html_links_and_embeds(test_html_no_body)
     assert len(links) == 3

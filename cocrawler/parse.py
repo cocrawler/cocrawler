@@ -55,16 +55,8 @@ def find_html_links(html, url=None):
     with stats.record_burn('find_html_links re', url=url): # this with is currently a noop
         links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
 
-    with stats.record_burn('find_html_links cleanjoin', url=url): # this with is currently a noop
-        ret = set()
-        for u in links:
-            u = urls.clean_webpage_links(u)
-            if url is not None:
-                u = urllib.parse.urljoin(url, u)
-            u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
-            ret.add(u)
-
-    return ret, set()
+    links = url_clean_join(links, url=url)
+    return links, set()
 
 def find_html_links_and_embeds(html, url=None):
     '''
@@ -85,6 +77,8 @@ def find_html_links_and_embeds(html, url=None):
         links_body = set(re.findall(r'''\shref=['"]?([^\s'"<>]+)''', body, re.I))
     embeds = embeds_head.union(embeds_body)
 
+    links_body = url_clean_join(links_body, url=url)
+    embeds = url_clean_join(embeds, url=url)
     return links_body, embeds
 
 def find_css_links(css, url=None):
@@ -96,3 +90,16 @@ def find_css_links(css, url=None):
         ret = set(re.findall(r'''\surl\(\s?['"]?([^\s'"<>()]+)''', css, re.I))
 
     return ret, set()
+
+def url_clean_join(links, url=None):
+    with stats.record_burn('find_html_links url_clean_join', url=url):
+        ret = set()
+        for u in links:
+            u = urls.clean_webpage_links(u)
+            if url is not None:
+                u = urllib.parse.urljoin(url, u)
+            u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
+            ret.add(u)
+
+    return ret
+

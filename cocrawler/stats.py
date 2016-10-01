@@ -144,6 +144,9 @@ def raw():
     return maxes, sums, burners
 
 def update(l):
+    '''
+    Update current thread's stats with stats from elsewhere
+    '''
     m, s, b = l
     for k in m:
         stats_max(k, m[k])
@@ -153,6 +156,17 @@ def update(l):
         print('after update, stats sum of', k, 'is', stat_value(k))
     for k in b:
         update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list', set()))
+
+def clear():
+    '''
+    After raw(), this clears stats to prevent double-counting
+    '''
+    global maxes
+    maxes = {}
+    global sums
+    sums = {}
+    global burners
+    burners = {}
 
 def save(f):
     pickle.dump('stats', f)

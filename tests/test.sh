@@ -52,3 +52,9 @@ rm -f robotslog.jsonl crawllog.jsonl
 
 # tear down the webserver. fails in travis, so ignore
 kill %1 || true
+
+echo
+echo run_burner
+echo
+
+$COVERAGE ../cocrawler/run_burner.py ./test_burner.html

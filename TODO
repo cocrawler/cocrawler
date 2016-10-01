@@ -1,5 +1,11 @@
 Short-term TODO list:
 
+factor out burner, with a proper test and run_parse
+  figure out what runtime length is appropriate to farm out to a burner thread?
+  Cheapest regex is 20ms/mb -- or 50kbytes in 1ms, or 50 MB/s
+  published example: 2 nodes, 2 billion pages in 3 months; 256qps = 200 megabits, pagesize=100kb
+  I'd like to crawl @ 1 gigbit on a small number of servers, 1 core driving the bus each.
+
 hook up to AccumulateEvent for politeness - 5xx
   do something real with t_{first,last}_byte? - slow replies as failures
     alternately monitor simultaneous connections? slower => wider => hits limit
@@ -7,11 +13,6 @@ hook up to AccumulateEvent for politeness - 5xx
   compute cpu-boundedness?
     do we believe our own timers?
     did we screw up trying to farm out burn to other processes?
-
-Multiprocessing for burners like html parsing.
-  Cheapest regex is 20ms/mb -- or 50kbytes in 1ms, or 50 MB/s
-  published example: 2 nodes, 2 billion pages in 3 months; 256qps = 200 megabits, pagesize=100kb
-  I'd like to crawl @ 1 gigbit on a small number of servers, 1 core driving the bus each.
 
 url-add injects homepage of domain and soft404 detection - test on top 1k sites
  ride-along post-fetch soft404 processing
