@@ -114,6 +114,12 @@ def stat_value(name):
     if name in burners:
         return burners[name].get('time', 0)
 
+def burn_values(name):
+    if name in burners:
+        return burners[name].get('time', 0), burners[name].get('count', 0)
+    else:
+        return None, None
+
 def check(config, no_test=False):
     if no_test:
         return

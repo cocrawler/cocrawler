@@ -76,7 +76,11 @@ def url_clean_join(links, url=None):
 
 def report():
     b = stats.stat_value('parser html bytes')
-    c = stats.stat_value('burner thread parser total cpu time')
+    c = stats.stat_value('find_html_links re')
     LOGGER.info('Burner thread report:')
     if c is not None and c > 0:
         LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)
+
+    t, c = stats.burn_values('find_html_links url_clean_join')
+    if c is not None and c > 0:
+        LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
