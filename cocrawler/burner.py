@@ -8,10 +8,10 @@ import stats
 LOGGER = logging.getLogger(__name__)
 
 def stats_wrap(partial, name):
+    stats.clear()
     with stats.record_burn(name):
         ret = list(partial()) # XXX what's pythonic here?
     s = stats.raw()
-    stats.clear()
     return s, ret
 
 class Burner:

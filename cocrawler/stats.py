@@ -48,7 +48,7 @@ def update_cpu_burn(name, count, time, l):
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + count
     burn['time'] = burn.get('time', 0.0) + time
-    burn['list'] = l.union(burn.get('list', set()))
+    burn['list'] = l.union(burn.get('list', SortedSet(key=mynegsplitter)))
     burners[name] = burn
 
 @contextmanager
@@ -151,11 +151,9 @@ def update(l):
     for k in m:
         stats_max(k, m[k])
     for k in s:
-        print('before update, stats sum of', k, 'is', stat_value(k))
         stats_sum(k, s[k])
-        print('after update, stats sum of', k, 'is', stat_value(k))
     for k in b:
-        update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list', set()))
+        update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list', SortedSet(key=mynegsplitter)))
 
 def clear():
     '''

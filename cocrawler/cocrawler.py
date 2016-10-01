@@ -14,7 +14,6 @@ from operator import itemgetter
 import random
 
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
 import logging
 import aiohttp
 import aiohttp.resolver
@@ -30,6 +29,7 @@ import parse
 import fetcher
 import useragent
 import urls
+import burner
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class Crawler:
     def __init__(self, loop, config, load=None, no_test=False):
         self.config = config
         self.loop = loop
-        self.executor = ProcessPoolExecutor(config['Crawl']['BurnerThreads'])
+        self.burner = burner.Burner(config['Crawl']['BurnerThreads'], loop, 'parser')
         self.stopping = 0
         self.no_test = no_test
 
@@ -309,7 +309,7 @@ class Crawler:
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
-                links, embeds = await parse.find_html_links_async(body, self.executor, self.loop, url=url)
+                links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url))
                 LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
                              url, len(links), len(embeds))
                 json_log['found_links'] = len(links) + len(embeds)
