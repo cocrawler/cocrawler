@@ -44,6 +44,7 @@ class Crawler:
         self.config = config
         self.loop = loop
         self.burner = burner.Burner(config['Crawl']['BurnerThreads'], loop, 'parser')
+        self.burner_parseinburnersize = int(self.config['Crawl']['ParseInBurnerSize'])
         self.stopping = 0
         self.no_test = no_test
 
@@ -314,7 +315,7 @@ class Crawler:
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
-                if len(body) > self.config['Crawl']['ParseInBurnerSize']:
+                if len(body) > self.burner_parseinburnersize:
                     links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url))
                 else:
                     with stats.coroutine_state('await parser'):
