@@ -28,7 +28,7 @@ def test_clean_webpage_links():
     # XXX tests for embedded spaces etc.
 
 def test_special_seed_handling():
-    assert urls.special_seed_handling('foo') == 'http:///foo'
+    assert urls.special_seed_handling('foo') == 'http://foo'
     assert urls.special_seed_handling('//foo') == 'http://foo'
     assert urls.special_seed_handling('https://foo') == 'https://foo'
     assert urls.special_seed_handling('mailto:foo') == 'mailto:foo'

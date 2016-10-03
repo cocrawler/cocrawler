@@ -44,8 +44,11 @@ def special_seed_handling(url):
     url = clean_webpage_links(url)
     parts = urllib.parse.urlparse(url)
     if parts.scheme == '':
-        parts = ('http',) + parts[1:]
-        url = urllib.parse.urlunparse(parts)
+        # without a scheme, the parse was invalid. start over.
+        if url.startswith('//'):
+            url = 'http:' + url
+        else:
+            url = 'http://' + url
     return url
 
 valid_hex = set('%02x' % i for i in range(256))
