@@ -12,6 +12,7 @@ import pickle
 from collections import defaultdict
 from operator import itemgetter
 import random
+import socket
 
 import asyncio
 import logging
@@ -30,6 +31,7 @@ import fetcher
 import useragent
 import urls
 import burner
+import dns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +68,7 @@ class Crawler:
         self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver}
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
+        self.conn_kwargs['family'] = socket.AF_INET # XXX config option
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
         self.session = aiohttp.ClientSession(loop=loop, connector=conn,
