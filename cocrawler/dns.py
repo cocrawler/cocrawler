@@ -19,6 +19,8 @@ async def prefetch_dns(parts, mock_url, session):
 
     TODO: Note that this TCPConnector's cache never expires, so we need to clear it occasionally.
 
+    TODO: make multiple source IPs work. Alas this is submerged into pycares.Channel.set_local_ip() :-(
+
     TODO: https://developers.google.com/speed/public-dns/docs/dns-over-https -- optional plugin?
     Note comments about google crawler at https://developers.google.com/speed/public-dns/docs/performance
     RR types A=1 AAAA=28 CNAME=5 NS=2
@@ -89,12 +91,10 @@ async def query(host, qtype):
          ares_query_ns_result(host='ns1.google.com', ttl=None),
          ares_query_ns_result(host='ns3.google.com', ttl=None)]
     CNAME: ares_query_cname_result(cname='blogger.l.google.com', ttl=None)
+    Alas, querying for A www.blogger.com doesn't return both the CNAME and the next A, just the A.
     '''
     try:
         return await res.query(host, qtype)
     except aiodns.error.DNSError:
-        return [] # kinda un-pythonic
-
-
-
+        pass
 

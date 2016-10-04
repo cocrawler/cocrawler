@@ -48,10 +48,8 @@ async def test_resolver():
     assert len(iplist) > 0
 
     iplist = await dns.query('google.com', 'CNAME')
-    assert len(iplist) == 0
+    assert iplist == None
 
     iplist = await dns.query('www.blogger.com', 'CNAME')
     assert len(iplist) > 0
-
-
 
