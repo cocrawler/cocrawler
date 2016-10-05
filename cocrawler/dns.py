@@ -75,7 +75,7 @@ res = None
 
 def setup_resolver(ns):
     global res
-    res = aiodns.DNSResolver(nameservers=ns)
+    res = aiodns.DNSResolver(nameservers=ns, rotate=True)
 
 async def query(host, qtype):
     '''
