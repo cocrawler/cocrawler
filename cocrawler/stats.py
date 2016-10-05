@@ -105,6 +105,8 @@ def report():
         LOGGER.info('  Crawl rate is %d pages/second', int(sums['fetch URLs']/elapsed))
     if sums.get('fetch URLs', 0) and elapsedc > 0:
         LOGGER.info('  Crawl rate is %d pages/main-thread-cpu-second', int(sums['fetch URLs']/elapsedc))
+    if sums.get('fetch bytes', 0) and elapsed > 0:
+        LOGGER.info('  Crawl rate is %.2f gigabits/s', sums['fetch bytes']/elapsed*8/1000000000.)
 
 def stat_value(name):
     if name in sums:

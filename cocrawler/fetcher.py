@@ -138,6 +138,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
             return ret(None, None, None, None, None, last_exception)
         # fall through for the case of response.status >= 500
 
+    stats.stats_sum('fetch bytes', len(body_bytes) + len(header_bytes))
+
     if stats_me:
         stats.stats_sum('fetch URLs', 1)
         stats.stats_sum('fetch http code=' + str(response.status), 1)
