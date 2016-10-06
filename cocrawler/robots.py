@@ -123,7 +123,8 @@ class Robots:
             return None
 
         # If the url was redirected to a different host/robots.txt, let's cache that too
-        final_url = f.response.url.human_repr() # a YARL thing
+        #final_url = f.response.url.human_repr() # a YARL thing
+        final_url = f.response.url
         final_schemenetloc = None
         if final_url != url:
             final_parts = urllib.parse.urlparse(final_url)
