@@ -4,6 +4,7 @@
 CoCrawler web crawler, main program
 '''
 import sys
+import resource
 
 import argparse
 import asyncio
@@ -22,6 +23,13 @@ ARGS.add_argument('--printdefault', action='store_true')
 ARGS.add_argument('--loglevel', action='store', type=int, default=2)
 ARGS.add_argument('--load', action='store')
 
+def limit_resources(config):
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
+
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS) # RLIMIT_VMEM does not exist?!
+    resource.setrlimit(resource.RLIMIT_AS, (10 * 1024 * 1024 * 1024, hard)) # XXX config
+
 def main():
     '''
     Main program: parse args, read config, set up event loop, run the crawler.
@@ -37,6 +45,7 @@ def main():
     logging.basicConfig(level=levels[min(args.loglevel, len(levels)-1)])
 
     conf = config.config(args.configfile, args.config, confighome=not args.no_confighome)
+    limit_resources(config)
 
     kwargs = {}
     if args.load:
