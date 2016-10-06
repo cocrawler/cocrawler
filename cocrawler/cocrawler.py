@@ -49,6 +49,7 @@ class Crawler:
         self.burner_parseinburnersize = int(self.config['Crawl']['ParseInBurnerSize'])
         self.stopping = 0
         self.no_test = no_test
+        self.next_minute = 0
 
         self.robotname, self.ua = useragent.useragent(config, __version__)
 
@@ -141,9 +142,6 @@ class Crawler:
     def add_url(self, priority, url, seed=False, seedredirs=None):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
-        if seed:
-            url = urls.special_seed_handling(url)
-
         # XXX optionally generate additional urls plugin here
         # e.g. any amazon url with an AmazonID should add_url() the base product page
         # and a non-homepage should add the homepage
@@ -167,7 +165,10 @@ class Crawler:
         # end allow/deny plugin
 
         LOGGER.debug('actually adding url %r', url)
-        stats.stats_sum('added urls', 1)
+        if seed:
+            stats.stats_sum('added seeds', 1)
+        else:
+            stats.stats_sum('added urls', 1)
 
         work = {'url': url, 'priority': priority}
         if seed:
@@ -313,7 +314,8 @@ class Crawler:
                     with stats.record_burn('response.text() decode', url=url):
                         body = await f.response.text() # do not use encoding found in the headers -- policy
                         # XXX consider using 'ascii' for speed, if all we want to do is regex in it
-                except UnicodeDecodeError:
+                except (UnicodeDecodeError, LookupError):
+                    # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
                     # XXX if encoding was in header, maybe I should use it?
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
@@ -423,6 +425,14 @@ class Crawler:
             self.datalayer.load(f)
             stats.load(f)
 
+    def minute(self):
+        '''
+        print interesting stuf, once a minute
+        '''
+        if time.time() > self.next_minute:
+            self.next_minute = time.time() + 30
+            stats.report()
+
     def summarize(self):
         '''
         Print a human-readable summary of what's in the queues
@@ -480,6 +490,7 @@ class Crawler:
                 break
 
             stats.coroutine_report()
+            self.minute()
 
             # XXX clear the DNS cache every few hours; currently the
             # in-memory one is kept for the entire crawler run
