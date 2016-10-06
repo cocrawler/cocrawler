@@ -45,9 +45,10 @@ async def prefetch_dns(parts, mock_url, session):
     iplist = []
 
     if (host, port) not in session.connector.cached_hosts:
-        with stats.coroutine_state('fetcher DNS lookup'):
-            # if this raises an exception, it's caught in the caller
-            answer = await session.connector._resolve_host(host, port)
+        with stats.record_latency('fetcher DNS lookup', url=host):
+            with stats.coroutine_state('fetcher DNS lookup'):
+                # if this raises an exception, it's caught in the caller
+                answer = await session.connector._resolve_host(host, port)
     else:
         answer = session.connector.cached_hosts[(host, port)]
 

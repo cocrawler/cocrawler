@@ -16,6 +16,7 @@ start_cpu = time.clock()
 maxes = {}
 sums = {}
 burners = {}
+latencies = {}
 coroutine_states = {}
 exitstatus = 0
 
@@ -44,6 +45,21 @@ def _record_cpu_burn(name, start, url=None):
 
     burners[name] = burn
 
+def _record_latency(name, start, url=None):
+    elapsed = time.time() - start
+    latency = latencies.get(name, {})
+    latency['count'] = latency.get('count', 0) + 1
+    latency['time'] = latency.get('time', 0.0) + elapsed
+
+    # are we exceptional? 10x current average and significant
+    if elapsed > latency['time']/latency['count'] * 10 and elapsed > 0.015:
+        if 'list' not in latency:
+            latency['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
+        url = url or 'none'
+        latency['list'].add(url + ':' + str(elapsed))
+
+    latencies[name] = latency
+
 def update_cpu_burn(name, count, time, l):
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + count
@@ -58,6 +74,14 @@ def record_burn(name, url=None):
         yield
     finally:
         _record_cpu_burn(name, start, url=url)
+
+@contextmanager
+def record_latency(name, url=None):
+    try:
+        start = time.time()
+        yield
+    finally:
+        _record_latency(name, start, url=url)
 
 @contextmanager
 def coroutine_state(k):
@@ -87,6 +111,16 @@ def report():
         if burn.get('list'):
             LOGGER.info('    biggest burners')
             first10 = burn['list'][0:min(len(burn['list']), 10)]
+            for url in first10:
+                u, e = url.rsplit(':', maxsplit=1)
+                LOGGER.info('      %.3fs: %s', float(e), u)
+
+    LOGGER.info('Latency report:')
+    for key, latency in sorted(latencies.items(), key=lambda x: x[1]['time'], reverse=True):
+        LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, latency['count'], latency['time'])
+        if latency.get('list'):
+            LOGGER.info('    biggest latencies')
+            first10 = latency['list'][0:min(len(latency['list']), 10)]
             for url in first10:
                 u, e = url.rsplit(':', maxsplit=1)
                 LOGGER.info('      %.3fs: %s', float(e), u)
