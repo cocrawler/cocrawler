@@ -13,16 +13,17 @@ default_yaml = '''
 Seeds:
 #  Hosts:
 #  - http://xkcd.com/
-#  Files: seed_list.txt
+#  Files:
+#  - seed_list.txt
   SeedRedirsFree: 1
   SeedRedirCount: 2
 
 Crawl:
   MaxDepth: 3
   MaxTries: 4 # outer retry loop
-  MaxSubTries: 4 # inner retry loop
+  MaxSubTries: 2 # inner retry loop
   PageTimeout: 30
-  RetryTimeout: 30
+  RetryTimeout: 5
   MaxWorkers: 10
 #  MaxCrawledUrls: 11
   BurnerThreads: 2
