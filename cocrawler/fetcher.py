@@ -23,6 +23,7 @@ import asyncio
 import logging
 import aiohttp
 import aiodns
+import ssl
 
 import stats
 import dns
@@ -115,6 +116,14 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
             LOGGER.debug('elapsed is %.3f', time.time() - t0) # XXX
             if response is not None:
                 response.release()
+        except (ssl.CertificateError, ValueError, AttributeError) as e:
+            # ValueError = 'Can redirect only to http or https' (not case blind)
+            # Value Error Location: https:/// 'Host could not be detected'
+            # AttributeError: 'NoneType' object has no attribute 'errno' - only fires when CNAME has no A?!
+            last_exception = repr(e)
+            LOGGER.debug('we choose to fail, url is %s, exception is %s', url, last_exception)
+            subtries += maxsubtries
+            continue # fall out of the loop as if we exhausted subtries
         except asyncio.CancelledError:
             raise
         except Exception as e:
