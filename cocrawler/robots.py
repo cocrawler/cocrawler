@@ -122,6 +122,14 @@ class Robots:
             self.in_progress.discard(schemenetloc)
             return None
 
+        # If the url was redirected to a different host/robots.txt, let's cache that too
+        final_url = f.response.url.human_repr() # a YARL thing
+        final_schemenetloc = None
+        if final_url != url:
+            final_parts = urllib.parse.urlparse(final_url)
+            if final_parts.path == '/robots.txt':
+                final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc
+
         # if we got a 404, return an empty robots.txt
         if f.response.status == 404:
             self.jsonlog(schemenetloc, {'error':'got a 404, treating as empty robots',
@@ -129,6 +137,8 @@ class Robots:
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
             parsed.parse('')
             self.datalayer.cache_robots(schemenetloc, parsed)
+            if final_schemenetloc:
+                self.datalayer.cache_robots(final_schemenetloc, parsed)
             self.in_progress.discard(schemenetloc)
             await f.response.release()
             return parsed
@@ -151,6 +161,8 @@ class Robots:
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
             parsed.parse('')
             self.datalayer.cache_robots(schemenetloc, parsed)
+            if final_schemenetloc:
+                self.datalayer.cache_robots(final_schemenetloc, parsed)
             self.in_progress.discard(schemenetloc)
             await f.response.release()
             return parsed
@@ -175,6 +187,8 @@ class Robots:
             parsed.parse(body)
         self.datalayer.cache_robots(schemenetloc, parsed)
         self.in_progress.discard(schemenetloc)
+        if final_schemenetloc:
+            self.in_progress.discard(final_schemenetloc)
         self.jsonlog(schemenetloc, {'action':'fetch', 't_first_byte':f.t_first_byte})
         return parsed
 
