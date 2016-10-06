@@ -321,7 +321,7 @@ class Crawler:
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
                 if len(body) > self.burner_parseinburnersize:
-                    links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url))
+                    links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url), url=url)
                 else:
                     with stats.coroutine_state('await parser'):
                         links, embeds = parse.find_html_links(body, url=url)

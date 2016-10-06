@@ -7,9 +7,9 @@ import stats
 
 LOGGER = logging.getLogger(__name__)
 
-def stats_wrap(partial, name):
+def stats_wrap(partial, name, url=None):
     stats.clear()
-    with stats.record_burn(name):
+    with stats.record_burn(name, url=url):
         ret = list(partial()) # XXX what's pythonic here?
     s = stats.raw()
     return s, ret
@@ -30,13 +30,13 @@ class Burner:
         self.name = name
         # XXX add some more strings that report will eventually use
 
-    async def burn(self, partial):
+    async def burn(self, partial, url=None):
         '''
         Do some cpu burning, and record stats related to it.
 
         Use functools.partial to wrap up your work function and its args.
         '''
-        wrap = functools.partial(stats_wrap, partial, 'burner thread {} total cpu time'.format(self.name))
+        wrap = functools.partial(stats_wrap, partial, 'burner thread {} total cpu time'.format(self.name), url=url)
 
         f = asyncio.ensure_future(self.loop.run_in_executor(self.executor, wrap))
         with stats.coroutine_state('await burner thread {}'.format(self.name)):

@@ -35,14 +35,16 @@ def _record_cpu_burn(name, start, url=None):
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
     burn['time'] = burn.get('time', 0.0) + elapsed
+    avg = burn.get('avg', 10000000.)
 
     # are we exceptional? 10x current average and significant
-    if elapsed > burn['time']/burn['count'] * 10 and elapsed > 0.015:
+    if elapsed > avg * 10 and elapsed > 0.015:
         if 'list' not in burn:
             burn['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
         url = url or 'none'
         burn['list'].add(url + ':' + str(elapsed))
 
+    burn['avg'] = burn['time']/burn['count']
     burners[name] = burn
 
 def _record_latency(name, start, url=None):
@@ -50,14 +52,16 @@ def _record_latency(name, start, url=None):
     latency = latencies.get(name, {})
     latency['count'] = latency.get('count', 0) + 1
     latency['time'] = latency.get('time', 0.0) + elapsed
+    avg = latency.get('avg', 1000000.)
 
     # are we exceptional? 10x current average and significant
-    if elapsed > latency['time']/latency['count'] * 10 and elapsed > 0.015:
+    if elapsed > avg * 10 and elapsed > 0.015:
         if 'list' not in latency:
             latency['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
         url = url or 'none'
         latency['list'].add(url + ':' + str(elapsed))
 
+    latency['avg'] = latency['time']/latency['count']
     latencies[name] = latency
 
 def update_cpu_burn(name, count, time, l):
@@ -208,8 +212,10 @@ def clear():
     maxes = {}
     global sums
     sums = {}
-    global burners
-    burners = {}
+    for b in burners:
+        burners[b] = {'avg': burners[b].get('avg'), 'count': 0, 'time': 0}
+    for l in latencies:
+        latencies[l] = {'avg': latencies[l].get('avg'), 'count': 0, 'time': 0}
 
 def save(f):
     pickle.dump('stats', f)
