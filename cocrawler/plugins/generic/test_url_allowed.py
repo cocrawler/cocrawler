@@ -19,11 +19,14 @@ def test_gethostname():
 
 def test_url_allowed():
     assert not url_allowed.url_allowed('ftp://example.com')
-    url_allowed.SEEDS.add('example.com')
+    url_allowed.SEEDS.add(url_allowed.get_hostname('http://example.com'))
     url_allowed.POLICY = 'SeedsDomain'
     assert url_allowed.url_allowed('http://example.com')
+    assert url_allowed.url_allowed('http://www.example.com')
     assert url_allowed.url_allowed('http://sub.example.com')
     url_allowed.POLICY = 'SeedsHostname'
+    assert url_allowed.url_allowed('http://example.com')
+    assert url_allowed.url_allowed('http://www.example.com')
     assert not url_allowed.url_allowed('http://sub.example.com')
     url_allowed.POLICY = 'OnlySeeds'
     assert not url_allowed.url_allowed('http://example.com')
