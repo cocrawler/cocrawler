@@ -1,5 +1,7 @@
 import logging
 
+import urls
+
 LOGGER = logging.getLogger(__name__)
 
 def expand_seeds(seeds):
@@ -29,4 +31,9 @@ def expand_seeds(seeds):
     # sitemaps are a little tedious, so I'll implement later.
     # needs to be fetched and then xml parsed and then <urlset ><url><loc></loc> elements extracted
 
-    return ret
+    seeds = []
+    for r in ret:
+        url = urls.special_seed_handling(r)
+        seeds.append(url)
+
+    return seeds
