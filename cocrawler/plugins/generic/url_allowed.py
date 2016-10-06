@@ -2,8 +2,11 @@
 Generic implementation of url_allowed.
 '''
 
+import logging
 import urllib.parse
 import tldextract
+
+LOGGER = logging.getLogger(__name__)
 
 POLICY=None
 SEEDS=set()
@@ -83,10 +86,15 @@ def setup(parent, config):
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))
 
     if POLICY == 'SeedsDomain':
-        seeds = parent.seeds
+        seeds = parent._seeds
         for s in seeds:
             SEEDS.add(get_domain(s))
     elif POLICY == 'SeedsHostname':
-        seeds = parent.seeds
+        seeds = parent._seeds
         for s in seeds:
             SEEDS.add(get_hostname(s))
+
+    LOGGER.debug('Seed list:')
+    for s in SEEDS:
+        LOGGER.debug('  Seed: %s', s)
+
