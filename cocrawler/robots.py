@@ -122,6 +122,8 @@ class Robots:
             self.in_progress.discard(schemenetloc)
             return None
 
+        stats.stats_sum('robots fetched', 1)
+
         # If the url was redirected to a different host/robots.txt, let's cache that too
         #final_url = f.response.url.human_repr() # a YARL thing
         final_url = f.response.url

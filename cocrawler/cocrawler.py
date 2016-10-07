@@ -433,6 +433,21 @@ class Crawler:
             self.next_minute = time.time() + 30
             stats.report()
 
+    def qps_report(self):
+        now = {}
+        qps = ['DNS prefetches', 'fetch URLs', 'robots fetched']
+        for s in qps:
+            now[s] = stats.stat_value(s)
+        now['time'] = time.time()
+        if hasattr(self, 'qps') and self.qps.get('time'):
+            elapsed = now['time'] - self.qps['time']
+            if elapsed > 0:
+                LOGGER.info('QPS report:')
+                for s in qps:
+                    value = (now[s] - self.qps[s])/elapsed
+                    LOGGER.info('  %s: %d qps', s, int(value))
+        self.qps = now
+
     def summarize(self):
         '''
         Print a human-readable summary of what's in the queues
@@ -490,6 +505,7 @@ class Crawler:
                 break
 
             stats.coroutine_report()
+            self.qps_report()
             self.minute()
 
             # XXX clear the DNS cache every few hours; currently the

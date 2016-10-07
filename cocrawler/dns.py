@@ -52,6 +52,8 @@ async def prefetch_dns(parts, mock_url, session):
     else:
         answer = session.connector.cached_hosts[(host, port)]
 
+    stats.stats_sum('DNS prefetches', 1)
+
     # XXX log DNS result to warc here?
     #  we should still log the IP to warc even if private
     #  note that these results don't have the TTL in them
