@@ -49,10 +49,9 @@ async def prefetch_dns(parts, mock_url, session):
             with stats.coroutine_state('fetcher DNS lookup'):
                 # if this raises an exception, it's caught in the caller
                 answer = await session.connector._resolve_host(host, port)
+                stats.stats_sum('DNS prefetches', 1)
     else:
         answer = session.connector.cached_hosts[(host, port)]
-
-    stats.stats_sum('DNS prefetches', 1)
 
     # XXX log DNS result to warc here?
     #  we should still log the IP to warc even if private
@@ -64,7 +63,6 @@ async def prefetch_dns(parts, mock_url, session):
             LOGGER.info('host %s has private ip of %s, ignoring', host, ip)
             continue
         if ':' in ip: # is this a valid sign of ipv6? XXX policy
-            # I'm seeing ipv6 answers on an ipv4-only server :-/
             LOGGER.info('host %s has ipv6 result of %s, ignoring', host, ip)
             continue
         iplist.append(ip)
