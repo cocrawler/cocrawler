@@ -444,8 +444,9 @@ class Crawler:
             if elapsed > 0:
                 LOGGER.info('QPS report:')
                 for s in qps:
-                    value = (now[s] - self.qps[s])/elapsed
-                    LOGGER.info('  %s: %d qps', s, int(value))
+                    if now[s] is not None and self.qps[s] is not None:
+                        value = (now[s] - self.qps[s])/elapsed
+                        LOGGER.info('  %s: %d qps', s, int(value))
         self.qps = now
 
     def summarize(self):
