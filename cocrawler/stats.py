@@ -26,7 +26,7 @@ def stats_max(name, value):
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
 
-def _record_cpu_burn(name, start, url=None):
+def record_a_burn(name, start, url=None):
     elapsed = time.clock() - start
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
@@ -46,7 +46,7 @@ def _record_cpu_burn(name, start, url=None):
     burn['avg'] = burn['time']/burn['count']
     burners[name] = burn
 
-def _record_latency(name, start, url=None):
+def record_a_latency(name, start, url=None):
     elapsed = time.time() - start
     latency = latencies.get(name, {})
     latency['count'] = latency.get('count', 0) + 1
@@ -86,7 +86,7 @@ def record_burn(name, url=None):
         start = time.clock()
         yield
     finally:
-        _record_cpu_burn(name, start, url=url)
+        record_a_burn(name, start, url=url)
 
 @contextmanager
 def record_latency(name, url=None):
@@ -94,7 +94,7 @@ def record_latency(name, url=None):
         start = time.time()
         yield
     finally:
-        _record_latency(name, start, url=url)
+        record_a_latency(name, start, url=url)
 
 @contextmanager
 def coroutine_state(k):

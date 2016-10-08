@@ -82,6 +82,8 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                                                  allow_redirects=allow_redirects,
                                                  headers=headers)
                     t_first_byte = '{:.3f}'.format(time.time() - t0)
+                    if stats_me:
+                        stats.record_a_latency('fetcher fetching', t0, url=url)
 
                     # XXX special sleepy 503 handling here - soft fail
                     # XXX json_log tries
