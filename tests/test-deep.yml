@@ -2,6 +2,7 @@ Crawl:
   MaxDepth: 100000
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
+  ParseInBurnerSize: 1 # make sure the burner thread gets used
 
 Plugins:
   url_allowed: SeedsHostname
