@@ -28,6 +28,7 @@ Crawl:
 #  MaxCrawledUrls: 11
   BurnerThreads: 2
   ParseInBurnerSize: 20000
+#  CookieJar: Defective
 
 UserAgent:
   Style: laptopplus
