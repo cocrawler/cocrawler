@@ -7,7 +7,7 @@ import pickle
 import time
 from contextlib import contextmanager
 
-from sortedcontainers import SortedSet
+from sortedcollections import ValueSortedDict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,10 +26,6 @@ def stats_max(name, value):
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
 
-def mynegsplitter(string):
-    _, value = string.rsplit(':', maxsplit=1)
-    return -float(value)
-
 def _record_cpu_burn(name, start, url=None):
     elapsed = time.clock() - start
     burn = burners.get(name, {})
@@ -40,9 +36,12 @@ def _record_cpu_burn(name, start, url=None):
     # are we exceptional? 10x current average and significant
     if elapsed > avg * 10 and elapsed > 0.015:
         if 'list' not in burn:
-            burn['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
+            burn['list'] = ValueSortedDict()
         url = url or 'none'
-        burn['list'].add(url + ':' + str(elapsed))
+        burn['list'][url] = -elapsed
+        length = len(burn['list'])
+        for i in range(10, length):
+            burn['list'].popitem()
 
     burn['avg'] = burn['time']/burn['count']
     burners[name] = burn
@@ -57,9 +56,12 @@ def _record_latency(name, start, url=None):
     # are we exceptional? 10x current average and significant
     if elapsed > avg * 10 and elapsed > 0.015:
         if 'list' not in latency:
-            latency['list'] = SortedSet(key=mynegsplitter) # XXX switch this to a ValueSortedDict
+            latency['list'] = ValueSortedDict()
         url = url or 'none'
-        latency['list'].add(url + ':' + str(elapsed))
+        latency['list'][url] = -elapsed
+        length = len(latency['list'])
+        for i in range(10, length):
+            latency['list'].popitem()
 
     latency['avg'] = latency['time']/latency['count']
     latencies[name] = latency
@@ -68,7 +70,14 @@ def update_cpu_burn(name, count, time, l):
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + count
     burn['time'] = burn.get('time', 0.0) + time
-    burn['list'] = l.union(burn.get('list', SortedSet(key=mynegsplitter)))
+    if l is not None:
+        l = ValueSortedDict(l)
+        burn['list'] = burn.get('list', ValueSortedDict())
+        for k in l: # XXX replace this loop with .update()
+            burn['list'][k] = l[k]
+        length = len(burn['list'])
+        for i in range(10, length):
+            burn['list'].popitem()
     burners[name] = burn
 
 @contextmanager
@@ -114,20 +123,18 @@ def report():
         LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, burn['count'], burn['time'])
         if burn.get('list'):
             LOGGER.info('    biggest burners')
-            first10 = burn['list'][0:min(len(burn['list']), 10)]
-            for url in first10:
-                u, e = url.rsplit(':', maxsplit=1)
-                LOGGER.info('      %.3fs: %s', float(e), u)
+            for url in list(burn['list'].keys())[0:10]:
+                e = - burn['list'][url]
+                LOGGER.info('      %.3fs: %s', float(e), url)
 
     LOGGER.info('Latency report:')
     for key, latency in sorted(latencies.items(), key=lambda x: x[1]['time'], reverse=True):
         LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, latency['count'], latency['time'])
         if latency.get('list'):
             LOGGER.info('    biggest latencies')
-            first10 = latency['list'][0:min(len(latency['list']), 10)]
-            for url in first10:
-                u, e = url.rsplit(':', maxsplit=1)
-                LOGGER.info('      %.3fs: %s', float(e), u)
+            for url in list(latency['list'].keys())[0:10]:
+                e = - latency['list'][url]
+                LOGGER.info('      %.3fs: %s', float(e), url)
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
@@ -153,6 +160,7 @@ def stat_value(name):
         return maxes[name]
     if name in burners:
         return burners[name].get('time', 0)
+    # note, not including latency
 
 def burn_values(name):
     if name in burners:
@@ -189,8 +197,15 @@ def check(config, no_test=False):
 def raw():
     '''
     Return a list of stuff suitable to feeding to stats.update() in a different thread.
+    As a wart, ValueSortedDict can't be pickled. Turn it into a dict.
     '''
-    return maxes, sums, burners
+    d = dict()
+    for k in burners:
+        d[k] = burners[k]
+        d[k]['list'] = dict(burners[k].get('list', dict()))
+
+    # note, not including latency
+    return maxes, sums, d
 
 def update(l):
     '''
@@ -202,7 +217,7 @@ def update(l):
     for k in s:
         stats_sum(k, s[k])
     for k in b:
-        update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list', SortedSet(key=mynegsplitter)))
+        update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list'))
 
 def clear():
     '''
