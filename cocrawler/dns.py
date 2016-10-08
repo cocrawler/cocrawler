@@ -81,7 +81,7 @@ def setup_resolver(ns):
 async def query(host, qtype):
     '''
     aiohttp uses aiodns under the hood, but you can't get
-    directly at the .query method. So we use aiodns directly.
+    directly at the .query method.
 
     Example results:
 
