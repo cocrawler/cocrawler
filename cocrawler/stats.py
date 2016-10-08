@@ -133,12 +133,12 @@ def report():
 
     LOGGER.info('Latency report:')
     for key, latency in sorted(latencies.items(), key=lambda x: x[1]['time'], reverse=True):
-        LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, latency['count'], latency['time'])
+        LOGGER.info('  %s has %d calls taking %.3f clock seconds.', key, latency['count'], latency['time'])
         t50 = latency['hist'].get_value_at_percentile(50.0) / 1000.
         t90 = latency['hist'].get_value_at_percentile(90.0) / 1000.
         t95 = latency['hist'].get_value_at_percentile(95.0) / 1000.
         t99 = latency['hist'].get_value_at_percentile(99.0) / 1000.
-        LOGGER.info('  %s 50/90/95/99%%tiles are: %.2f/%.2f/%.2f/%.2f', key, t50, t90, t95, t99)
+        LOGGER.info('  %s 50/90/95/99%%tiles are: %.2f/%.2f/%.2f/%.2f seconds', key, t50, t90, t95, t99)
         if latency.get('list'):
             LOGGER.info('    biggest latencies')
             for url in list(latency['list'].keys())[0:10]:
@@ -155,6 +155,9 @@ def report():
     LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
     if elapsed > 0:
         LOGGER.info('  Main thread cpu {:.1f}%'.format(elapsedc/elapsed*100))
+    bt = burners.get('burner thread parser total cpu time', {}).get('time', 0.)
+    if bt > 0:
+        LOGGER.info('  Burner thread burned %.3f cpu seconds', bt)
     if sums.get('fetch URLs', 0) and elapsed > 0:
         LOGGER.info('  Crawl rate is %d pages/second', int(sums['fetch URLs']/elapsed))
     if sums.get('fetch URLs', 0) and elapsedc > 0:
