@@ -449,8 +449,7 @@ class Crawler:
                         value = (now[s] - self.qps[s])/elapsed
                         LOGGER.info('  %s: %d qps', s, int(value))
                         grand_total += value
-                if grand_total:
-                    LOGGER.info('  Total: %d qps', grand_total)
+                LOGGER.info('  Total: %d qps', grand_total)
         self.qps = now
 
     def summarize(self):
