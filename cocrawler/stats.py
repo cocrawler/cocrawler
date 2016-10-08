@@ -7,6 +7,7 @@ import pickle
 import time
 from contextlib import contextmanager
 
+from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
 
 LOGGER = logging.getLogger(__name__)
@@ -52,6 +53,9 @@ def record_a_latency(name, start, url=None):
     latency['count'] = latency.get('count', 0) + 1
     latency['time'] = latency.get('time', 0.0) + elapsed
     avg = latency.get('avg', 1000000.)
+    if 'hist' not in latency:
+        latency['hist'] = HdrHistogram(1, 30 * 1000, 2) # 1ms-30sec, 2 sig figs
+    latency['hist'].record_value(elapsed * 1000) # ms
 
     # are we exceptional? 10x current average and significant
     if elapsed > avg * 10 and elapsed > 0.015:
@@ -130,6 +134,11 @@ def report():
     LOGGER.info('Latency report:')
     for key, latency in sorted(latencies.items(), key=lambda x: x[1]['time'], reverse=True):
         LOGGER.info('  %s has %d calls taking %.3f cpu seconds.', key, latency['count'], latency['time'])
+        t50 = latency['hist'].get_value_at_percentile(50.0) / 1000.
+        t90 = latency['hist'].get_value_at_percentile(90.0) / 1000.
+        t95 = latency['hist'].get_value_at_percentile(95.0) / 1000.
+        t99 = latency['hist'].get_value_at_percentile(99.0) / 1000.
+        LOGGER.info('  %s 50/90/95/99%%tiles are: %.2f/%.2f/%.2f/%.2f', key, t50, t90, t95, t99)
         if latency.get('list'):
             LOGGER.info('    biggest latencies')
             for url in list(latency['list'].keys())[0:10]:
