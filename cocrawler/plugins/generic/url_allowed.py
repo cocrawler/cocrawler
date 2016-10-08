@@ -32,8 +32,9 @@ def get_hostname(hostname, parts=None):
         hostname = hostname[4:]
     return hostname
 
+allowed_schemes = set(('http', 'https'))
 def scheme_allowed(parts):
-    if parts.scheme not in set(('http', 'https')):
+    if parts.scheme not in allowed_schemes:
         return False
     return True
 
