@@ -469,6 +469,7 @@ class Crawler:
         for s in qps:
             now[s] = stats.stat_value(s)
         now['time'] = time.time()
+        now['fetch bytes'] = stats.stat_value('fetch bytes')
         if hasattr(self, 'qps') and self.qps.get('time'):
             elapsed = now['time'] - self.qps['time']
             if elapsed > 0:
@@ -480,6 +481,9 @@ class Crawler:
                         LOGGER.info('  %s: %d qps', s, int(value))
                         grand_total += value
                 LOGGER.info('  Total: %d qps', grand_total)
+                if now['fetch bytes'] is not None and self.qps['fetch bytes'] is not None:
+                    value = (now['fetch bytes'] - self.qps['fetch bytes'])/elapsed
+                    LOGGER.info('  Crawl rate is %.2f gigabit/s', value * 8 / 1000000000.)
         self.qps = now
 
     def summarize(self):
