@@ -67,6 +67,7 @@ class Crawler:
         self.burner = burner.Burner(config['Crawl']['BurnerThreads'], loop, 'parser')
         self.burner_parseinburnersize = int(self.config['Crawl']['ParseInBurnerSize'])
         self.stopping = 0
+        self.paused = 0
         self.no_test = no_test
         self.next_minute = 0
 
@@ -146,6 +147,7 @@ class Crawler:
         self.awaiting_work = 0
 
         LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
+        LOGGER.info('Touch ~/PAUSECRAWLER.%d to pause the crawler.', os.getpid())
 
     @property
     def seeds(self):
@@ -392,6 +394,9 @@ class Crawler:
                 if self.stopping:
                     raise asyncio.CancelledError
 
+                while self.paused:
+                    await asyncio.sleep(1)
+
                 if self.remaining_url_budget is not None:
                     self.remaining_url_budget -= 1
                     if self.remaining_url_budget <= 0:
@@ -516,6 +521,13 @@ class Crawler:
             if os.path.exists(os.path.expanduser('~/STOPCRAWLER.{}'.format(os.getpid()))):
                 LOGGER.warning('saw STOPCRAWLER file, stopping crawler and saving queues')
                 self.stopping = 1
+
+            if os.path.exists(os.path.expanduser('~/PAUSECRAWLER.{}'.format(os.getpid()))):
+                LOGGER.warning('saw PAUSECRAWLER file, pausing crawler')
+                self.paused = 1
+            elif self.paused:
+                LOGGER.warning('saw PAUSECRAWLER file disappear, un-pausing crawler')
+                self.paused = 0
 
             self.workers = [w for w in self.workers if not w.done()]
             LOGGER.debug('%d workers remain', len(self.workers))
