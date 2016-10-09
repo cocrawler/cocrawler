@@ -9,10 +9,12 @@ import resource
 import argparse
 import asyncio
 import logging
+from aiohttp import web
 
 import config
 import cocrawler
 import stats
+import webserver
 
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
@@ -56,6 +58,8 @@ def main():
     loop = asyncio.get_event_loop()
     crawler = cocrawler.Crawler(loop, conf, **kwargs)
 
+    app = webserver.make_app(loop)
+
     try:
         loop.run_until_complete(crawler.crawl())
     except KeyboardInterrupt:
@@ -64,6 +68,7 @@ def main():
         crawler.cancel_workers()
     finally:
         crawler.close()
+        webserver.close(app)
         # apparently this is needed for full aiohttp cleanup
         loop.stop()
         loop.run_forever()
