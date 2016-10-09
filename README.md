@@ -21,12 +21,12 @@ CoCrawler is pre-release, with major restructuring going on.
 
 ## Installing
 
-We recommend that you use pyenv, because (1) CoCrawler requires
-Python 3.5 or better, and (2) requirements.txt specifies exact
-module versions.
+We recommend that you use pyenv, because (1) CoCrawler requires Python
+3.5+, and (2) requirements.txt specifies exact module versions.
 
 ```
 git clone https://github.com/cocrawler/cocrawler.git
+cd cocrawl
 python -m pip install -r requirements.txt
 cd cocrawl
 make test
@@ -42,8 +42,8 @@ of databases. These databases are mostly used to orchestrate the
 cooperation of multiple crawl processes, enabling the horizontal
 scalability of the crawler over many cores and many nodes.
 
-Crawled web assets are currently stored as WARC files, although
-this interface is also pluggable.
+Crawled web assets are intended to be stored as WARC files, although
+this interface should also pluggable.
 
 ## Ranking
 
@@ -63,7 +63,7 @@ sophisticated SEO techniques, but a little ranking goes a long way.
 CoCrawler draws on ideas from the Python 3.4 code in "500 Lines or
 Less", which can be found at https://github.com/aosabook/500lines.
 It is also heavily influenced by the experiences that Greg acquired
-while working for blekko and the Internet Archive.
+while working at blekko and the Internet Archive.
 
 ## License
 
