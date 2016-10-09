@@ -162,7 +162,7 @@ class Crawler:
         if self.rejectedaddurlfd:
             print(url, file=self.rejectedaddurlfd)
 
-    def add_url(self, priority, url, seed=False, seedredirs=None):
+    def add_url(self, priority, url, seed=False, seedredirs=None, parts=None):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
         # XXX optionally generate additional urls plugin here
@@ -180,7 +180,7 @@ class Crawler:
             stats.stats_sum('rejected by seen_urls', 1)
             self.log_rejected_add_url(url)
             return
-        if not seed and not self.plugins['url_allowed'](url):
+        if not seed and not self.plugins['url_allowed'](url, parts=parts):
             LOGGER.debug('url %r was rejected by url_allow.', url)
             stats.stats_sum('rejected by url_allowed', 1)
             self.log_rejected_add_url(url)
@@ -356,10 +356,10 @@ class Crawler:
 
                 new_links = 0
                 for u in links:
-                    if self.add_url(priority + 1, u):
+                    if self.add_url(priority + 1, u.u, parts=u.parts):
                         new_links += 1
                 for u in embeds:
-                    if self.add_url(priority - 1, u):
+                    if self.add_url(priority - 1, u.u, parts=u.parts):
                         new_links += 1
 
                 if new_links:

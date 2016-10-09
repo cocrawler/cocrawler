@@ -57,8 +57,9 @@ def extension_allowed(parts):
                 return False
     return True
 
-def url_allowed(url):
-    parts = urllib.parse.urlparse(url)
+def url_allowed(url, parts=None):
+    if not parts:
+        parts = urllib.parse.urlparse(url)
     if not scheme_allowed(parts):
         return False
     if not extension_allowed(parts):

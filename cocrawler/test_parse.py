@@ -49,14 +49,17 @@ def test_html_parse():
     links, embeds = parse.find_html_links(test_html)
     assert len(links) == 5
     assert len(embeds) == 0
-    assert 'foo3.html' in links # space?
-    assert 'foo.gif' in links # space?
+    linkset = set(u.u for u in links)
+    assert 'foo3.html' in linkset # space?
+    assert 'foo.gif' in linkset # space?
 
     links, embeds = parse.find_html_links_and_embeds(test_html)
     assert len(links) == 3
     assert len(embeds) == 2
-    assert 'foo3.html' in links # space?
-    assert 'foo.gif' in embeds # space?
+    linkset = set(u.u for u in links)
+    embedset = set(u.u for u in embeds)
+    assert 'foo3.html' in linkset # space?
+    assert 'foo.gif' in embedset # space?
 
     links, embeds = parse.find_html_links_and_embeds(test_html_no_body)
     assert len(links) == 3
@@ -80,4 +83,5 @@ def test_css_parse():
     links, embeds = parse.find_css_links(test_css)
     assert len(links) == 3
     assert len(embeds) == 0
-    assert 'images/foo3.png' in links # space?
+    linkset = set(u.u for u in links)
+    assert 'images/foo3.png' in linkset # space?

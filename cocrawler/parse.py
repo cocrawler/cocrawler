@@ -5,9 +5,11 @@ XXX also need a gumbocy version
 '''
 
 import logging
-import asyncio
+from collections import namedtuple
 import re
 import urllib.parse
+
+import asyncio
 
 import stats
 import urls
@@ -58,9 +60,12 @@ def find_css_links(css, url=None):
     Finds the links embedded in css files
     '''
     with stats.record_burn('find_css_links re', url=url):
-        ret = set(re.findall(r'''\surl\(\s?['"]?([^\s'"<>()]+)''', css, re.I))
+        links = set(re.findall(r'''\surl\(\s?['"]?([^\s'"<>()]+)''', css, re.I))
 
-    return ret, set()
+    links = url_clean_join(links, url=url)
+    return links, set()
+
+parse_tuple = namedtuple('parse_tuple', ['u', 'parts'])
 
 def url_clean_join(links, url=None):
     with stats.record_burn('find_html_links url_clean_join', url=url):
@@ -70,7 +75,8 @@ def url_clean_join(links, url=None):
             if url is not None:
                 u = urllib.parse.urljoin(url, u)
             u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
-            ret.add(u)
+            parts = urllib.parse.urlparse(u)
+            ret.add(parse_tuple(u, parts))
 
     return ret
 
