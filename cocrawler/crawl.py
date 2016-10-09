@@ -47,7 +47,7 @@ def main():
     logging.basicConfig(level=levels[min(args.loglevel, len(levels)-1)])
 
     conf = config.config(args.configfile, args.config, confighome=not args.no_confighome)
-    limit_resources(config)
+    limit_resources(conf)
 
     kwargs = {}
     if args.load:
@@ -58,7 +58,7 @@ def main():
     loop = asyncio.get_event_loop()
     crawler = cocrawler.Crawler(loop, conf, **kwargs)
 
-    app = webserver.make_app(loop)
+    app = webserver.make_app(loop, conf)
 
     try:
         loop.run_until_complete(crawler.crawl())

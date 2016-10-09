@@ -18,6 +18,11 @@ Seeds:
   SeedRedirsFree: 1
   SeedRedirCount: 2
 
+REST:
+  Make this a dict:
+#  ServerIP: 0.0.0.0
+#  ServerPort: 8080
+
 Crawl:
   MaxDepth: 3
   MaxTries: 4 # outer retry loop
