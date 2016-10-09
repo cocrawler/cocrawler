@@ -3,11 +3,11 @@ async fetching of urls.
 
 Assumes robots checks have already been done.
 
-Supports proxies and server mocking.
+Supports server mocking; proxies are not yet implemented.
 
 Success returns response object (caller must release()) and response
 bytes (which were already read in order to shake out all potential
-errors.)
+exceptions.)
 
 Failure returns enough details for the caller to do something smart:
 503, other 5xx, DNS fail, connect timeout, error between connect and
@@ -46,14 +46,12 @@ def apply_url_policies(url, parts, config):
     return headers, proxy, mock_url, mock_robots
 
 async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
-
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
     retrytimeout = float(config['Crawl']['RetryTimeout'])
 
     ret = namedtuple('fetcher_return', ['response', 'body_bytes', 'header_bytes',
                                         't_first_byte', 't_last_byte', 'last_exception'])
-
     if proxy: # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
         # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
@@ -77,7 +75,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
 
             with stats.coroutine_state('fetcher fetching'):
                 with aiohttp.Timeout(pagetimeout):
-                    response = None # is this needed?
+                    response = None
                     response = await session.get(mock_url or url,
                                                  allow_redirects=allow_redirects,
                                                  headers=headers)
@@ -85,16 +83,10 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                     if stats_me:
                         stats.record_a_latency('fetcher fetching', t0, url=url)
 
-                    # XXX special sleepy 503 handling here - soft fail
-                    # XXX json_log tries
-                    # XXX serverdisconnected is a soft fail
-                    # XXX aiodns.error.DNSError
-                    # XXX equivalent to requests.exceptions.SSLerror ??
-                    #   reddit.com is an example of a CDN-related SSL fail
-                    # XXX when we retry, if local_addr was a list, switch to a different IP
+                    # XXX json_log tries?
+                    # reddit.com is an example of a CDN-related SSL fail
+                    # XXX when we retry, if local_addr was a list, switch to a different source IP
                     #   (change out the TCPConnector)
-                    # XXX what does a proxy error look like?
-                    # XXX record proxy error
 
                     # fully receive headers and body.
                     # XXX if we want to limit bytecount, do it here?
@@ -115,13 +107,12 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                 aiodns.error.DNSError, asyncio.TimeoutError) as e:
             last_exception = repr(e)
             LOGGER.debug('we sub-failed once, url is %s, exception is %s', url, last_exception)
-            LOGGER.debug('elapsed is %.3f', time.time() - t0) # XXX
             if response is not None:
                 response.release()
         except (ssl.CertificateError, ValueError, AttributeError) as e:
-            # ValueError = 'Can redirect only to http or https' (not case blind)
+            # ValueError = 'Can redirect only to http or https' (BUG in aiohttp: not case blind comparison)
             # Value Error Location: https:/// 'Host could not be detected'
-            # AttributeError: 'NoneType' object has no attribute 'errno' - only fires when CNAME has no A?!
+            # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
             last_exception = repr(e)
             LOGGER.debug('we choose to fail, url is %s, exception is %s', url, last_exception)
             subtries += maxsubtries
@@ -159,14 +150,14 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     # hsts? if ssl, check strict-transport-security header,
     #   remember max-age=foo part., other stuff like includeSubDomains
     # did we receive cookies? was the security bit set?
-    # record everything needed for warc. all headers, for example.
+    # generate warc here? both normal and robots fetches go through here.
 
     return ret(response, body_bytes, header_bytes, t_first_byte, t_last_byte, None)
 
 def upgrade_scheme(url):
     '''
-    Upgrade crawled scheme to https, if reasonable. This helps to reduce MITM attacks
-    against the crawler.
+    Upgrade crawled scheme to https, if reasonable. This helps to reduce MITM attacks against the crawler.
+
     https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
 
     Alternately, the return headers from a site might have strict-transport-security set ... a bit more
