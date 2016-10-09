@@ -394,8 +394,10 @@ class Crawler:
                 if self.stopping:
                     raise asyncio.CancelledError
 
-                while self.paused:
-                    await asyncio.sleep(1)
+                if self.paused:
+                    with stats.coroutine_state('paused'):
+                        while self.paused:
+                            await asyncio.sleep(1)
 
                 if self.remaining_url_budget is not None:
                     self.remaining_url_budget -= 1
