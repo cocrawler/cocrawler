@@ -52,22 +52,20 @@ def record_a_latency(name, start, url=None):
     latency = latencies.get(name, {})
     latency['count'] = latency.get('count', 0) + 1
     latency['time'] = latency.get('time', 0.0) + elapsed
-    avg = latency.get('avg', 1000000.)
     if 'hist' not in latency:
         latency['hist'] = HdrHistogram(1, 30 * 1000, 2) # 1ms-30sec, 2 sig figs
     latency['hist'].record_value(elapsed * 1000) # ms
 
-    # are we exceptional? 10x current average and significant
-    if elapsed > avg * 10 and elapsed > 0.015:
+    # show the 10 most recent latencies > 10 seconds
+    if elapsed > 10:
         if 'list' not in latency:
             latency['list'] = ValueSortedDict()
         url = url or 'none'
-        latency['list'][url] = -elapsed
         length = len(latency['list'])
-        for i in range(10, length):
-            latency['list'].popitem()
+        for i in range(9, length):
+            latency['list'].popitem(last=False) # throwing away biggest value(s)
+        latency['list'][url] = -elapsed
 
-    latency['avg'] = latency['time']/latency['count']
     latencies[name] = latency
 
 def update_cpu_burn(name, count, time, l):
