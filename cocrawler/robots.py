@@ -212,13 +212,13 @@ class Robots:
                 body_bytes.startswith(b'\xff\xfe')): # pragma: no cover
             return True
 
-        # OK: file magic mimetype is 'text' or similar
-        mime_type = self.magic.id_buffer(body_bytes)
-        if not (mime_type.startswith('text') or mime_type == 'application/x-empty'):
-            self.jsonlog(schemenetloc, {'error':
-                                        'robots has unexpected mimetype {}, ignoring'.format(mime_type),
-                                        'action':'fetch', 't_first_byte':t_first_byte})
-            return False
+        # OK: file magic mimetype is 'text' or similar -- too expensive, 3ms per call
+        #mime_type = self.magic.id_buffer(body_bytes)
+        #if not (mime_type.startswith('text') or mime_type == 'application/x-empty'):
+        #    self.jsonlog(schemenetloc, {'error':
+        #                                'robots has unexpected mimetype {}, ignoring'.format(mime_type),
+        #                                'action':'fetch', 't_first_byte':t_first_byte})
+        #    return False
 
         # not OK: too big
         if len(body_bytes) > 1000000: # pragma: no cover

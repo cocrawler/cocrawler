@@ -62,20 +62,24 @@ def url_allowed(url, parts=None):
         parts = urllib.parse.urlparse(url)
     if not scheme_allowed(parts):
         return False
-    if not extension_allowed(parts):
-        return False
 
     if POLICY == 'SeedsDomain':
-        return get_domain(url) in SEEDS
+        if not get_domain(url) in SEEDS:
+            return False
     elif POLICY == 'SeedsHostname':
-        return get_hostname(url, parts=parts) in SEEDS
+        if not get_hostname(url, parts=parts) in SEEDS:
+            return False
     elif POLICY == 'OnlySeeds':
         return False # cheating :-)
     elif POLICY == 'AllDomains':
-        return True
+        pass
     else:
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))
-    return False
+
+    if not extension_allowed(parts):
+        return False
+
+    return True
 
 valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
 

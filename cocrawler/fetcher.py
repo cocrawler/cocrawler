@@ -45,13 +45,14 @@ def apply_url_policies(url, parts, config):
 
     return headers, proxy, mock_url, mock_robots
 
+fetcher_return = namedtuple('fetcher_return', ['response', 'body_bytes', 'header_bytes',
+                                               't_first_byte', 't_last_byte', 'last_exception'])
+
 async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
     retrytimeout = float(config['Crawl']['RetryTimeout'])
 
-    ret = namedtuple('fetcher_return', ['response', 'body_bytes', 'header_bytes',
-                                        't_first_byte', 't_last_byte', 'last_exception'])
     if proxy: # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
         # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
@@ -137,7 +138,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     else:
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
-            return ret(None, None, None, None, None, last_exception)
+            return fetcher_return(None, None, None, None, None, last_exception)
         # fall through for the case of response.status >= 500
 
     stats.stats_sum('fetch bytes', len(body_bytes) + len(header_bytes))
@@ -152,7 +153,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
     # did we receive cookies? was the security bit set?
     # generate warc here? both normal and robots fetches go through here.
 
-    return ret(response, body_bytes, header_bytes, t_first_byte, t_last_byte, None)
+    return fetcher_return(response, body_bytes, header_bytes, t_first_byte, t_last_byte, None)
 
 def upgrade_scheme(url):
     '''
