@@ -19,6 +19,7 @@ import logging
 import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
+import psutil
 
 import pluginbase
 
@@ -64,8 +65,8 @@ class Crawler:
     def __init__(self, loop, config, load=None, no_test=False):
         self.config = config
         self.loop = loop
-        self.burner = burner.Burner(config['Crawl']['BurnerThreads'], loop, 'parser')
-        self.burner_parseinburnersize = int(self.config['Crawl']['ParseInBurnerSize'])
+        self.burner = burner.Burner(config, loop, 'parser')
+        self.burner_parseinburnersize = int(self.config['Multiprocess']['ParseInBurnerSize'])
         self.stopping = 0
         self.paused = 0
         self.no_test = no_test
@@ -520,6 +521,10 @@ class Crawler:
         self.workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
 
         # this is now the 'main' coroutine
+
+        if self.config['Multiprocess'].get('Affinity'):
+            p = psutil.Process()
+            p.cpu_affinity([0])
 
         while True:
             await asyncio.sleep(1)

@@ -9,9 +9,9 @@ import burner
 import parse
 import stats
 
-test_threadcount = 2
+config = {'Multiprocess': {'BurnerThreads': 2}}
 loop = asyncio.get_event_loop()
-b = burner.Burner(test_threadcount, loop, 'parser')
+b = burner.Burner(config, loop, 'parser')
 queue = asyncio.Queue()
 
 def parse_all(name, string):
@@ -38,7 +38,7 @@ async def work():
         queue.task_done()
 
 async def crawl():
-    workers = [asyncio.Task(work(), loop=loop) for _ in range(test_threadcount)]
+    workers = [asyncio.Task(work(), loop=loop) for _ in range(int(config['Multiprocess']['BurnerThreads']))]
     print('q count is {}'.format(queue.qsize()))
     await queue.join()
     print('join is done')

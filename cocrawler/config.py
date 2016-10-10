@@ -31,8 +31,6 @@ Crawl:
   RetryTimeout: 5
   MaxWorkers: 10
 #  MaxCrawledUrls: 11
-  BurnerThreads: 2
-  ParseInBurnerSize: 20000
 #  CookieJar: Defective
 
 UserAgent:
@@ -54,6 +52,11 @@ Plugins:
   Path:
   - ./plugins/generic
   url_allowed: SeedsHostname
+
+Multiprocess:
+  BurnerThreads: 2
+  ParseInBurnerSize: 20000
+#  Affinity: yes
 
 Save:
 #   Name:
