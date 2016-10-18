@@ -288,17 +288,27 @@ class Crawler:
             location = f.response.headers.get('location')
             location = urls.clean_webpage_links(location)
             next_url = urllib.parse.urljoin(url, location)
-            next_url_canon = urls.safe_url_canonicalization(next_url)
+            next_url_canon, _ = urls.safe_url_canonicalization(next_url)
+
+            kind = urls.special_redirect(url, next_url, parts=parts)
+            if kind is not None:
+                if 'seed' in work:
+                    prefix = 'redirect seed'
+                else:
+                    prefix = 'redirect'
+                stats.stats_sum(prefix+' '+kind, 1)
+
+            if kind is None:
+                pass
+            elif kind == 'same':
+                LOGGING.info('attempted redirect to myself: %s to %s', url, next_url)
+                # fall through; will fail seen-url test in addurl
+            else:
+                # XXX push this info onto a last-k for the host
+                # to be used pre-fetch to mutate urls we think will redir
+                pass
+
             priority += 1
-
-            # XXX make sure it didn't redirect to itself
-            #  e.g. only a capitalization change in hostname
-            #  e.g. only a capitalization change in the path - could be real, should allow even if seen before
-            #  e.g. only adding/removing www. - mark in last-k data structure for pre-processing
-            # some hosts redir to exactly themselves while setting cookies, e.g. nyt
-            # another case: directories: example.com/dir -> exmaple.com/dir/ and vice versa
-            # XXX need surt-surt comparison and seen_url check
-
             json_log['redirect'] = next_url
 
             kwargs = {}
