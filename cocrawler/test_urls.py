@@ -49,6 +49,11 @@ def test_safe_url_canonicalization():
 
 def test_special_redirect():
     assert urls.special_redirect('foo', 'bar') == None
+    assert urls.special_redirect('http://example.com/', 'http://example.com/foo') == None
+    assert urls.special_redirect('http://example.com/', 'https://example.com/foo') == None
+    assert urls.special_redirect('http://example.com/', 'https://www.example.com/foo') == None
+    assert urls.special_redirect('http://example.com/', 'http://example.com/?foo=1') == None
+    assert urls.special_redirect('http://example.com/', 'http://example.com/bar?foo=1') == None
     url1 = 'http://example.com/'
     parts1 = urllib.parse.urlparse(url1)
     assert urls.special_redirect(url1, url1) == 'same'
