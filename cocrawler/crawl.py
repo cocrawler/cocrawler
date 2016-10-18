@@ -58,7 +58,10 @@ def main():
     loop = asyncio.get_event_loop()
     crawler = cocrawler.Crawler(loop, conf, **kwargs)
 
-    app = webserver.make_app(loop, conf)
+    if conf['REST']:
+        app = webserver.make_app(loop, conf)
+    else:
+        app = None
 
     try:
         loop.run_until_complete(crawler.crawl())
@@ -68,7 +71,8 @@ def main():
         crawler.cancel_workers()
     finally:
         crawler.close()
-        webserver.close(app)
+        if app:
+            webserver.close(app)
         # apparently this is needed for full aiohttp cleanup
         loop.stop()
         loop.run_forever()
