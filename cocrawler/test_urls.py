@@ -46,3 +46,28 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/#frag') == ('http://example.com/', '#frag')
     assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == ('http://example.com/?foo=bar', '#frag')
     assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
+
+def test_special_redirect():
+    assert urls.special_redirect('foo', 'bar') == None
+    url1 = 'http://example.com/'
+    parts1 = urllib.parse.urlparse(url1)
+    assert urls.special_redirect(url1, url1) == 'same'
+    assert urls.special_redirect(url1, 'https://example.com/', parts=parts1) == 'tohttps'
+    assert urls.special_redirect(url1, 'http://www.example.com/', parts=parts1) == 'towww'
+    assert urls.special_redirect(url1, 'https://www.example.com/', parts=parts1) == 'towww+tohttps'
+
+    url2 = 'http://www.example.com/'
+    parts2 = urllib.parse.urlparse(url2)
+    assert urls.special_redirect(url2, 'https://www.example.com/', parts=parts2) == 'tohttps'
+    assert urls.special_redirect(url2, 'http://example.com/', parts=parts2) == 'tononwww'
+    assert urls.special_redirect(url2, 'https://example.com/', parts=parts2) == 'tononwww+tohttps'
+
+    url3 = 'https://www.example.com/'
+    parts3 = urllib.parse.urlparse(url3)
+    assert urls.special_redirect(url3, 'http://www.example.com/', parts=parts3) == 'tohttp'
+    assert urls.special_redirect(url3, 'https://example.com/', parts=parts3) == 'tononwww'
+    assert urls.special_redirect(url3, 'http://example.com/', parts=parts3) == 'tononwww+tohttp'
+
+    url4 = 'https://example.com/'
+    parts4 = urllib.parse.urlparse(url4)
+    assert urls.special_redirect(url4, 'http://www.example.com/', parts=parts4) == 'towww+tohttp'

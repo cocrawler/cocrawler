@@ -1,3 +1,5 @@
+import urllib.parse
+
 '''
 URL transformations for the cocrawler.
 
@@ -88,3 +90,43 @@ def upgrade_url_to_https(url):
     #  https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
     # use HTTPSEverwhere? would have to have a fallback if https failed
     return
+
+def special_redirect(url, next_url, parts=None):
+    '''
+    Detect redirects like www to non-www, http to https, etc.
+    '''
+    # TODO get next url parts from caller
+
+    if abs(len(url) - len(next_url)) > 5: # 5 = 'www.' + 's'
+        return None
+
+    if url == next_url:
+        return 'same'
+
+    if url.replace('http', 'https', 1) == next_url:
+        return 'tohttps'
+    if url.startswith('https') and url.replace('https', 'http', 1) == next_url:
+        return 'tohttp'
+
+    next_parts = urllib.parse.urlparse(next_url)
+    if not parts:
+        parts = urllib.parse.urlparse(url)
+
+    if parts.netloc.startswith('www.'):
+        if url.replace('www.', '', 1) == next_url:
+            return 'tononwww'
+        else:
+            if url.replace('www.', '', 1).replace('http', 'https', 1) == next_url:
+                return 'tononwww+tohttps'
+            elif url.startswith('https') and url.replace('www.', '', 1).replace('https', 'http', 1) == next_url:
+                return 'tononwww+tohttp'
+    elif next_parts.netloc.startswith('www.'):
+        if url == next_url.replace('www.', '', 1):
+            return 'towww'
+        else:
+            if next_url.replace('www.', '', 1) == url.replace('http', 'https', 1):
+                return 'towww+tohttps'
+            elif url.startswith('https') and next_url.replace('www.', '', 1)== url.replace('https', 'http', 1):
+                return 'towww+tohttp'
+
+    return None
