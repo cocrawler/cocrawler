@@ -1,17 +1,17 @@
 # Install with "python -m pip install -r requirements.txt".
 
 # used by the cocrawler system
-aiohttp==1.0.3
+aiohttp==1.0.5
 aiodns==1.1.1
 pyyaml==3.12
-cchardet==1.0.0
+cchardet==1.1.0
 surt==0.3.0
 robotexclusionrulesparser==1.7.1
 cachetools==2.0.0
 pluginbase==0.4
 filemagic==1.6
-tldextract==2.0.1
-sortedcontainers==1.5.3
+tldextract==2.0.2
+sortedcontainers==1.5.4
 sortedcollections==0.4.2
 psutil==4.3.1
 hdrhistogram==0.4.1
@@ -20,14 +20,15 @@ hdrhistogram==0.4.1
 pur==4.0.0
 
 # used by the mock webserver
-bottle==0.12.9
+bottle==0.12.10
 gevent==1.1.2
 
 # used by Makefile
 coverage==4.2
 pylint==1.6.4
+flake8==3.0.4
 pytest==3.0.3
-pytest-cov==2.3.1
+pytest-cov==2.4.0
 pytest-asyncio==0.5.0
 pytest-sugar==0.7.1
 coveralls==1.1
