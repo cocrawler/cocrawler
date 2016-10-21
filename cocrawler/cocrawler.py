@@ -477,7 +477,7 @@ class Crawler:
     def qps_report(self):
         now = {}
         qps = ['DNS prefetches', 'fetch URLs', 'robots fetched']
-        gather = qps
+        gather = qps.copy()
         gather.extend(['fetch bytes',])
         for s in gather:
             now[s] = stats.stat_value(s)
