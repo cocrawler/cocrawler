@@ -82,7 +82,6 @@ class CarbonTimer:
         self.last = None
 
         while True:
-            print('sleep is for', self.last_t + self.dt - time.time())
             await asyncio.sleep(self.last_t + self.dt - time.time())
             t = time.time()
             elapsed = t - self.last_t
@@ -100,8 +99,8 @@ class CarbonTimer:
                 carbon_tuples = []
                 for n in delta:
                     path = '{}.{}'.format(self.prefix, n.replace(' ', ''))
-                    carbon_tuples.append((path, (delta[n], t)))
-                carbon_tuples.append((self.prefix+'.elapsed', (elapsed, t)))
+                    carbon_tuples.append((path, (t, delta[n])))
+                carbon_tuples.append((self.prefix+'.elapsed', (t, elapsed)))
 
                 await carbon_push(self.server, self.port, carbon_tuples)
 
