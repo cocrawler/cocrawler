@@ -171,6 +171,7 @@ def stat_value(name):
     if name in burners:
         return burners[name].get('time', 0)
     # note, not including latency
+    return 0.0
 
 def burn_values(name):
     if name in burners:
