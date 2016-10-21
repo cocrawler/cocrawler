@@ -23,9 +23,9 @@ import stats
 fast_prefix = 'cocrawler.persec'
 
 fast_stats = [
-    {'name': 'DNS prefetches'},
-    {'name': 'fetch URLs'},
-    {'name': 'robots fetched'},
+    {'name': 'DNS prefetches', 'total': True},
+    {'name': 'fetch URLs', 'total': True},
+    {'name': 'robots fetched', 'total': True},
     {'name': 'fetch bytes', 'normalize': 8/1000000000.},
 ]
 
@@ -91,15 +91,19 @@ class CarbonTimer:
                 n = s['name']
                 new[n] = stats.stat_value(n)
             if self.last:
+                qps_total = 0
                 delta = {}
                 for s in self.stats_list:
                     n = s['name']
                     delta[n] = (new[n] - self.last[n])/elapsed
                     delta[n] *= s.get('normalize', 1.0)
+                    if s.get('total'):
+                        qps_total += delta[n]
                 carbon_tuples = []
                 for n in delta:
-                    path = '{}.{}'.format(self.prefix, n.replace(' ', ''))
+                    path = '{}.{}'.format(self.prefix, n.replace(' ', '_'))
                     carbon_tuples.append((path, (t, delta[n])))
+                carbon_tuples.append((self.prefix+'.qps_sum', (t, qps_total)))
                 carbon_tuples.append((self.prefix+'.elapsed', (t, elapsed)))
 
                 await carbon_push(self.server, self.port, carbon_tuples)
