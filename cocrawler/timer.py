@@ -33,6 +33,10 @@ fast_stats = [
     {'name': 'fetching/checking robots', 'kind': 'value'},
     {'name': 'robots collision sleep', 'kind': 'value'},
     {'name': 'priority', 'kind': 'value'},
+    {'name': 'fetch 50', 'kind': 'value'},
+    {'name': 'fetch 90', 'kind': 'value'},
+    {'name': 'fetch 95', 'kind': 'value'},
+    {'name': 'fetch 99', 'kind': 'value'},
 ]
 
 slow_prefix = 'cocrawler'

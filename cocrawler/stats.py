@@ -142,7 +142,12 @@ def report():
         t90 = latency['hist'].get_value_at_percentile(90.0) / 1000.
         t95 = latency['hist'].get_value_at_percentile(95.0) / 1000.
         t99 = latency['hist'].get_value_at_percentile(99.0) / 1000.
+        stats_fixed('fetch 50', t50)
+        stats_fixed('fetch 90', t90)
+        stats_fixed('fetch 95', t95)
+        stats_fixed('fetch 99', t99)
         LOGGER.info('  %s 50/90/95/99%%tiles are: %.2f/%.2f/%.2f/%.2f seconds', key, t50, t90, t95, t99)
+
         if latency.get('list'):
             LOGGER.info('    biggest latencies')
             for url in list(latency['list'].keys())[0:10]:
