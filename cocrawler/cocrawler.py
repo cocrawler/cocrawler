@@ -301,7 +301,7 @@ class Crawler:
             if kind is None:
                 pass
             elif kind == 'same':
-                LOGGING.info('attempted redirect to myself: %s to %s', url, next_url)
+                LOGGER.info('attempted redirect to myself: %s to %s', url, next_url)
                 # fall through; will fail seen-url test in addurl
             else:
                 # XXX push this info onto a last-k for the host
@@ -477,10 +477,11 @@ class Crawler:
     def qps_report(self):
         now = {}
         qps = ['DNS prefetches', 'fetch URLs', 'robots fetched']
-        for s in qps:
+        gather = qps
+        gather.extend(['fetch bytes',])
+        for s in gather:
             now[s] = stats.stat_value(s)
         now['time'] = time.time()
-        now['fetch bytes'] = stats.stat_value('fetch bytes')
         if hasattr(self, 'qps') and self.qps.get('time'):
             elapsed = now['time'] - self.qps['time']
             if elapsed > 0:
