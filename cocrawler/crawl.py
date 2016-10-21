@@ -14,6 +14,7 @@ from aiohttp import web
 import config
 import cocrawler
 import stats
+import timer
 import webserver
 
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
@@ -58,6 +59,9 @@ def main():
     loop = asyncio.get_event_loop()
     crawler = cocrawler.Crawler(loop, conf, **kwargs)
 
+    if conf.get('CarbonStats'):
+        timer.start_carbon(loop, conf)
+
     if conf['REST']:
         app = webserver.make_app(loop, conf)
     else:
@@ -73,6 +77,8 @@ def main():
         crawler.close()
         if app:
             webserver.close(app)
+        if conf.get('CarbonStats'):
+            timer.close()
         # apparently this is needed for full aiohttp cleanup
         loop.stop()
         loop.run_forever()

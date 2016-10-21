@@ -48,6 +48,10 @@ Fetcher:
   - 8.8.8.8
   - 8.8.4.4
 
+#CarbonStats:
+#  Server: localhost
+#  Port: 2004
+
 Plugins:
   Path:
   - ./plugins/generic

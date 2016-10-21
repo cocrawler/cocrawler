@@ -4,6 +4,10 @@ Crawl:
   PageTimeout: 2.0 # we talk to google.com:81 so don't make this too short
   RetryTimeout: 0.3
 
+CarbonStats:
+  Server: localhost
+  Port: 2004
+
 Plugins:
   url_allowed: OnlySeeds
 
