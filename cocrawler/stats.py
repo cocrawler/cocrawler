@@ -16,6 +16,7 @@ start_time = time.time()
 start_cpu = time.clock()
 maxes = {}
 sums = {}
+fixed = {}
 burners = {}
 latencies = {}
 coroutine_states = {}
@@ -26,6 +27,9 @@ def stats_max(name, value):
 
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
+
+def stats_fixed(name, value):
+    fixed[name] = value
 
 def record_a_burn(name, start, url=None):
     elapsed = time.clock() - start
@@ -119,6 +123,8 @@ def report():
         LOGGER.info('  %s: %d', s, sums[s])
     for s in sorted(maxes):
         LOGGER.info('  %s: %d', s, maxes[s])
+    for s in sorted(fixed):
+        LOGGER.info('  %s: %d', s, fixed[s])
 
     LOGGER.info('CPU burn report:')
     for key, burn in sorted(burners.items(), key=lambda x: x[1]['time'], reverse=True):
@@ -164,13 +170,17 @@ def report():
         LOGGER.info('  Crawl rate is %.2f gigabits/s', sums['fetch bytes']/elapsed*8/1000000000.)
 
 def stat_value(name):
-    if name in sums:
-        return sums[name]
     if name in maxes:
         return maxes[name]
+    if name in sums:
+        return sums[name]
+    if name in fixed:
+        return fixed[name]
     if name in burners:
         return burners[name].get('time', 0)
     # note, not including latency
+    if name in coroutine_states:
+        return coroutine_states[name]
     return 0.0
 
 def burn_values(name):

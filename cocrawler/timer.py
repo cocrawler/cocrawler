@@ -20,13 +20,19 @@ import asyncio
 
 import stats
 
-fast_prefix = 'cocrawler.persec'
+fast_prefix = 'cocrawler'
 
 fast_stats = [
-    {'name': 'DNS prefetches', 'total': True},
-    {'name': 'fetch URLs', 'total': True},
-    {'name': 'robots fetched', 'total': True},
-    {'name': 'fetch bytes', 'normalize': 8/1000000000.},
+    {'name': 'DNS prefetches', 'kind': 'persec', 'qps_total': True},
+    {'name': 'fetch URLs', 'kind': 'persec', 'qps_total': True},
+    {'name': 'robots fetched', 'kind': 'persec', 'qps_total': True},
+    {'name': 'fetch bytes', 'kind': 'persec', 'normalize': 8/1000000000.},
+    {'name': 'await burner thread parser', 'kind': 'value'},
+    {'name': 'fetcher fetching', 'kind': 'value'},
+    {'name': 'fetcher retry sleep', 'kind': 'value'},
+    {'name': 'fetching/checking robots', 'kind': 'value'},
+    {'name': 'robots collision sleep', 'kind': 'value'},
+    {'name': 'priority', 'kind': 'value'},
 ]
 
 slow_prefix = 'cocrawler'
@@ -92,19 +98,20 @@ class CarbonTimer:
                 new[n] = stats.stat_value(n)
             if self.last:
                 qps_total = 0
-                delta = {}
+                carbon_tuples = []
                 for s in self.stats_list:
                     n = s['name']
-                    delta[n] = (new[n] - self.last[n])/elapsed
-                    delta[n] *= s.get('normalize', 1.0)
-                    if s.get('total'):
-                        qps_total += delta[n]
-                carbon_tuples = []
-                for n in delta:
-                    path = '{}.{}'.format(self.prefix, n.replace(' ', '_'))
-                    carbon_tuples.append((path, (t, delta[n])))
-                carbon_tuples.append((self.prefix+'.qps_sum', (t, qps_total)))
-                carbon_tuples.append((self.prefix+'.elapsed', (t, elapsed)))
+                    if s['kind'] == 'persec':
+                        value = (new[n] - self.last[n])/elapsed
+                    elif s['kind'] == 'value':
+                        value = new[n]
+                    value *= s.get('normalize', 1.0)
+                    if s.get('qps_total'):
+                        qps_total += value
+                    path = '{}.{}.{}'.format(self.prefix, s['kind'], n.replace('/', '_').replace(' ', '_'))
+                    carbon_tuples.append((path, (t, value)))
+                carbon_tuples.append((self.prefix+'.persec.qps_total', (t, qps_total)))
+                carbon_tuples.append((self.prefix+'.persec.elapsed', (t, elapsed)))
 
                 await carbon_push(self.server, self.port, carbon_tuples)
 

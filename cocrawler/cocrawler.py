@@ -235,6 +235,7 @@ class Crawler:
         Fetch and process a single url.
         '''
         priority, rand, ra = work
+        stats.stats_fixed('priority', priority)
         work = self.ridealong[ra]
         url = work['url']
         tries = work.get('tries', 0)
