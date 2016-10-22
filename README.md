@@ -19,6 +19,8 @@ coroutines.
 
 CoCrawler is pre-release, with major restructuring going on.
 
+![Screenshot](https://cloud.githubusercontent.com/assets/2142266/19621581/92e83044-9849-11e6-825d-66b674cc59f0.png)
+
 ## Installing
 
 We recommend that you use pyenv, because (1) CoCrawler requires Python
