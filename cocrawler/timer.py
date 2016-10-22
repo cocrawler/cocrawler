@@ -16,6 +16,7 @@ better than doing both together.
 import pickle
 import struct
 import time
+
 import asyncio
 
 import stats
@@ -33,10 +34,10 @@ fast_stats = [
     {'name': 'fetching/checking robots', 'kind': 'value'},
     {'name': 'robots collision sleep', 'kind': 'value'},
     {'name': 'priority', 'kind': 'value'},
-    {'name': 'fetch 50', 'kind': 'value'},
-    {'name': 'fetch 90', 'kind': 'value'},
-    {'name': 'fetch 95', 'kind': 'value'},
-    {'name': 'fetch 99', 'kind': 'value'},
+#    {'name': 'fetch 50', 'kind': 'value'},
+#    {'name': 'fetch 90', 'kind': 'value'},
+#    {'name': 'fetch 95', 'kind': 'value'},
+#    {'name': 'fetch 99', 'kind': 'value'},
 ]
 
 slow_prefix = 'cocrawler'
@@ -52,11 +53,11 @@ def start_carbon(loop, config):
     port = int(config['CarbonStats'].get('Port', '2004'))
 
     global ft
-    fast = CarbonTimer(1, fast_prefix, fast_stats, server, port)
+    fast = CarbonTimer(1, fast_prefix, fast_stats, server, port, loop)
     ft = asyncio.Task(fast.timer(), loop=loop)
 
     global st
-    slow = CarbonTimer(30, slow_prefix, slow_stats, server, port)
+    slow = CarbonTimer(30, slow_prefix, slow_stats, server, port, loop)
     st = asyncio.Task(slow.timer(), loop=loop)
 
 def close():
@@ -65,12 +66,12 @@ def close():
     if not st.done():
         st.cancel()
 
-async def carbon_push(server, port, tuples):
+async def carbon_push(server, port, tuples, loop):
     payload = pickle.dumps(tuples, protocol=2)
     header = struct.pack("!L", len(payload))
     message = header + payload
     try:
-        r, w = await asyncio.open_connection(host=server, port=port)
+        r, w = await asyncio.open_connection(host=server, port=port, loop=loop)
         w.write(message)
         await w.drain()
         w.close()
@@ -80,12 +81,13 @@ async def carbon_push(server, port, tuples):
         pass
 
 class CarbonTimer:
-    def __init__(self, dt, prefix, stats_list, server, port):
+    def __init__(self, dt, prefix, stats_list, server, port, loop):
         self.dt = dt
         self.prefix = prefix
         self.stats_list = stats_list
         self.server = server
         self.port = port
+        self.loop = loop
 
     async def timer(self):
         self.last_t = time.time()
@@ -117,7 +119,7 @@ class CarbonTimer:
                 carbon_tuples.append((self.prefix+'.persec.qps_total', (t, qps_total)))
                 carbon_tuples.append((self.prefix+'.persec.elapsed', (t, elapsed)))
 
-                await carbon_push(self.server, self.port, carbon_tuples)
+                await carbon_push(self.server, self.port, carbon_tuples, self.loop)
 
             self.last = new
             self.last_t = t
