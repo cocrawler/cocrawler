@@ -2,8 +2,9 @@ import asyncio
 from aiohttp import web
 
 def make_app(loop, config):
+    # TODO switch this to socket.getaddrinfo() -- see https://docs.python.org/3/library/socket.html
     serverip = config['REST'].get('ServerIP')
-    serverport = int(config['REST'].get('ServerPort', '8080'))
+    serverport = int(config['REST'].get('ServerPort', '8081'))
     if serverip is None:
         return None
 
