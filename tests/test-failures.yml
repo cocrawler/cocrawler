@@ -1,3 +1,7 @@
+REST:
+  ServerIP: 127.0.0.1
+  ServerPort: 8093
+
 Crawl:
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
