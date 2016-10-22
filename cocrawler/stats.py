@@ -111,12 +111,6 @@ def coroutine_state(k):
     finally:
         coroutine_states[k] -= 1
 
-def coroutine_report():
-    LOGGER.info('Coroutine report:')
-    for k in sorted(list(coroutine_states.keys())):
-        if coroutine_states[k] > 0:
-            LOGGER.info('  %s: %d', k, coroutine_states[k])
-
 def report():
     LOGGER.info('Stats report:')
     for s in sorted(sums):

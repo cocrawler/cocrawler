@@ -9,7 +9,9 @@ Record delta, Send stats to Carbon
 
 TODO rebin to actual "fast" and "slow" durations
 
-The split between recording and pushing stats tolerates hiccups
+TODO option to spit out text, since setting up carbon/graphite is kinda annoying
+
+TODO The split between recording and pushing stats tolerates hiccups
 better than doing both together.
 '''
 
