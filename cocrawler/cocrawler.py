@@ -276,7 +276,9 @@ class Crawler:
             work['tries'] = tries
             work['priority'] = priority
             self.ridealong[ra] = work
-            self.q.put_nowait((priority, rand, ra))
+            # increment random so that we don't immediately retry
+            extra = random.uniform(0, 0.5)
+            self.q.put_nowait((priority, rand+extra, ra))
             return
 
         del self.ridealong[ra]
@@ -533,7 +535,6 @@ class Crawler:
                 LOGGER.warning('all workers exited, finishing up.')
                 break
 
-            print('checking to see if awaiting {} equals workers {}'.format(self.awaiting_work, len(self.workers)))
             if self.awaiting_work == len(self.workers) and self.q.qsize() == 0:
                 # this is a little racy with how awaiting work is set and the queue is read
                 # while we're in this join we aren't looking for STOPCRAWLER etc
