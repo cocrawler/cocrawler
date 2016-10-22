@@ -222,7 +222,6 @@ class Crawler:
         stats.report()
         parse.report()
         stats.check(self.config, no_test=self.no_test)
-        stats.coroutine_report()
         self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
@@ -475,30 +474,6 @@ class Crawler:
             self.next_minute = time.time() + 30
             stats.report()
 
-    def qps_report(self):
-        now = {}
-        qps = ['DNS prefetches', 'fetch URLs', 'robots fetched']
-        gather = qps.copy()
-        gather.extend(['fetch bytes',])
-        for s in gather:
-            now[s] = stats.stat_value(s)
-        now['time'] = time.time()
-        if hasattr(self, 'qps') and self.qps.get('time'):
-            elapsed = now['time'] - self.qps['time']
-            if elapsed > 0:
-                LOGGER.info('QPS report:')
-                grand_total = 0
-                for s in qps:
-                    if now[s] is not None and self.qps[s] is not None:
-                        value = (now[s] - self.qps[s])/elapsed
-                        LOGGER.info('  %s: %d qps', s, int(value))
-                        grand_total += value
-                LOGGER.info('  Total: %d qps', grand_total)
-                if now['fetch bytes'] is not None and self.qps['fetch bytes'] is not None:
-                    value = (now['fetch bytes'] - self.qps['fetch bytes'])/elapsed
-                    LOGGER.info('  Crawl rate is %.2f gigabit/s', value * 8 / 1000000000.)
-        self.qps = now
-
     def summarize(self):
         '''
         Print a human-readable summary of what's in the queues
@@ -566,8 +541,6 @@ class Crawler:
                 await self.q.join()
                 break
 
-            stats.coroutine_report()
-            self.qps_report()
             self.minute()
 
             # XXX clear the DNS cache every few hours; currently the
