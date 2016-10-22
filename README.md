@@ -17,7 +17,9 @@ coroutines.
 
 ## Status
 
-CoCrawler is pre-release, with major restructuring going on.
+CoCrawler is pre-release, with major restructuring going on. It is
+currently able to crawl at around 170 megabits / 170 pages/sec on a 4
+core machine.
 
 ![Screenshot](https://cloud.githubusercontent.com/assets/2142266/19621581/92e83044-9849-11e6-825d-66b674cc59f0.png)
 
