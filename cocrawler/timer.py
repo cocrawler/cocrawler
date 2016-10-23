@@ -23,28 +23,35 @@ import asyncio
 
 import stats
 
-fast_prefix = 'cocrawler'
+fast_prefix = 'cocrawler.fast'
 
 fast_stats = [
-    {'name': 'DNS prefetches', 'kind': 'persec', 'qps_total': True},
-    {'name': 'fetch URLs', 'kind': 'persec', 'qps_total': True},
-    {'name': 'robots fetched', 'kind': 'persec', 'qps_total': True},
-    {'name': 'fetch bytes', 'kind': 'persec', 'normalize': 8/1000000000.},
-    {'name': 'await burner thread parser', 'kind': 'value'},
-    {'name': 'fetcher fetching', 'kind': 'value'},
-    {'name': 'fetcher retry sleep', 'kind': 'value'},
-    {'name': 'fetching/checking robots', 'kind': 'value'},
-    {'name': 'robots collision sleep', 'kind': 'value'},
-    {'name': 'priority', 'kind': 'value'},
-#    {'name': 'fetch 50', 'kind': 'value'},
-#    {'name': 'fetch 90', 'kind': 'value'},
-#    {'name': 'fetch 95', 'kind': 'value'},
-#    {'name': 'fetch 99', 'kind': 'value'},
+    {'name': 'DNS prefetches', 'kind': 'delta', 'qps_total': True},
+    {'name': 'fetch URLs', 'kind': 'delta', 'qps_total': True},
+    {'name': 'robots fetched', 'kind': 'delta', 'qps_total': True},
+    {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},
+    {'name': 'await burner thread parser'},
+    {'name': 'fetcher fetching'},
+    {'name': 'fetcher retry sleep'},
+    {'name': 'fetching/checking robots'},
+    {'name': 'robots collision sleep'},
+    {'name': 'priority'},
 ]
 
-slow_prefix = 'cocrawler'
+slow_prefix = 'cocrawler.slow'
 
 slow_stats = [
+    {'name': 'initial seeds'},
+    {'name': 'added seeds'},
+    {'name': 'fetch URL'},
+    {'name': 'fetch bytes', 'normalize': 1/1000000000.},
+    {'name': 'robots denied'},
+    {'name': 'tries completely exhausted'},
+    {'name': 'max queue size'},
+    {'name': 'queue size'},
+    {'name': 'added urls'},
+    {'name': 'parser cpu time', 'kind': 'delta'},
+    {'name': 'main thread cpu time', 'kind': 'delta'},
 ]
 
 ft = None
@@ -109,17 +116,17 @@ class CarbonTimer:
                 carbon_tuples = []
                 for s in self.stats_list:
                     n = s['name']
-                    if s['kind'] == 'persec':
+                    if s.get('kind', '') == 'delta':
                         value = (new[n] - self.last[n])/elapsed
-                    elif s['kind'] == 'value':
+                    else:
                         value = new[n]
                     value *= s.get('normalize', 1.0)
                     if s.get('qps_total'):
                         qps_total += value
-                    path = '{}.{}.{}'.format(self.prefix, s['kind'], n.replace('/', '_').replace(' ', '_'))
+                    path = '{}.{}'.format(self.prefix, n.replace('/', '_').replace(' ', '_'))
                     carbon_tuples.append((path, (t, value)))
-                carbon_tuples.append((self.prefix+'.persec.qps_total', (t, qps_total)))
-                carbon_tuples.append((self.prefix+'.persec.elapsed', (t, elapsed)))
+                carbon_tuples.append((self.prefix+'.qps_total', (t, qps_total)))
+                carbon_tuples.append((self.prefix+'.elapsed', (t, elapsed)))
 
                 await carbon_push(self.server, self.port, carbon_tuples, self.loop)
 

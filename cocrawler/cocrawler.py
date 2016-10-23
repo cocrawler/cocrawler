@@ -381,6 +381,7 @@ class Crawler:
                     json_log['found_new_links'] = new_links
                 # XXX plugin for links and new links - post to Kafka, etc
                 LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
+                stats.stats_fixed('queue size', self.q.qsize())
                 stats.stats_max('max queue size', self.q.qsize())
 
         await f.response.release()
@@ -476,6 +477,10 @@ class Crawler:
             self.next_minute = time.time() + 30
             stats.report()
 
+    def update_cpu_stats(self):
+        elapsedc = time.clock() # should be since process start
+        stats.stats_fixed('main thread cpu time', elapsedc)
+
     def summarize(self):
         '''
         Print a human-readable summary of what's in the queues
@@ -542,6 +547,7 @@ class Crawler:
                 await self.q.join()
                 break
 
+            self.update_cpu_stats()
             self.minute()
 
             # XXX clear the DNS cache every few hours; currently the

@@ -150,10 +150,7 @@ def report():
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
-    elapsedc = time.clock() - start_cpu # includes all threads
-    parser_cpu = stat_value('parser cpu time')
-    if parser_cpu:
-        elapsedc -= parser_cpu
+    elapsedc = time.clock() - start_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
     if elapsed > 0:
@@ -238,6 +235,7 @@ def update(l):
         stats_sum(k, s[k])
     for k in b:
         update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list'))
+    stats_fixed('parser cpu time', burners.get('burner thread parser total cpu time', {}).get('time', 0))
 
 def clear():
     '''
