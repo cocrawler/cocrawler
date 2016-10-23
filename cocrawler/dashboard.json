@@ -1,0 +1,78 @@
+[
+  {
+    "lineMode": "staircase",
+    "target": [
+      "cocrawler.fast.qps_sum",
+      "cocrawler.fast.fetcher_fetching",
+      "cocrawler.fast.fetcher_retry_sleep",
+      "cocrawler.fast.robots_collision_sleep",
+      "cocrawler.fast.await_burner_thread_parser"
+    ],
+    "title": "coroutine states",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477084163.479",
+    "drawNullAsZero": "true"
+  },
+  {
+    "lineMode": "staircase",
+    "drawNullAsZero": "true",
+    "title": "depth from seed",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477084298.08",
+    "target": [
+      "cocrawler.fast.qps_sum",
+      "cocrawler.fast.priority"
+    ]
+  },
+  {
+    "lineMode": "staircase",
+    "drawNullAsZero": "true",
+    "title": "qps",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477088320.952",
+    "target": [
+      "cocrawler.fast.robots_fetched",
+      "cocrawler.fast.fetch_URLs",
+      "cocrawler.fast.DNS_prefetches",
+      "cocrawler.fast.qps_total"
+    ]
+  },
+  {
+    "lineMode": "staircase",
+    "drawNullAsZero": "true",
+    "title": "bandwidth",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477084435.074",
+    "target": [
+      "cocrawler.fast.fetch_bytes"
+    ]
+  },
+  {
+    "lineMode": "staircase",
+    "drawNullAsZero": "true",
+    "title": "cpu consumption",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477195917.721",
+    "target": [
+      "cocrawler.slow.main_thread_cpu_time",
+      "cocrawler.slow.parser_cpu_time"
+    ]
+  },
+  {
+    "width": "586",
+    "height": "305",
+    "_salt": "1477196227.692",
+    "title": "URL Stats",
+    "target": [
+      "cocrawler.slow.added_urls",
+      "cocrawler.slow.fetch_URL",
+      "cocrawler.slow.max_queue_size",
+      "cocrawler.slow.queue_size"
+    ]
+  }
+]
