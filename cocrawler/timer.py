@@ -19,6 +19,8 @@ import pickle
 import struct
 import time
 import resource
+import functools
+import sys
 
 import asyncio
 
@@ -56,6 +58,12 @@ slow_stats = [
     {'name': 'main thread cpu time', 'kind': 'delta'},
 ]
 
+def timer_exception_complaint(name, fut):
+    exc = fut.exception()
+    if exc:
+        # this raises, but the stack trace points here
+        r = fut.result()
+
 ft = None
 st = None
 
@@ -66,10 +74,12 @@ def start_carbon(loop, config):
     global ft
     fast = CarbonTimer(1, fast_prefix, fast_stats, server, port, loop)
     ft = asyncio.Task(fast.timer(), loop=loop)
+    ft.add_done_callback(functools.partial(timer_exception_complaint, 'fast carbon timer'))
 
     global st
     slow = CarbonTimer(30, slow_prefix, slow_stats, server, port, loop)
     st = asyncio.Task(slow.timer(), loop=loop)
+    st.add_done_callback(functools.partial(timer_exception_complaint, 'slow carbon timer'))
 
 def close():
     if not ft.done():
