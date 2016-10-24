@@ -31,7 +31,7 @@ def limit_resources(config):
     resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 
     soft, hard = resource.getrlimit(resource.RLIMIT_AS) # RLIMIT_VMEM does not exist?!
-    resource.setrlimit(resource.RLIMIT_AS, (10 * 1024 * 1024 * 1024, hard)) # XXX config
+    resource.setrlimit(resource.RLIMIT_AS, (16 * 1024 * 1024 * 1024, hard)) # XXX config
 
 def main():
     '''
