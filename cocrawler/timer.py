@@ -18,6 +18,7 @@ better than doing both together.
 import pickle
 import struct
 import time
+import resource
 
 import asyncio
 
@@ -30,6 +31,7 @@ fast_stats = [
     {'name': 'fetch URLs', 'kind': 'delta', 'qps_total': True},
     {'name': 'robots fetched', 'kind': 'delta', 'qps_total': True},
     {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},
+    {'name': 'awaiting work'},
     {'name': 'await burner thread parser'},
     {'name': 'fetcher fetching'},
     {'name': 'fetcher retry sleep'},
@@ -127,6 +129,10 @@ class CarbonTimer:
                     carbon_tuples.append((path, (t, value)))
                 carbon_tuples.append((self.prefix+'.qps_total', (t, qps_total)))
                 carbon_tuples.append((self.prefix+'.elapsed', (t, elapsed)))
+                ru = resource.getrusage(resource.RUSAGE_SELF)
+                vmem = (ru[2])/1000000.
+                # TODO: swapouts in 8, blocks out in 10
+                carbon_tuples.append((self.prefix+'.vmem', (t, vmem)))
 
                 await carbon_push(self.server, self.port, carbon_tuples, self.loop)
 

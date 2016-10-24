@@ -400,7 +400,8 @@ class Crawler:
                     # this is racy with the test for all workers awaiting.
                     # putting it here makes sure the race is rarely run.
                     self.awaiting_work += 1
-                    work = await self.q.get()
+                    with stats.coroutine_state('awaiting work'):
+                        work = await self.q.get()
                     self.awaiting_work -= 1
                 await self.fetch_and_process(work)
                 self.q.task_done()
