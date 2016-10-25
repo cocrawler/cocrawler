@@ -72,12 +72,11 @@
   {
     "width": "586",
     "height": "305",
-    "_salt": "1477356858.813",
+    "_salt": "1477357929.201",
     "drawNullAsZero": "true",
     "lineMode": "staircase",
     "title": "coroutine states",
     "target": [
-      "cocrawler.fast.qps_total",
       "cocrawler.fast.fetcher_fetching",
       "cocrawler.fast.fetcher_retry_sleep",
       "cocrawler.fast.robots_collision_sleep",
