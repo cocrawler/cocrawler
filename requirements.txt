@@ -13,8 +13,9 @@ filemagic==1.6
 tldextract==2.0.2
 sortedcontainers==1.5.4
 sortedcollections==0.4.2
-psutil==4.3.1
+psutil==4.4.0
 hdrhistogram==0.4.1
+fakeredis==0.8.1
 
 # used to maintain this file
 pur==4.0.0
