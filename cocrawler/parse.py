@@ -97,7 +97,11 @@ def report():
     LOGGER.info('Burner thread report:')
     if c is not None and c > 0:
         LOGGER.info('  Burner thread parsed %.1f MB/cpu-second', b / c / 1000000)
+    d = stats.stat_value('sha1 html')
+    if d is not None and d > 0:
+        LOGGER.info('  Burner thread sha1 %.1f MB/cpu-second', b / d / 1000000)
 
     t, c = stats.burn_values('find_html_links url_clean_join')
     if c is not None and c > 0 and t is not None and t > 0:
         LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
+
