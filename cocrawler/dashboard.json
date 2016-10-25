@@ -1,21 +1,6 @@
 [
   {
     "lineMode": "staircase",
-    "target": [
-      "cocrawler.fast.qps_sum",
-      "cocrawler.fast.fetcher_fetching",
-      "cocrawler.fast.fetcher_retry_sleep",
-      "cocrawler.fast.robots_collision_sleep",
-      "cocrawler.fast.await_burner_thread_parser"
-    ],
-    "title": "coroutine states",
-    "height": "305",
-    "width": "586",
-    "_salt": "1477084163.479",
-    "drawNullAsZero": "true"
-  },
-  {
-    "lineMode": "staircase",
     "drawNullAsZero": "true",
     "title": "depth from seed",
     "height": "305",
@@ -64,15 +49,41 @@
     ]
   },
   {
-    "width": "586",
-    "height": "305",
-    "_salt": "1477196227.692",
-    "title": "URL Stats",
     "target": [
       "cocrawler.slow.added_urls",
       "cocrawler.slow.fetch_URL",
       "cocrawler.slow.max_queue_size",
       "cocrawler.slow.queue_size"
+    ],
+    "title": "URL Stats",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477196227.692"
+  },
+  {
+    "target": [
+      "cocrawler.fast.vmem"
+    ],
+    "title": "Resident memory",
+    "height": "305",
+    "width": "586",
+    "_salt": "1477341206.655"
+  },
+  {
+    "width": "586",
+    "height": "305",
+    "_salt": "1477356858.813",
+    "drawNullAsZero": "true",
+    "lineMode": "staircase",
+    "title": "coroutine states",
+    "target": [
+      "cocrawler.fast.qps_total",
+      "cocrawler.fast.fetcher_fetching",
+      "cocrawler.fast.fetcher_retry_sleep",
+      "cocrawler.fast.robots_collision_sleep",
+      "cocrawler.fast.await_burner_thread_parser",
+      "cocrawler.fast.awaiting_work",
+      "cocrawler.fast.await_main_thread_parser"
     ]
   }
 ]
