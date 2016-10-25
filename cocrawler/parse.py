@@ -8,6 +8,7 @@ import logging
 from collections import namedtuple
 import re
 import urllib.parse
+import hashlib
 
 import asyncio
 
@@ -16,18 +17,28 @@ import urls
 
 LOGGER = logging.getLogger(__name__)
 
+def do_burner_work_html(html, html_bytes, url=None):
+    stats.stats_sum('parser html bytes', len(html_bytes))
+
+    with stats.record_burn('find_html_links re', url=url):
+        links, embeds = find_html_links(html, url=url)
+
+    with stats.record_burn('find_html_links url_clean_join', url=url):
+        links = url_clean_join(links, url=url)
+        embeds = url_clean_join(embeds, url=url)
+
+    with stats.record_burn('sha1 html', url=url):
+        sha1 = 'sha1:' + hashlib.sha1(html_bytes).hexdigest()
+
+    return links, embeds, sha1
+
 def find_html_links(html, url=None):
     '''
     Find the outgoing links and embeds in html. If url passed in, urljoin to it.
 
-    On a 3.4ghz x86 core, this runs at 50 megabytes/sec (20ms per MB)
+    On a 3.4ghz x86 core, this runs at 50 megabytes/sec.
     '''
-    stats.stats_sum('parser html bytes', len(html))
-
-    with stats.record_burn('find_html_links re', url=url): # this with is currently a noop
-        links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
-
-    links = url_clean_join(links, url=url)
+    links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
     return links, set()
 
 def find_html_links_and_embeds(html, url=None):
@@ -65,19 +76,19 @@ def find_css_links(css, url=None):
     links = url_clean_join(links, url=url)
     return links, set()
 
-parse_tuple = namedtuple('parse_tuple', ['u', 'parts'])
+parse_tuple = namedtuple('parse_tuple', ['u', 'parts', 'hostname', 'domain'])
 
 def url_clean_join(links, url=None):
-    with stats.record_burn('find_html_links url_clean_join', url=url):
-        ret = set()
-        for u in links:
-            u = urls.clean_webpage_links(u)
-            if url is not None:
-                u = urllib.parse.urljoin(url, u)
-            u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
-            parts = urllib.parse.urlparse(u)
-            ret.add(parse_tuple(u, parts))
-
+    ret = set()
+    for u in links:
+        u = urls.clean_webpage_links(u)
+        if url is not None:
+            u = urllib.parse.urljoin(url, u)
+        u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
+        parts = urllib.parse.urlparse(u)
+        hostname = urls.get_hostname(None, parts)
+        domain = urls.get_domain(hostname)
+        ret.add(parse_tuple(u, parts, hostname, domain))
     return ret
 
 def report():

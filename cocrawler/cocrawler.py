@@ -359,10 +359,12 @@ class Crawler:
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
                 if len(body) > self.burner_parseinburnersize:
-                    links, embeds = await self.burner.burn(partial(parse.find_html_links, body, url=url), url=url)
+                    links, embeds, sha1 = await self.burner.burn(
+                        partial(parse.do_burner_work_html, body, f.body_bytes, url=url),
+                        url=url)
                 else:
-                    with stats.coroutine_state('await parser'):
-                        links, embeds = parse.find_html_links(body, url=url)
+                    with stats.coroutine_state('await main thread parser'):
+                        links, embeds, sha1 = parse.do_burner_work_html(body, f.body_bytes, url=url)
 
                 LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
                              url, len(links), len(embeds))
@@ -370,6 +372,7 @@ class Crawler:
                 stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
                 new_links = 0
+                # TODO: note that we also have u.{hostname,domain}, use them
                 for u in links:
                     if self.add_url(priority + 1, u.u, parts=u.parts):
                         new_links += 1

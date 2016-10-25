@@ -45,14 +45,17 @@ href=foo2.htm></a>
 <img src=foo.gif />
 '''
 
-def test_html_parse():
-    links, embeds = parse.find_html_links(test_html)
+def test_do_burner_work_html():
+    test_html_bytes = test_html.encode(encoding='utf-8', errors='replace')
+    links, embeds, sha1 = parse.do_burner_work_html(test_html, test_html_bytes)
     assert len(links) == 5
     assert len(embeds) == 0
     linkset = set(u.u for u in links)
     assert 'foo3.html' in linkset # space?
     assert 'foo.gif' in linkset # space?
+    assert sha1 == 'sha1:8ea2d7e90c956118c451819330b875994f96f511'
 
+def test_misc_parsers():
     links, embeds = parse.find_html_links_and_embeds(test_html)
     assert len(links) == 3
     assert len(embeds) == 2

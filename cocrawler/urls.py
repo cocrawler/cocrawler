@@ -1,4 +1,5 @@
 import urllib.parse
+import tldextract
 
 '''
 URL transformations for the cocrawler.
@@ -74,12 +75,15 @@ def safe_url_canonicalization(url):
     (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
     scheme = scheme.lower()
     netloc = netloc.lower()
-    if netloc[-3:] == ':80':
+    if scheme == 'http' and netloc[-3:] == ':80':
         netloc = netloc[:-3]
+    if scheme == 'https' and netloc[-4:] == ':443':
+        netloc = netloc[:-4]
 
     # TODO:
     #  decode unnecessary quotes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E
     #  encode necessary quotes -- need to take the str to bytes first -- different list for each part
+    #  punycode hostnames
 
     if fragment is not '':
         fragment = '#' + fragment
@@ -130,3 +134,25 @@ def special_redirect(url, next_url, parts=None):
                 return 'towww+tohttp'
 
     return None
+
+def get_domain(hostname):
+    # XXX config option to set include_psl_private_domains=True ?
+    #  sometimes we do want *.blogspot.com to all be different tlds
+    tlde = tldextract.extract(hostname)
+    mylist = list(tlde) # make it easy to change
+    if mylist[1] == 'www':
+        mylist[1] = ''
+    if mylist[2] == 'www':
+        mylist[2] = ''
+    return '.'.join(part for part in mylist[1:3] if part)
+
+def get_hostname(url, parts=None, remove_www=False):
+    # TODO: also duplicated in cocrawler.urls.
+    # note www handling, different parts of the code 
+    if not parts:
+        parts = urllib.parse.urlparse(url)
+    hostname = parts.netloc
+    if remove_www and hostname.startswith('www.'):
+        hostname = hostname[4:]
+    return hostname
+

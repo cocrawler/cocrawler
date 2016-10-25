@@ -35,6 +35,7 @@ fast_stats = [
     {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},
     {'name': 'awaiting work'},
     {'name': 'await burner thread parser'},
+    {'name': 'await main thread parser'},
     {'name': 'fetcher fetching'},
     {'name': 'fetcher retry sleep'},
     {'name': 'fetching/checking robots'},

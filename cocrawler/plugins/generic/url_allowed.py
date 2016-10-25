@@ -16,6 +16,8 @@ SEEDS=set()
 def get_domain(hostname):
     # XXX config option to set include_psl_private_domains=True ?
     #  sometimes we do want *.blogspot.com to all be different tlds
+    # TODO: this code is duplicated in cocrawler.urls for packaging badness, get rid of this one
+    # note www handling
     tlde = tldextract.extract(hostname)
     mylist = list(tlde) # make it easy to change
     if mylist[1] == 'www':
@@ -25,6 +27,8 @@ def get_domain(hostname):
     return '.'.join(part for part in mylist[1:3] if part)
 
 def get_hostname(hostname, parts=None):
+    # TODO: also duplicated in cocrawler.urls.
+    # note www handling, different parts of the code 
     if not parts:
         parts = urllib.parse.urlparse(hostname)
     hostname = parts.netloc

@@ -22,7 +22,8 @@ def stats_wrap(partial, name, url=None):
 def set_an_affinity(cpu):
     '''
     Run in a burner thread to set affinity. The sleep
-    allows us to set affinity for each burner thread.
+    allows us to set affinity for each burner thread by
+    racing.
     '''
     p = psutil.Process()
     p.cpu_affinity([cpu])
@@ -54,6 +55,8 @@ class Burner:
         Do some cpu burning, and record stats related to it.
 
         Use functools.partial to wrap up your work function and its args.
+
+        stats_wrap is used to report how much work was done in the burner threads.
         '''
         wrap = functools.partial(stats_wrap, partial, 'burner thread {} total cpu time'.format(self.name), url=url)
 

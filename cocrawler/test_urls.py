@@ -38,6 +38,7 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?foo=bar') == ('http://example.com/?foo=bar', '')
     assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM/') == ('http://example.com/', '')
     assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM:80/') == ('http://example.com/', '')
+    assert urls.safe_url_canonicalization('httpS://EXAMPLE.COM:443/') == ('https://example.com/', '')
     assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM:81/') == ('http://example.com:81/', '')
     assert urls.safe_url_canonicalization('%2a%3Doof%20%%2f') == ('%2A%3Doof%20%%2F', '')
     assert urls.safe_url_canonicalization('foo%2a%3D%20%%2ffoo') == ('foo%2A%3D%20%%2Ffoo', '')
@@ -76,3 +77,20 @@ def test_special_redirect():
     url4 = 'https://example.com/'
     parts4 = urllib.parse.urlparse(url4)
     assert urls.special_redirect(url4, 'http://www.example.com/', parts=parts4) == 'towww+tohttp'
+
+def test_get_domain():
+    assert urls.get_domain('http://www.bbc.co.uk')  == 'bbc.co.uk'
+    assert urls.get_domain('http://www.nhs.uk') == 'nhs.uk' # nhs.uk is a public suffix!
+    assert urls.get_domain('http://www.example.com') == 'example.com'
+    assert urls.get_domain('http://sub.example.com') == 'example.com'
+
+def test_get_hostname():
+    assert urls.get_hostname('http://www.bbc.co.uk') == 'www.bbc.co.uk'
+    parts = urllib.parse.urlparse('http://www.bbc.co.uk')
+    assert urls.get_hostname(None, parts=parts) == 'www.bbc.co.uk'
+    assert urls.get_hostname('http://www.bbc.co.uk', remove_www=True) == 'bbc.co.uk'
+    assert urls.get_hostname('http://bbc.co.uk') == 'bbc.co.uk'
+    assert urls.get_hostname('http://www.example.com') == 'www.example.com'
+    assert urls.get_hostname('http://www.example.com:80') == 'www.example.com:80'
+    assert urls.get_hostname('http://www.sub.example.com') == 'www.sub.example.com'
+    assert urls.get_hostname('http://sub.example.com') == 'sub.example.com'
