@@ -18,8 +18,8 @@ Seeds:
   SeedRedirsFree: 1
   SeedRedirCount: 2
 
-REST:
-  Make this a dict:
+REST: {}
+#REST:
 #  ServerIP: 0.0.0.0
 #  ServerPort: 8080
 
@@ -65,10 +65,10 @@ Multiprocess:
 Save:
 #   Name:
 #   SaveAtExit:
-   Overwrite: n
+   Overwrite: False
 
-Logging:
-  Make this a dict:
+Logging: {}
+#Logging:
 # note that the following files are all opened for append, for
 # restart purposes. Might change to unique filenames?
 #  Crawllog: crawllog.jsonl
@@ -76,7 +76,7 @@ Logging:
 #  RejectedAddUrllog: rejectedaddurl.log
 
 Testing:
-  TestHostmapAll: n
+  TestHostmapAll: False
 #  TestHostmapAll: test.website: localhost:8080
 #  StatsEQ:
 #    fetch http code=200: 1000
