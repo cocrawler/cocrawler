@@ -75,15 +75,15 @@ def safe_url_canonicalization(url):
     (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
     scheme = scheme.lower()
     netloc = netloc.lower()
+    # TODO: punycode hostnames (codec='punycode')
     if scheme == 'http' and netloc[-3:] == ':80':
         netloc = netloc[:-3]
     if scheme == 'https' and netloc[-4:] == ':443':
         netloc = netloc[:-4]
 
     # TODO:
-    #  decode unnecessary quotes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E
-    #  encode necessary quotes -- need to take the str to bytes first -- different list for each part
-    #  punycode hostnames
+    #  decode unnecessary quoted bytes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E
+    #  encode necessary bytes -- need to take the str to bytes first -- different list for each part
 
     if fragment is not '':
         fragment = '#' + fragment
