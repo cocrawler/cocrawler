@@ -1,5 +1,7 @@
 import urllib.parse
 
+import pytest
+
 import urls
 
 def test_urllib_parse():
@@ -80,9 +82,14 @@ def test_special_redirect():
 
 def test_get_domain():
     assert urls.get_domain('http://www.bbc.co.uk')  == 'bbc.co.uk'
-    assert urls.get_domain('http://www.nhs.uk') == 'nhs.uk' # nhs.uk is a public suffix!
+    assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk' # nhs.uk is a public suffix, so this is expected
+    assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk' # ditto
     assert urls.get_domain('http://www.example.com') == 'example.com'
     assert urls.get_domain('http://sub.example.com') == 'example.com'
+    assert urls.get_domain('http://sub.blogspot.com') == 'sub.blogspot.com' # we want this behavior
+    # if the blogspot test doesn't work, try this from the shell: "tldextract -u -p"
+    # unfortunately, all tldextract users use the same cache
+    assert urls.get_domain('http://www.com') == 'www.com'
 
 def test_get_hostname():
     assert urls.get_hostname('http://www.bbc.co.uk') == 'www.bbc.co.uk'
@@ -94,3 +101,5 @@ def test_get_hostname():
     assert urls.get_hostname('http://www.example.com:80') == 'www.example.com:80'
     assert urls.get_hostname('http://www.sub.example.com') == 'www.sub.example.com'
     assert urls.get_hostname('http://sub.example.com') == 'sub.example.com'
+    assert urls.get_hostname('http://www.com') == 'www.com'
+    assert urls.get_hostname('http://www.com', remove_www=True) == 'www.com'

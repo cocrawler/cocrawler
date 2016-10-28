@@ -2,7 +2,7 @@ import urllib.parse
 import tldextract
 
 '''
-URL transformations for the cocrawler.
+URL class and transformations for the cocrawler.
 
 We apply "safe" transformations early and often.
 
@@ -10,13 +10,13 @@ We use some "less safe" transformations when we are checking if
 we've crawled (or may have crawled) an URL before. This helps
 us keep out of some kinds of crawler traps, and can save us
 a lot of effort overall.
-'''
 
-import urllib.parse
+TODO: SURT
+'''
 
 def clean_webpage_links(link):
     '''
-    Webpages have lots of random crap in them that we'd like to
+    Webpage links have lots of random crap in them that we'd like to
     clean up before calling urljoin() on them.
 
     Some of these come from
@@ -26,7 +26,7 @@ def clean_webpage_links(link):
     The following seem to be browser-universals?
     '''
 
-    # leading and trailing white space, and unescaped control chars.
+    # remove leading and trailing white space, and unescaped control chars.
     # escaped chars are a different issue.
     link = link.strip(' \x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
                       '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f')
@@ -36,7 +36,7 @@ def clean_webpage_links(link):
         # same-host-absolute-path url. unsafe.
         link = '/' + link.lstrip('/')
 
-    # XXX do something here with mid-url control chars/spaces/utf-8? or do it elsewhere?
+    # TODO: do something here with mid-url unquoted control chars/spaces/utf-8? or do it elsewhere?
 
     return link
 
@@ -45,9 +45,10 @@ def special_seed_handling(url):
     We don't expect seed-lists to be very clean.
     '''
     url = clean_webpage_links(url)
+
+    # use urlparse to accurately test if a scheme is present
     parts = urllib.parse.urlparse(url)
     if parts.scheme == '':
-        # without a scheme, the parse was invalid. start over.
         if url.startswith('//'):
             url = 'http:' + url
         else:
@@ -90,17 +91,17 @@ def safe_url_canonicalization(url):
     return urllib.parse.urlunparse((scheme, netloc, path, parms, query, None)), fragment
 
 def upgrade_url_to_https(url):
-    # uses HSTS to upgrade to https:
-    #  https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
-    # use HTTPSEverwhere? would have to have a fallback if https failed
+    # TODO
+    #  use browser HSTS list to upgrade to https:
+    #   https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
+    #  use HTTPSEverwhere? would have to have a fallback if https failed / redir to http
     return
 
+# XXX switch to using url objects
 def special_redirect(url, next_url, parts=None):
     '''
-    Detect redirects like www to non-www, http to https, etc.
+    Detect redirects like www to non-www, http to https
     '''
-    # TODO get next url parts from caller
-
     if abs(len(url) - len(next_url)) > 5: # 5 = 'www.' + 's'
         return None
 
@@ -136,23 +137,20 @@ def special_redirect(url, next_url, parts=None):
     return None
 
 def get_domain(hostname):
-    # XXX config option to set include_psl_private_domains=True ?
+    # TODOconfig option to set include_psl_private_domains=True ?
     #  sometimes we do want *.blogspot.com to all be different tlds
-    tlde = tldextract.extract(hostname)
-    mylist = list(tlde) # make it easy to change
-    if mylist[1] == 'www':
-        mylist[1] = ''
-    if mylist[2] == 'www':
-        mylist[2] = ''
-    return '.'.join(part for part in mylist[1:3] if part)
+    return tldextract.extract(hostname).registered_domain
 
 def get_hostname(url, parts=None, remove_www=False):
-    # TODO: also duplicated in cocrawler.urls.
+    # TODO: also duplicated in url_allowed.py
     # note www handling, different parts of the code 
+    # XXX www.com is a valid domain name. I need to be careful to not damage it.
     if not parts:
         parts = urllib.parse.urlparse(url)
     hostname = parts.netloc
     if remove_www and hostname.startswith('www.'):
-        hostname = hostname[4:]
+        domain = get_domain(hostname)
+        if not domain.startswith('www.'):
+            hostname = hostname[4:]
     return hostname
 
