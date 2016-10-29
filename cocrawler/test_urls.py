@@ -83,6 +83,10 @@ def test_special_redirect():
     assert urls.special_redirect(url4, 'http://www.example.com/', parts=parts4) == 'towww+tohttp'
 
 def test_get_domain():
+
+    # force TLDExtract to have the private suffix stuff enabled
+    t = tldextract.TLDExtract(include_psl_private_domains=True)
+
     assert urls.get_domain('http://www.bbc.co.uk')  == 'bbc.co.uk'
     assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk' # nhs.uk is a public suffix, so this is expected
     assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk' # ditto
