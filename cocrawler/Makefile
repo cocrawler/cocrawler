@@ -1,4 +1,5 @@
 pytest:
+	tldextract -u -p
 	py.test
 
 test: pytest
