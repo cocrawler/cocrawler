@@ -10,7 +10,7 @@ import argparse
 import asyncio
 import logging
 
-import config
+import conf
 import cocrawler
 import stats
 import timer
@@ -40,14 +40,14 @@ def main():
     args = ARGS.parse_args()
 
     if args.printdefault:
-        config.print_default()
+        conf.print_default()
         sys.exit(1)
 
     levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
     logging.basicConfig(level=levels[min(args.loglevel, len(levels)-1)])
 
-    conf = config.config(args.configfile, args.config, confighome=not args.no_confighome)
-    limit_resources(conf)
+    config = conf.config(args.configfile, args.config, confighome=not args.no_confighome)
+    limit_resources(config)
 
     kwargs = {}
     if args.load:
@@ -56,13 +56,13 @@ def main():
         kwargs['no_test'] = True
 
     loop = asyncio.get_event_loop()
-    crawler = cocrawler.Crawler(loop, conf, **kwargs)
+    crawler = cocrawler.Crawler(loop, config, **kwargs)
 
-    if conf.get('CarbonStats'):
-        timer.start_carbon(loop, conf)
+    if config.get('CarbonStats'):
+        timer.start_carbon(loop, config)
 
-    if conf['REST']:
-        app = webserver.make_app(loop, conf)
+    if config['REST']:
+        app = webserver.make_app(loop, config)
     else:
         app = None
 
@@ -76,7 +76,7 @@ def main():
         crawler.close()
         if app:
             webserver.close(app)
-        if conf.get('CarbonStats'):
+        if config.get('CarbonStats'):
             timer.close()
         # apparently this is needed for full aiohttp cleanup
         loop.stop()
