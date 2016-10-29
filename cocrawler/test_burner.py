@@ -11,5 +11,4 @@ def test_stats_wrap():
     '''
     partial = functools.partial(trivial)
 
-    burner.stats_wrap(trivial, 'trivial')
-
+    burner.stats_wrap(partial, 'trivial')

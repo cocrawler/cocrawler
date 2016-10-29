@@ -48,7 +48,8 @@ async def prefetch_dns(parts, mock_url, session):
         with stats.record_latency('fetcher DNS lookup', url=host):
             with stats.coroutine_state('fetcher DNS lookup'):
                 # if this raises an exception, it's caught in the caller
-                answer = await session.connector._resolve_host(host, port)
+                # we want to use this protected thing because we want the result cached in the connector
+                answer = await session.connector._resolve_host(host, port) # pylint: disable=protected-access
                 stats.stats_sum('DNS prefetches', 1)
     else:
         answer = session.connector.cached_hosts[(host, port)]
@@ -98,4 +99,3 @@ async def query(host, qtype):
         return await res.query(host, qtype)
     except aiodns.error.DNSError:
         pass
-

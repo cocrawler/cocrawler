@@ -34,7 +34,8 @@ class EventAccumulator:
             if len(self.data[l]) == 1:
                 self.data[l].append(value) # only at startup
             if len(self.data[l]) > 10:
-                value = self.function(self.data[l][1:])
+                # this confuses pylint. all of the functions return floats
+                value = self.function(self.data[l][1:]) # pylint: disable=redefined-variable-type
                 self.data[l] = [value]
             else:
                 break

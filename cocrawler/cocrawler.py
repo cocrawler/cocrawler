@@ -32,7 +32,6 @@ import fetcher
 import useragent
 import urls
 import burner
-import dns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -146,6 +145,8 @@ class Crawler:
         if self.remaining_url_budget is not None:
             self.remaining_url_budget = int(self.remaining_url_budget)
         self.awaiting_work = 0
+
+        self.workers = []
 
         LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
         LOGGER.info('Touch ~/PAUSECRAWLER.%d to pause the crawler.', os.getpid())
@@ -290,7 +291,6 @@ class Crawler:
             location = f.response.headers.get('location')
             location = urls.clean_webpage_links(location)
             next_url = urllib.parse.urljoin(url, location)
-            next_url_canon, _ = urls.safe_url_canonicalization(next_url)
 
             kind = urls.special_redirect(url, next_url, parts=parts)
             if kind is not None:
@@ -365,6 +365,7 @@ class Crawler:
                 else:
                     with stats.coroutine_state('await main thread parser'):
                         links, embeds, sha1 = parse.do_burner_work_html(body, f.body_bytes, url=url)
+                json_log['checksum'] = sha1
 
                 LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
                              url, len(links), len(embeds))

@@ -16,14 +16,13 @@ full response, proxy failure. Plus an errorstring good enough for logging.
 
 import time
 import traceback
-import urllib
 from collections import namedtuple
+import ssl
 
 import asyncio
 import logging
 import aiohttp
 import aiodns
-import ssl
 
 import stats
 import dns
@@ -46,9 +45,10 @@ def apply_url_policies(url, parts, config):
     return headers, proxy, mock_url, mock_robots
 
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'header_bytes',
-                                               't_first_byte', 't_last_byte', 'last_exception'])
+                                                 't_first_byte', 't_last_byte', 'last_exception'])
 
-async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
+async def fetch(url, parts, session, config,
+                headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
     retrytimeout = float(config['Crawl']['RetryTimeout'])
@@ -96,7 +96,7 @@ async def fetch(url, parts, session, config, headers=None, proxy=None, mock_url=
                     header_bytes = response.raw_headers
 
             if len(iplist) == 0:
-                LOGGER.info('surprised that no-ip-address fetch of {} succeeded'.format(parts.netloc))
+                LOGGER.info('surprised that no-ip-address fetch of %s succeeded', parts.netloc)
 
             # break only if we succeeded. 5xx = retry, exception = retry
             if response.status < 500:

@@ -135,8 +135,8 @@ class Robots:
 
         # if we got a 404, return an empty robots.txt
         if f.response.status == 404:
-            self.jsonlog(schemenetloc, {'error':'got a 404, treating as empty robots',
-                                        'action':'fetch', 't_first_byte':f.t_first_byte})
+            self.jsonlog(schemenetloc, {'error': 'got a 404, treating as empty robots',
+                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
             parsed.parse('')
             self.datalayer.cache_robots(schemenetloc, parsed)
@@ -150,8 +150,9 @@ class Robots:
         # this implements only None (deny)
         if str(f.response.status).startswith('4') or str(f.response.status).startswith('5'):
             self.jsonlog(schemenetloc,
-                         {'error':'got an unexpected status of {}, treating as deny'.format(f.response.status),
-                          'action':'fetch', 't_first_byte':f.t_first_byte})
+                         {'error':
+                          'got an unexpected status of {}, treating as deny'.format(f.response.status),
+                          'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
             await f.response.release()
             return None

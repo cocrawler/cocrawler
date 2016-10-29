@@ -20,7 +20,6 @@ import struct
 import time
 import resource
 import functools
-import sys
 
 import asyncio
 
@@ -63,7 +62,7 @@ def timer_exception_complaint(name, fut):
     exc = fut.exception()
     if exc:
         # this raises, but the stack trace points here
-        r = fut.result()
+        _ = fut.result()
 
 ft = None
 st = None
@@ -93,14 +92,13 @@ async def carbon_push(server, port, tuples, loop):
     header = struct.pack("!L", len(payload))
     message = header + payload
     try:
-        r, w = await asyncio.open_connection(host=server, port=port, loop=loop)
+        _, w = await asyncio.open_connection(host=server, port=port, loop=loop)
         w.write(message)
         await w.drain()
         w.close()
     except OSError:
         # XXX do something useful here
         stats.stats_sum('carbon stats push fail', 1)
-        pass
 
 class CarbonTimer:
     def __init__(self, dt, prefix, stats_list, server, port, loop):
@@ -110,6 +108,8 @@ class CarbonTimer:
         self.server = server
         self.port = port
         self.loop = loop
+        self.last_t = None
+        self.last = None
 
     async def timer(self):
         self.last_t = time.time()

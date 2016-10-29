@@ -1,4 +1,3 @@
-import os
 import sys
 import logging
 import functools
@@ -33,7 +32,7 @@ async def work():
         w = await queue.get()
         string = ' ' * 10000
         partial = functools.partial(parse_all, w, string)
-        ret = await b.burn(partial)
+        await b.burn(partial)
         queue.task_done()
 
 async def crawl():

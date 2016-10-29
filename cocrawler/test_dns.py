@@ -4,7 +4,6 @@ for something that purports to be a unit test.
 '''
 
 import socket
-import asyncio
 import urllib
 import logging
 
@@ -17,7 +16,6 @@ levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])
 
 ns = ['8.8.8.8', '8.8.4.4'] # google
-resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)
 
 @pytest.mark.asyncio
 async def test_prefetch_dns():
@@ -48,8 +46,7 @@ async def test_resolver():
     assert len(iplist) > 0
 
     iplist = await dns.query('google.com', 'CNAME')
-    assert iplist == None
+    assert iplist is None
 
     iplist = await dns.query('www.blogger.com', 'CNAME')
     assert len(iplist) > 0
-

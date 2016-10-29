@@ -31,10 +31,10 @@ def parse_all(name, string):
 async def work():
     while True:
         w = await queue.get()
-        with open(w, 'r', errors='ignore') as f:
-            string = f.read()
+        with open(w, 'r', errors='ignore') as fi:
+            string = fi.read()
         partial = functools.partial(parse_all, w, string)
-        ret = await b.burn(partial)
+        await b.burn(partial)
         queue.task_done()
 
 async def crawl():
@@ -53,9 +53,9 @@ for d in sys.argv[1:]:
         queue.put_nowait(d)
         continue
     for root, _, files in os.walk(d):
-        for name in files:
-            if name.endswith('.html') or name.endswith('.htm'):
-                queue.put_nowait(os.path.join(root, name))
+        for f in files:
+            if f.endswith('.html') or f.endswith('.htm'):
+                queue.put_nowait(os.path.join(root, f))
 
 print('Queue size is {}, beginning work.'.format(queue.qsize()))
 

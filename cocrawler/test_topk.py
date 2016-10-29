@@ -24,10 +24,10 @@ def test_topK_sum():
     t.add('bar', 1, 'bara') # update value and ridealong
     assert t.readout() == [('baz', [3, 'ridealong']), ('bar', [2, 'bara']), ('foo', [1, None])]
     t.add('barf', 1, None) # equal to smallest, replacement happens
-    assert t.readout() == [('baz', [3, 'ridealong']), ('bar', [2, 'bara']), ('barf', [1, None])] # barf error is 0
+    assert t.readout() == [
+        ('baz', [3, 'ridealong']), ('bar', [2, 'bara']), ('barf', [1, None]) # barf error is 0
+        ]
     t.add('barf', 2, None) # update
     assert t.readout() == [('baz', [3, 'ridealong']), ('barf', [3, None]), ('bar', [2, 'bara'])]
     t.add('blech', 1, None) # evict bar
     assert t.readout() == [('baz', [3, 'ridealong']), ('barf', [3, None])] # blech error is 2, invisible
-
-

@@ -9,7 +9,6 @@ import resource
 import argparse
 import asyncio
 import logging
-from aiohttp import web
 
 import config
 import cocrawler
@@ -27,10 +26,10 @@ ARGS.add_argument('--loglevel', action='store', type=int, default=2)
 ARGS.add_argument('--load', action='store')
 
 def limit_resources(config):
-    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    _, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 
-    soft, hard = resource.getrlimit(resource.RLIMIT_AS) # RLIMIT_VMEM does not exist?!
+    _, hard = resource.getrlimit(resource.RLIMIT_AS) # RLIMIT_VMEM does not exist?!
     resource.setrlimit(resource.RLIMIT_AS, (16 * 1024 * 1024 * 1024, hard)) # XXX config
 
 def main():

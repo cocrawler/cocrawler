@@ -1,6 +1,3 @@
-import urllib.parse
-import tldextract
-
 '''
 URL class and transformations for the cocrawler.
 
@@ -13,6 +10,9 @@ a lot of effort overall.
 
 TODO: SURT
 '''
+
+import urllib.parse
+import tldextract
 
 def clean_webpage_links(link):
     '''
@@ -123,7 +123,8 @@ def special_redirect(url, next_url, parts=None):
         else:
             if url.replace('www.', '', 1).replace('http', 'https', 1) == next_url:
                 return 'tononwww+tohttps'
-            elif url.startswith('https') and url.replace('www.', '', 1).replace('https', 'http', 1) == next_url:
+            elif (url.startswith('https') and
+                  url.replace('www.', '', 1).replace('https', 'http', 1) == next_url):
                 return 'tononwww+tohttp'
     elif next_parts.netloc.startswith('www.'):
         if url == next_url.replace('www.', '', 1):
@@ -131,7 +132,8 @@ def special_redirect(url, next_url, parts=None):
         else:
             if next_url.replace('www.', '', 1) == url.replace('http', 'https', 1):
                 return 'towww+tohttps'
-            elif url.startswith('https') and next_url.replace('www.', '', 1)== url.replace('https', 'http', 1):
+            elif (url.startswith('https') and
+                  next_url.replace('www.', '', 1) == url.replace('https', 'http', 1)):
                 return 'towww+tohttp'
 
     return None
@@ -143,7 +145,7 @@ def get_domain(hostname):
 
 def get_hostname(url, parts=None, remove_www=False):
     # TODO: also duplicated in url_allowed.py
-    # note www handling, different parts of the code 
+    # note www handling, different parts of the code
     # XXX www.com is a valid domain name. I need to be careful to not damage it.
     if not parts:
         parts = urllib.parse.urlparse(url)

@@ -48,7 +48,9 @@ class Burner:
             for _ in range(thread_count):
                 cpu = all_cpus.pop()
                 wrap = functools.partial(set_an_affinity, cpu)
-                f = asyncio.ensure_future(self.loop.run_in_executor(self.executor, wrap))
+                f = asyncio.ensure_future(self.loop.run_in_executor(self.executor, wrap)) # pylint: disable=unused-variable
+                # I can't await f because I'm not async, and the StackOverflow
+                # answers I see regarding this issue in __init__ look ugly
 
     async def burn(self, partial, url=None):
         '''
@@ -58,7 +60,8 @@ class Burner:
 
         stats_wrap is used to report how much work was done in the burner threads.
         '''
-        wrap = functools.partial(stats_wrap, partial, 'burner thread {} total cpu time'.format(self.name), url=url)
+        wrap = functools.partial(stats_wrap, partial,
+                                 'burner thread {} total cpu time'.format(self.name), url=url)
 
         f = asyncio.ensure_future(self.loop.run_in_executor(self.executor, wrap))
         with stats.coroutine_state('await burner thread {}'.format(self.name)):

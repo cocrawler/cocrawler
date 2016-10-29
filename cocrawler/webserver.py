@@ -1,4 +1,3 @@
-import asyncio
 from aiohttp import web
 
 def make_app(loop, config):
@@ -36,5 +35,5 @@ async def frontpage(request):
 
 async def api(request):
     name = request.match_info['name']
-    return web.json_resopnse({'name':name})
-
+    data = {'name': name}
+    return web.json_response(data)

@@ -1,5 +1,4 @@
 import time
-import sys
 
 import stats
 
@@ -50,4 +49,3 @@ def test_update():
         assert s[k]*2 == stats.stat_value(k)
         break
     # no test for b, yet
-

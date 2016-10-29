@@ -45,7 +45,7 @@ def record_a_burn(name, start, url=None):
         url = url or 'none'
         burn['list'][url] = -elapsed
         length = len(burn['list'])
-        for i in range(10, length):
+        for _ in range(10, length):
             burn['list'].popitem()
 
     burn['avg'] = burn['time']/burn['count']
@@ -66,23 +66,23 @@ def record_a_latency(name, start, url=None):
             latency['list'] = ValueSortedDict()
         url = url or 'none'
         length = len(latency['list'])
-        for i in range(9, length):
+        for _ in range(9, length):
             latency['list'].popitem(last=False) # throwing away biggest value(s)
         latency['list'][url] = -elapsed
 
     latencies[name] = latency
 
-def update_cpu_burn(name, count, time, l):
+def update_cpu_burn(name, count, t, l):
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + count
-    burn['time'] = burn.get('time', 0.0) + time
+    burn['time'] = burn.get('time', 0.0) + t
     if l is not None:
         l = ValueSortedDict(l)
         burn['list'] = burn.get('list', ValueSortedDict())
         for k in l: # XXX replace this loop with .update()
             burn['list'][k] = l[k]
         length = len(burn['list'])
-        for i in range(10, length):
+        for _ in range(10, length):
             burn['list'].popitem()
     burners[name] = burn
 
@@ -154,7 +154,7 @@ def report():
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
     if elapsed > 0:
-        LOGGER.info('  Main thread cpu {:.1f}%'.format(elapsedc/elapsed*100))
+        LOGGER.info('  Main thread cpu %.1f', elapsedc/elapsed*100)
     bt = burners.get('burner thread parser total cpu time', {}).get('time', 0.)
     if bt > 0:
         LOGGER.info('  Burner thread burned %.3f cpu seconds', bt)

@@ -53,12 +53,12 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
 
 def test_special_redirect():
-    assert urls.special_redirect('foo', 'bar') == None
-    assert urls.special_redirect('http://example.com/', 'http://example.com/foo') == None
-    assert urls.special_redirect('http://example.com/', 'https://example.com/foo') == None
-    assert urls.special_redirect('http://example.com/', 'https://www.example.com/foo') == None
-    assert urls.special_redirect('http://example.com/', 'http://example.com/?foo=1') == None
-    assert urls.special_redirect('http://example.com/', 'http://example.com/bar?foo=1') == None
+    assert urls.special_redirect('foo', 'bar') is None
+    assert urls.special_redirect('http://example.com/', 'http://example.com/foo') is None
+    assert urls.special_redirect('http://example.com/', 'https://example.com/foo') is None
+    assert urls.special_redirect('http://example.com/', 'https://www.example.com/foo') is None
+    assert urls.special_redirect('http://example.com/', 'http://example.com/?foo=1') is None
+    assert urls.special_redirect('http://example.com/', 'http://example.com/bar?foo=1') is None
     url1 = 'http://example.com/'
     parts1 = urllib.parse.urlparse(url1)
     assert urls.special_redirect(url1, url1) == 'same'
@@ -83,7 +83,7 @@ def test_special_redirect():
     assert urls.special_redirect(url4, 'http://www.example.com/', parts=parts4) == 'towww+tohttp'
 
 def test_get_domain():
-    assert urls.get_domain('http://www.bbc.co.uk')  == 'bbc.co.uk'
+    assert urls.get_domain('http://www.bbc.co.uk') == 'bbc.co.uk'
     assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk' # nhs.uk is a public suffix, so this is expected
     assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk' # ditto
     assert urls.get_domain('http://www.example.com') == 'example.com'
@@ -122,11 +122,11 @@ def test_URL():
     assert url.hostname == 'www.example.com'
     assert url.hostname_without_www == 'example.com'
     assert url.registered_domain == 'example.com'
-    assert url.original_frag == None
+    assert url.original_frag is None
     url = URL('http://www.example.com/#foo#foo')
     assert url.original_frag == 'foo#foo'
     url = URL('http://www.example.com/#')
-    assert url.original_frag == None
+    assert url.original_frag is None
 
     # canonicalization
     url = URL('http://www.example.com/?')
@@ -152,4 +152,3 @@ def test_URL():
     # read-only
     with pytest.raises(AttributeError):
         url.url = 'foo'
-

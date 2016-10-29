@@ -28,11 +28,11 @@ def parse_all(name, string):
 
 for d in sys.argv[1:]:
     for root, _, files in os.walk(d):
-        for name in files:
-            if name.endswith('.html') or name.endswith('.htm'):
-                expanded = os.path.join(root, name)
-                with open(expanded, 'r', errors='ignore') as f:
-                    parse_all(expanded, f.read())
+        for f in files:
+            if f.endswith('.html') or f.endswith('.htm'):
+                expanded = os.path.join(root, f)
+                with open(expanded, 'r', errors='ignore') as fi:
+                    parse_all(expanded, fi.read())
 
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])
