@@ -162,7 +162,6 @@ class URL(object):
 
     TODO: examine common search check_encoding
     TODO: handle idna xn-- encoding consistently
-    TODO: split out urljoin below into a method
     TODO: do something with frag
 
     '''
@@ -171,18 +170,34 @@ class URL(object):
             url = special_seed_handling(url)
         url = clean_webpage_links(url)
         if urljoin:
-            # XXX do I need to canonicalize urljoin, just to be safe?
             if url.startswith('http://') or url.startswith('https://'):
                 pass
             elif url.startswith('/') and not url.startswith('//'):
-                url = get_hostname(urljoin) + url
+                url = urljoin.urlparse.scheme + '://' + urljoin.hostname + url
             else:
-                url = urllib.urljoin(url, urljoin) # exensive
+                print('DEBUG')
+                url = urllib.parse.urljoin(urljoin.url, url) # exensive
 
-        # XXX do an urljoin here for more canonicalization: trailing ?, / after hostname, etc
-        self._url = url
+        if '#' in url:
+            # we have a frag. split on the leftmost #
+            url, frag = url.split('#', 1)
+            if frag == '':
+                frag = None
+            self._original_frag = frag
+        else:
+            self._original_frag = None
 
         self._urlparse = urllib.parse.urlparse(url) # expensive
+
+        if self._urlparse.path == '': # we want this to be '/'
+            # pretty much a design error, but I digress.
+            urlp = list(self._urlparse)
+            urlp[2] = '/'
+            url = urllib.parse.urlunparse(urlp)
+            self._urlparse = urllib.parse.urlparse(url) # expensive
+
+        self._url = urllib.parse.urlunparse(self._urlparse) # final canonicalization
+
         self._netloc = self.urlparse.netloc
         self._hostname = get_hostname(None, parts=self._urlparse)
         self._hostname_without_www = get_hostname(None, parts=self._urlparse, remove_www=True)
@@ -208,4 +223,6 @@ class URL(object):
     @property
     def registered_domain(self):
         return self._registered_domain
-
+    @property
+    def original_frag(self):
+        return self._original_frag

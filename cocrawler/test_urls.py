@@ -116,9 +116,35 @@ def test_tldextract():
 
 def test_URL():
     url = URL('http://www.example.com/')
-    assert url._url == 'http://www.example.com/'
+    assert url.url == 'http://www.example.com/'
     assert list(url.urlparse) == ['http', 'www.example.com', '/', '', '', '']
     assert url.netloc == 'www.example.com'
     assert url.hostname == 'www.example.com'
     assert url.hostname_without_www == 'example.com'
     assert url.registered_domain == 'example.com'
+    assert url.original_frag == None
+    url = URL('http://www.example.com/#foo#foo')
+    assert url.original_frag == 'foo#foo'
+    url = URL('http://www.example.com/#')
+    assert url.original_frag == None
+
+    # canonicalization
+    url = URL('http://www.example.com/?')
+    assert url.url == 'http://www.example.com/'
+    url = URL('http://www.example.com')
+    assert url.url == 'http://www.example.com/'
+    url = URL('http://www.example.com/?#')
+    assert url.url == 'http://www.example.com/'
+    url = URL('http://www.example.com/foo')
+    assert url.url == 'http://www.example.com/foo'
+    url = URL('http://www.example.com/foo/')
+    assert url.url == 'http://www.example.com/foo/'
+
+    # urljoin
+    urlj = URL('http://www.example.com/foo/')
+    url = URL('foo', urljoin=urlj)
+    assert url.url == 'http://www.example.com/foo/foo'
+    url = URL('/bar', urljoin=urlj)
+    assert url.url == 'http://www.example.com/bar'
+    url = URL('http://sub.example.com/', urljoin=urlj)
+    assert url.url == 'http://sub.example.com/'
