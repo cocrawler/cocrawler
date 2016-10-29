@@ -1,5 +1,10 @@
 Short-term TODO list:
 
+url object -- facilitates host and domain info
+benchmark for invoking empty burner thread
+fakeredis
+benchmark fakeredis
+
 hook up to AccumulateEvent for politeness - 5xx
   do something real with t_{first,last}_byte? - slow replies as failures
     alternately monitor simultaneous connections? slower => wider => hits limit
@@ -16,7 +21,7 @@ Space Saving Heavy Hitters
   http://www.cse.ust.hk/~raywong/comp5331/References/EfficientComputationOfFrequentAndTop-kElementsInDataStreams.pdf
   nice because it estimates the error! on read-back, can drop poorly-estimated values
   HH also called "top k"
-Hierarchical Heavy Hitters to figure out hot paths in every host
+Hierarchical Heavy Hitters to figure out hot paths in every host, and common cgi args for a site
   https://arxiv.org/pdf/1102.5540v2.pdf
 
 AccumulateTime for qps graphs
