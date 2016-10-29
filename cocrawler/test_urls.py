@@ -148,3 +148,8 @@ def test_URL():
     assert url.url == 'http://www.example.com/bar'
     url = URL('http://sub.example.com/', urljoin=urlj)
     assert url.url == 'http://sub.example.com/'
+
+    # read-only
+    with pytest.raises(AttributeError):
+        url.url = 'foo'
+
