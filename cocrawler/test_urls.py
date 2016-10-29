@@ -1,8 +1,10 @@
 import urllib.parse
 
 import pytest
+import tldextract
 
 import urls
+from urls import URL
 
 def test_urllib_parse():
     # This is just here so I can understand what urllib is doing with these:
@@ -103,3 +105,20 @@ def test_get_hostname():
     assert urls.get_hostname('http://sub.example.com') == 'sub.example.com'
     assert urls.get_hostname('http://www.com') == 'www.com'
     assert urls.get_hostname('http://www.com', remove_www=True) == 'www.com'
+
+def test_tldextract():
+    '''
+    verify that tldextract parses just the netloc
+    This is neither documented or tested by tldextract (!)
+    '''
+    assert tldextract.extract('example.com').registered_domain == 'example.com'
+    assert tldextract.extract('www.example.com').registered_domain == 'example.com'
+
+def test_URL():
+    url = URL('http://www.example.com/')
+    assert url._url == 'http://www.example.com/'
+    assert list(url.urlparse) == ['http', 'www.example.com', '/', '', '', '']
+    assert url.netloc == 'www.example.com'
+    assert url.hostname == 'www.example.com'
+    assert url.hostname_without_www == 'example.com'
+    assert url.registered_domain == 'example.com'

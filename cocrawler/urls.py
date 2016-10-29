@@ -154,3 +154,58 @@ def get_hostname(url, parts=None, remove_www=False):
             hostname = hostname[4:]
     return hostname
 
+class URL(object):
+    '''
+    Container for urls and url processing.
+    Precomputes a lot of stuff upon creation, which is usually done in a burner thread.
+    Currently idempotent.
+
+    TODO: examine common search check_encoding
+    TODO: handle idna xn-- encoding consistently
+    TODO: split out urljoin below into a method
+    TODO: do something with frag
+
+    '''
+    def __init__(self, url, urljoin=None, seed=False):
+        if seed:
+            url = special_seed_handling(url)
+        url = clean_webpage_links(url)
+        if urljoin:
+            # XXX do I need to canonicalize urljoin, just to be safe?
+            if url.startswith('http://') or url.startswith('https://'):
+                pass
+            elif url.startswith('/') and not url.startswith('//'):
+                url = get_hostname(urljoin) + url
+            else:
+                url = urllib.urljoin(url, urljoin) # exensive
+
+        # XXX do an urljoin here for more canonicalization: trailing ?, / after hostname, etc
+        self._url = url
+
+        self._urlparse = urllib.parse.urlparse(url) # expensive
+        self._netloc = self.urlparse.netloc
+        self._hostname = get_hostname(None, parts=self._urlparse)
+        self._hostname_without_www = get_hostname(None, parts=self._urlparse, remove_www=True)
+
+        # tldextract basically has its own urlparse built-in :-/
+        self._registered_domain = tldextract.extract(url).registered_domain
+
+    @property
+    def url(self):
+        return self._url
+    @property
+    def urlparse(self):
+        return self._urlparse
+    @property
+    def netloc(self):
+        return self._netloc
+    @property
+    def hostname(self):
+        return self._hostname
+    @property
+    def hostname_without_www(self):
+        return self._hostname_without_www
+    @property
+    def registered_domain(self):
+        return self._registered_domain
+
