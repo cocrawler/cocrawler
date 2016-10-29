@@ -159,24 +159,22 @@ class URL(object):
     Container for urls and url processing.
     Precomputes a lot of stuff upon creation, which is usually done in a burner thread.
     Currently idempotent.
-
-    TODO: examine common search check_encoding
-    TODO: handle idna xn-- encoding consistently
-    TODO: do something with frag
-
     '''
     def __init__(self, url, urljoin=None, seed=False):
         if seed:
             url = special_seed_handling(url)
         url = clean_webpage_links(url)
+
         if urljoin:
+            # optimize a few common cases to dodge full urljoin cost
             if url.startswith('http://') or url.startswith('https://'):
                 pass
             elif url.startswith('/') and not url.startswith('//'):
                 url = urljoin.urlparse.scheme + '://' + urljoin.hostname + url
             else:
-                print('DEBUG')
                 url = urllib.parse.urljoin(urljoin.url, url) # exensive
+
+        # XXX incorporate safe_url_canonicalization() with the below frag and / handling
 
         if '#' in url:
             # we have a frag. split on the leftmost #
@@ -195,6 +193,9 @@ class URL(object):
             urlp[2] = '/'
             url = urllib.parse.urlunparse(urlp)
             self._urlparse = urllib.parse.urlparse(url) # expensive
+
+        # url is currently decoded, and may or may not have parts of the hostname in idna
+        # XXX make sure it's valid encoding, canonicalize hostname to idna encoding ('xn--...')
 
         self._url = urllib.parse.urlunparse(self._urlparse) # final canonicalization
 
