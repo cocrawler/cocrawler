@@ -17,7 +17,7 @@ def test_sum():
     assert stats.stat_value('bar2') == 2
 
 def test_burn():
-    with stats.record_burn('foo', 'http://example.com/'):
+    with stats.record_burn('foo', url='http://example.com/'):
         t0 = time.clock()
         while time.clock() < t0 + 0.2:
             pass

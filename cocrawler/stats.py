@@ -10,6 +10,8 @@ from contextlib import contextmanager
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
 
+from urls import URL
+
 LOGGER = logging.getLogger(__name__)
 
 start_time = time.time()
@@ -32,6 +34,8 @@ def stats_fixed(name, value):
     fixed[name] = value
 
 def record_a_burn(name, start, url=None):
+    if isinstance(url, URL):
+        url = url.url
     elapsed = time.clock() - start
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
@@ -52,6 +56,8 @@ def record_a_burn(name, start, url=None):
     burners[name] = burn
 
 def record_a_latency(name, start, url=None):
+    if isinstance(url, URL):
+        url = url.url
     elapsed = time.time() - start
     latency = latencies.get(name, {})
     latency['count'] = latency.get('count', 0) + 1
