@@ -8,7 +8,6 @@ cchardet==1.1.0
 surt==0.3.0
 robotexclusionrulesparser==1.7.1
 cachetools==2.0.0
-pluginbase==0.4
 filemagic==1.6
 tldextract==2.0.2
 sortedcontainers==1.5.4

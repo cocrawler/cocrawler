@@ -12,7 +12,7 @@ import stats
 
 LOGGER = logging.getLogger(__name__)
 
-async def prefetch_dns(parts, mock_url, session):
+async def prefetch_dns(url, mock_url, session):
     '''
     So that we can track DNS transactions, and log them, we try to make sure
     DNS answers are in the cache before we try to fetch from a host that's not cached.
@@ -31,13 +31,13 @@ async def prefetch_dns(parts, mock_url, session):
     NS records can lie, but, it seems that most hosting companies use 'em "correctly"
     '''
     if mock_url is None:
-        netlocparts = parts.netloc.split(':', maxsplit=1)
+        netloc_parts = url.urlparse.netloc.split(':', maxsplit=1)
     else:
-        mockurlparts = urllib.parse.urlparse(mock_url)
-        netlocparts = mockurlparts.netloc.split(':', maxsplit=1)
-    host = netlocparts[0]
+        mockurl_parts = urllib.parse.urlparse(mock_url)
+        netloc_parts = mockurl_parts.netloc.split(':', maxsplit=1)
+    host = netloc_parts[0]
     try:
-        port = int(netlocparts[1])
+        port = int(netloc_parts[1])
     except IndexError:
         port = 80
 
@@ -47,7 +47,6 @@ async def prefetch_dns(parts, mock_url, session):
     if (host, port) not in session.connector.cached_hosts:
         with stats.record_latency('fetcher DNS lookup', url=host):
             with stats.coroutine_state('fetcher DNS lookup'):
-                # if this raises an exception, it's caught in the caller
                 # we want to use this protected thing because we want the result cached in the connector
                 answer = await session.connector._resolve_host(host, port) # pylint: disable=protected-access
                 stats.stats_sum('DNS prefetches', 1)

@@ -97,43 +97,40 @@ def upgrade_url_to_https(url):
     #  use HTTPSEverwhere? would have to have a fallback if https failed / redir to http
     return
 
-# XXX switch to using url objects
-def special_redirect(url, next_url, parts=None):
+def special_redirect(url, next_url):
     '''
     Detect redirects like www to non-www, http to https
+
+    TODO: detect adding '/' on the end of a path. Removing '/' is rare, normally a 404
     '''
-    if abs(len(url) - len(next_url)) > 5: # 5 = 'www.' + 's'
+    if abs(len(url.url) - len(next_url.url)) > 5: # 5 = 'www.' + 's'
         return None
 
-    if url == next_url:
+    if url.url == next_url.url:
         return 'same'
 
-    if url.replace('http', 'https', 1) == next_url:
+    if url.url.replace('http', 'https', 1) == next_url.url:
         return 'tohttps'
-    if url.startswith('https') and url.replace('https', 'http', 1) == next_url:
+    if url.url.startswith('https') and url.url.replace('https', 'http', 1) == next_url.url:
         return 'tohttp'
 
-    next_parts = urllib.parse.urlparse(next_url)
-    if not parts:
-        parts = urllib.parse.urlparse(url)
-
-    if parts.netloc.startswith('www.'):
-        if url.replace('www.', '', 1) == next_url:
+    if url.urlparse.netloc.startswith('www.'):
+        if url.url.replace('www.', '', 1) == next_url.url:
             return 'tononwww'
         else:
-            if url.replace('www.', '', 1).replace('http', 'https', 1) == next_url:
+            if url.url.replace('www.', '', 1).replace('http', 'https', 1) == next_url.url:
                 return 'tononwww+tohttps'
-            elif (url.startswith('https') and
-                  url.replace('www.', '', 1).replace('https', 'http', 1) == next_url):
+            elif (url.url.startswith('https') and
+                  url.url.replace('www.', '', 1).replace('https', 'http', 1) == next_url.url):
                 return 'tononwww+tohttp'
-    elif next_parts.netloc.startswith('www.'):
-        if url == next_url.replace('www.', '', 1):
+    elif next_url.urlparse.netloc.startswith('www.'):
+        if url.url == next_url.url.replace('www.', '', 1):
             return 'towww'
         else:
-            if next_url.replace('www.', '', 1) == url.replace('http', 'https', 1):
+            if next_url.url.replace('www.', '', 1) == url.url.replace('http', 'https', 1):
                 return 'towww+tohttps'
-            elif (url.startswith('https') and
-                  next_url.replace('www.', '', 1) == url.replace('https', 'http', 1)):
+            elif (url.url.startswith('https') and
+                  next_url.url.replace('www.', '', 1) == url.url.replace('https', 'http', 1)):
                 return 'towww+tohttp'
 
     return None
@@ -174,7 +171,7 @@ class URL(object):
             elif url.startswith('/') and not url.startswith('//'):
                 url = urljoin.urlparse.scheme + '://' + urljoin.hostname + url
             else:
-                url = urllib.parse.urljoin(urljoin.url, url) # exensive
+                url = urllib.parse.urljoin(urljoin.url, url) # expensive
 
         # XXX incorporate safe_url_canonicalization() with the below frag and / handling
 

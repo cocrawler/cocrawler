@@ -1,6 +1,5 @@
 Short-term TODO list:
 
-url object -- facilitates host and domain info
 benchmark for invoking empty burner thread
 fakeredis
 benchmark fakeredis

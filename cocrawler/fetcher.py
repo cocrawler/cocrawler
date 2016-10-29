@@ -30,24 +30,24 @@ import dns
 LOGGER = logging.getLogger(__name__)
 
 # XXX should be a policy plugin
-def apply_url_policies(url, parts, config):
+def apply_url_policies(url, config):
     headers = {}
     proxy = None
     mock_url = None
     mock_robots = None
 
     test_host = config['Testing'].get('TestHostmapAll')
-    if test_host and test_host != 'n': # why don't booleans in YAML work?
-        headers['Host'] = parts.netloc
-        mock_url = parts._replace(netloc=test_host).geturl()
-        mock_robots = parts.scheme + '://' + test_host + '/robots.txt'
+    if test_host:
+        headers['Host'] = url.urlparse.netloc
+        mock_url = url.urlparse._replace(netloc=test_host).geturl()
+        mock_robots = url.urlparse.scheme + '://' + test_host + '/robots.txt'
 
     return headers, proxy, mock_url, mock_robots
 
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'header_bytes',
                                                  't_first_byte', 't_last_byte', 'last_exception'])
 
-async def fetch(url, parts, session, config,
+async def fetch(url, session, config,
                 headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
     maxsubtries = int(config['Crawl']['MaxSubTries'])
     pagetimeout = float(config['Crawl']['PageTimeout'])
@@ -72,12 +72,12 @@ async def fetch(url, parts, session, config,
             last_exception = None
 
             if len(iplist) == 0:
-                iplist = await dns.prefetch_dns(parts, mock_url, session)
+                iplist = await dns.prefetch_dns(url, mock_url, session)
 
             with stats.coroutine_state('fetcher fetching'):
                 with aiohttp.Timeout(pagetimeout):
                     response = None
-                    response = await session.get(mock_url or url,
+                    response = await session.get(mock_url or url.url,
                                                  allow_redirects=allow_redirects,
                                                  headers=headers)
                     t_first_byte = '{:.3f}'.format(time.time() - t0)
@@ -96,26 +96,27 @@ async def fetch(url, parts, session, config,
                     header_bytes = response.raw_headers
 
             if len(iplist) == 0:
-                LOGGER.info('surprised that no-ip-address fetch of %s succeeded', parts.netloc)
+                LOGGER.info('surprised that no-ip-address fetch of %s succeeded', url.urlparse.netloc)
 
             # break only if we succeeded. 5xx = retry, exception = retry
             if response.status < 500:
                 break
 
-            print('will retry a {} for {}'.format(response.status, url))
+            print('will retry a {} for {}'.format(response.status, url.url))
 
         except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
                 aiodns.error.DNSError, asyncio.TimeoutError) as e:
             last_exception = repr(e)
-            LOGGER.debug('we sub-failed once, url is %s, exception is %s', url, last_exception)
+            LOGGER.debug('we sub-failed once, url is %s, exception is %s', url.url, last_exception)
             if response is not None:
                 response.release()
         except (ssl.CertificateError, ValueError, AttributeError) as e:
-            # ValueError = 'Can redirect only to http or https' (BUG in aiohttp: not case blind comparison)
+            # ValueError = 'Can redirect only to http or https'
+            #  (XXX BUG in aiohttp: not case blind comparison)
             # Value Error Location: https:/// 'Host could not be detected'
             # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
             last_exception = repr(e)
-            LOGGER.debug('we choose to fail, url is %s, exception is %s', url, last_exception)
+            LOGGER.debug('we choose to fail, url is %s, exception is %s', url.url, last_exception)
             subtries += maxsubtries
             continue # fall out of the loop as if we exhausted subtries
         except asyncio.CancelledError:
@@ -125,7 +126,7 @@ async def fetch(url, parts, session, config,
             print('UNKNOWN EXCEPTION SEEN in the fetcher')
             traceback.print_exc()
             LOGGER.debug('we sub-failed once WITH UNKNOWN EXCEPTION, url is %s, exception is %s',
-                         url, last_exception)
+                         url.url, last_exception)
             if response is not None:
                 response.release()
 

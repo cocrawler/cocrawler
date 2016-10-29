@@ -39,7 +39,8 @@ def test_special_seed_handling():
 
 def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?') == ('http://example.com/', '')
-    assert urls.safe_url_canonicalization('http://example.com/?foo=bar') == ('http://example.com/?foo=bar', '')
+    assert urls.safe_url_canonicalization('http://example.com/?foo=bar') == \
+        ('http://example.com/?foo=bar', '')
     assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM/') == ('http://example.com/', '')
     assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM:80/') == ('http://example.com/', '')
     assert urls.safe_url_canonicalization('httpS://EXAMPLE.COM:443/') == ('https://example.com/', '')
@@ -49,42 +50,39 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com#frag') == ('http://example.com', '#frag')
     assert urls.safe_url_canonicalization('http://example.com#!frag') == ('http://example.com', '#!frag')
     assert urls.safe_url_canonicalization('http://example.com/#frag') == ('http://example.com/', '#frag')
-    assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == ('http://example.com/?foo=bar', '#frag')
+    assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == \
+        ('http://example.com/?foo=bar', '#frag')
     assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
 
 def test_special_redirect():
-    assert urls.special_redirect('foo', 'bar') is None
-    assert urls.special_redirect('http://example.com/', 'http://example.com/foo') is None
-    assert urls.special_redirect('http://example.com/', 'https://example.com/foo') is None
-    assert urls.special_redirect('http://example.com/', 'https://www.example.com/foo') is None
-    assert urls.special_redirect('http://example.com/', 'http://example.com/?foo=1') is None
-    assert urls.special_redirect('http://example.com/', 'http://example.com/bar?foo=1') is None
-    url1 = 'http://example.com/'
-    parts1 = urllib.parse.urlparse(url1)
+    assert urls.special_redirect(URL('foo'), URL('bar')) is None
+    assert urls.special_redirect(URL('http://example.com/'), URL('http://example.com/foo')) is None
+    assert urls.special_redirect(URL('http://example.com/'), URL('https://example.com/foo')) is None
+    assert urls.special_redirect(URL('http://example.com/'), URL('https://www.example.com/foo')) is None
+    assert urls.special_redirect(URL('http://example.com/'), URL('http://example.com/?foo=1')) is None
+    assert urls.special_redirect(URL('http://example.com/'), URL('http://example.com/bar?foo=1')) is None
+    url1 = URL('http://example.com/')
     assert urls.special_redirect(url1, url1) == 'same'
-    assert urls.special_redirect(url1, 'https://example.com/', parts=parts1) == 'tohttps'
-    assert urls.special_redirect(url1, 'http://www.example.com/', parts=parts1) == 'towww'
-    assert urls.special_redirect(url1, 'https://www.example.com/', parts=parts1) == 'towww+tohttps'
+    assert urls.special_redirect(url1, URL('https://example.com/')) == 'tohttps'
+    assert urls.special_redirect(url1, URL('http://www.example.com/')) == 'towww'
+    assert urls.special_redirect(url1, URL('https://www.example.com/')) == 'towww+tohttps'
 
-    url2 = 'http://www.example.com/'
-    parts2 = urllib.parse.urlparse(url2)
-    assert urls.special_redirect(url2, 'https://www.example.com/', parts=parts2) == 'tohttps'
-    assert urls.special_redirect(url2, 'http://example.com/', parts=parts2) == 'tononwww'
-    assert urls.special_redirect(url2, 'https://example.com/', parts=parts2) == 'tononwww+tohttps'
+    url2 = URL('http://www.example.com/')
+    assert urls.special_redirect(url2, URL('https://www.example.com/')) == 'tohttps'
+    assert urls.special_redirect(url2, URL('http://example.com/')) == 'tononwww'
+    assert urls.special_redirect(url2, URL('https://example.com/')) == 'tononwww+tohttps'
 
-    url3 = 'https://www.example.com/'
-    parts3 = urllib.parse.urlparse(url3)
-    assert urls.special_redirect(url3, 'http://www.example.com/', parts=parts3) == 'tohttp'
-    assert urls.special_redirect(url3, 'https://example.com/', parts=parts3) == 'tononwww'
-    assert urls.special_redirect(url3, 'http://example.com/', parts=parts3) == 'tononwww+tohttp'
+    url3 = URL('https://www.example.com/')
+    assert urls.special_redirect(url3, URL('http://www.example.com/')) == 'tohttp'
+    assert urls.special_redirect(url3, URL('https://example.com/')) == 'tononwww'
+    assert urls.special_redirect(url3, URL('http://example.com/')) == 'tononwww+tohttp'
 
-    url4 = 'https://example.com/'
-    parts4 = urllib.parse.urlparse(url4)
-    assert urls.special_redirect(url4, 'http://www.example.com/', parts=parts4) == 'towww+tohttp'
+    url4 = URL('https://example.com/')
+    assert urls.special_redirect(url4, URL('http://www.example.com/')) == 'towww+tohttp'
 
 def test_get_domain():
     assert urls.get_domain('http://www.bbc.co.uk') == 'bbc.co.uk'
-    assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk' # nhs.uk is a public suffix, so this is expected
+    assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk' # nhs.uk is a public suffix, surprise
     assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk' # ditto
     assert urls.get_domain('http://www.example.com') == 'example.com'
     assert urls.get_domain('http://sub.example.com') == 'example.com'
@@ -95,8 +93,6 @@ def test_get_domain():
 
 def test_get_hostname():
     assert urls.get_hostname('http://www.bbc.co.uk') == 'www.bbc.co.uk'
-    parts = urllib.parse.urlparse('http://www.bbc.co.uk')
-    assert urls.get_hostname(None, parts=parts) == 'www.bbc.co.uk'
     assert urls.get_hostname('http://www.bbc.co.uk', remove_www=True) == 'bbc.co.uk'
     assert urls.get_hostname('http://bbc.co.uk') == 'bbc.co.uk'
     assert urls.get_hostname('http://www.example.com') == 'www.example.com'

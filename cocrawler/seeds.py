@@ -23,7 +23,7 @@ def expand_seeds(seeds):
             with open(name, 'r') as f:
                 for line in f:
                     if '#' in line:
-                        line, _ = line.split('#', maxsplit=1)
+                        line, _ = line.split('#', 1)
                     if line.strip() == '':
                         continue
                     ret.append(line.strip())
@@ -33,7 +33,6 @@ def expand_seeds(seeds):
 
     seeds = []
     for r in ret:
-        url = urls.special_seed_handling(r)
-        seeds.append(url)
+        seeds.append(urls.URL(r, seed=True))
 
     return seeds

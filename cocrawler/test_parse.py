@@ -1,4 +1,5 @@
 import parse
+from urls import URL
 
 test_html = '''
 <html>
@@ -46,23 +47,25 @@ href=foo2.htm></a>
 '''
 
 def test_do_burner_work_html():
+    urlj = URL('http://example.com')
     test_html_bytes = test_html.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1 = parse.do_burner_work_html(test_html, test_html_bytes)
+    links, embeds, sha1 = parse.do_burner_work_html(test_html, test_html_bytes, url=urlj)
     assert len(links) == 5
     assert len(embeds) == 0
-    linkset = set(u.u for u in links)
-    assert 'foo3.html' in linkset # space?
-    assert 'foo.gif' in linkset # space?
+    linkset = set(u.url for u in links)
+    assert 'http://example.com/foo3.html' in linkset # space?
+    assert 'http://example.com/foo.gif' in linkset # space?
     assert sha1 == 'sha1:8ea2d7e90c956118c451819330b875994f96f511'
 
 def test_misc_parsers():
-    links, embeds = parse.find_html_links_and_embeds(test_html)
+    urlj = URL('http://example.com')
+    links, embeds = parse.find_html_links_and_embeds(test_html, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 2
-    linkset = set(u.u for u in links)
-    embedset = set(u.u for u in embeds)
-    assert 'foo3.html' in linkset # space?
-    assert 'foo.gif' in embedset # space?
+    linkset = set(u.url for u in links)
+    embedset = set(u.url for u in embeds)
+    assert 'http://example.com/foo3.html' in linkset # space?
+    assert 'http://example.com/foo.gif' in embedset # space?
 
     links, embeds = parse.find_html_links_and_embeds(test_html_no_body)
     assert len(links) == 3
@@ -83,8 +86,9 @@ url( images/foo3.png )
 '''
 
 def test_css_parse():
-    links, embeds = parse.find_css_links(test_css)
+    urlj = URL('http://example.com')
+    links, embeds = parse.find_css_links(test_css, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 0
-    linkset = set(u.u for u in links)
-    assert 'images/foo3.png' in linkset # space?
+    linkset = set(u.url for u in links)
+    assert 'http://example.com/images/foo3.png' in linkset # space?

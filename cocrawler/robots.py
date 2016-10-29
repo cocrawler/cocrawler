@@ -12,6 +12,7 @@ import urllib.parse
 import robotexclusionrulesparser
 import magic
 
+from urls import URL
 import stats
 import fetcher
 
@@ -32,20 +33,15 @@ class Robots:
         else:
             self.robotslogfd = None
 
-    async def check(self, url, parts, headers=None, proxy=None, mock_robots=None):
-        schemenetloc = parts.scheme + '://' + parts.netloc
-
-        if mock_robots:
-            mock_robots_parts = urllib.parse.urlparse(mock_robots)
-        else:
-            mock_robots_parts = parts
+    async def check(self, url, headers=None, proxy=None, mock_robots=None):
+        schemenetloc = url.urlparse.scheme + '://' + url.urlparse.netloc
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
             # extra semantics and policy inside fetch_robots: 404 returns '', etc. also inserts into cache.
-            robots = await self.fetch_robots(schemenetloc, mock_robots, mock_robots_parts,
+            robots = await self.fetch_robots(schemenetloc, mock_robots,
                                              headers=headers, proxy=proxy)
 
         if robots is None:
@@ -56,14 +52,14 @@ class Robots:
 
 #        if robots.sitemaps:
 #           ...
-        if parts.path:
-            pathplus = parts.path
+        if url.urlparse.path:
+            pathplus = url.urlparse.path
         else:
             pathplus = '/'
-        if parts.params:
-            pathplus += ';' + parts.params
-        if parts.query:
-            pathplus += '?' + parts.query
+        if url.urlparse.params:
+            pathplus += ';' + url.urlparse.params
+        if url.urlparse.query:
+            pathplus += '?' + url.urlparse.query
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
             check = robots.is_allowed(self.robotname, pathplus)
@@ -76,11 +72,11 @@ class Robots:
         stats.stats_sum('robots denied', 1)
         return False
 
-    async def fetch_robots(self, schemenetloc, mock_url, parts, headers=None, proxy=None):
+    async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
         robotexclusionrules parser is not async, so fetch the file ourselves
         '''
-        url = schemenetloc + '/robots.txt'
+        url = URL(schemenetloc + '/robots.txt')
 
         if proxy:
             raise ValueError('not yet implemented')
@@ -113,7 +109,7 @@ class Robots:
         self.in_progress.add(schemenetloc)
 
         #XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
-        f = await fetcher.fetch(url, parts, self.session, self.config,
+        f = await fetcher.fetch(url, self.session, self.config,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, stats_me=False)
         if f.last_exception:
@@ -128,7 +124,7 @@ class Robots:
         #final_url = f.response.url.human_repr() # a YARL thing
         final_url = f.response.url
         final_schemenetloc = None
-        if final_url != url:
+        if final_url != url.url:
             final_parts = urllib.parse.urlparse(final_url)
             if final_parts.path == '/robots.txt':
                 final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc

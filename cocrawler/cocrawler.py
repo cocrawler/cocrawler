@@ -3,7 +3,6 @@ The actual web crawler
 '''
 
 import cgi
-import urllib.parse
 import json
 import time
 import os
@@ -21,8 +20,6 @@ import aiohttp.resolver
 import aiohttp.connector
 import psutil
 
-import pluginbase
-
 import stats
 import seeds
 import datalayer
@@ -32,6 +29,7 @@ import fetcher
 import useragent
 import urls
 import burner
+import url_allowed # XXX policy
 
 LOGGER = logging.getLogger(__name__)
 
@@ -126,18 +124,7 @@ class Crawler:
             LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
             stats.stats_max('initial seeds', self.q.qsize())
 
-        self.plugin_base = pluginbase.PluginBase(package='cocrawler.plugins')
-        plugins_path = config.get('Plugins', {}).get('Path', [])
-        fix_plugin_path = partial(os.path.join, os.path.abspath(os.path.dirname(__file__)))
-        plugins_path = [fix_plugin_path(x) for x in plugins_path]
-        self.plugin_source = self.plugin_base.make_plugin_source(searchpath=plugins_path)
-        self.plugins = {}
-        for plugin_name in self.plugin_source.list_plugins():
-            if plugin_name.startswith('test_'):
-                continue
-            plugin = self.plugin_source.load_plugin(plugin_name)
-            plugin.setup(self, config)
-        LOGGER.info('Installed plugins: %s', ','.join(sorted(list(self.plugins.keys()))))
+        url_allowed.setup(self._seeds, config)
 
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
         self.remaining_url_budget = self.config['Crawl'].get('MaxCrawledUrls')
@@ -159,14 +146,11 @@ class Crawler:
     def qsize(self):
         return self.q.qsize()
 
-    def register_plugin(self, name, plugin_function):
-        self.plugins[name] = plugin_function
-
     def log_rejected_add_url(self, url):
         if self.rejectedaddurlfd:
-            print(url, file=self.rejectedaddurlfd)
+            print(url.url, file=self.rejectedaddurlfd)
 
-    def add_url(self, priority, url, seed=False, seedredirs=None, parts=None):
+    def add_url(self, priority, url, seed=False, seedredirs=None):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
         # XXX optionally generate additional urls plugin here
@@ -184,14 +168,14 @@ class Crawler:
             stats.stats_sum('rejected by seen_urls', 1)
             self.log_rejected_add_url(url)
             return
-        if not seed and not self.plugins['url_allowed'](url, parts=parts):
+        if not seed and not url_allowed.url_allowed(url):
             LOGGER.debug('url %r was rejected by url_allow.', url)
             stats.stats_sum('rejected by url_allowed', 1)
             self.log_rejected_add_url(url)
             return
         # end allow/deny plugin
 
-        LOGGER.debug('actually adding url %r', url)
+        LOGGER.debug('actually adding url %r', url.url)
         if seed:
             stats.stats_sum('added seeds', 1)
         else:
@@ -241,27 +225,27 @@ class Crawler:
         tries = work.get('tries', 0)
         maxtries = self.config['Crawl']['MaxTries']
 
-        parts = urllib.parse.urlparse(url)
-        headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, parts, self.config)
+        headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.config)
 
         with stats.coroutine_state('fetching/checking robots'):
-            r = await self.robots.check(url, parts, headers=headers, proxy=proxy, mock_robots=mock_robots)
+            r = await self.robots.check(url, headers=headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
             # XXX treat 'no robots data' as a soft failure?
             # XXX log more particular robots fail reason here
-            json_log = {'type':'get', 'url':url, 'priority':priority, 'status':'robots', 'time':time.time()}
+            json_log = {'type': 'get', 'url': url.url, 'priority': priority,
+                        'status': 'robots', 'time': time.time()}
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             del self.ridealong[ra]
             return
 
         # XXX response.release asap. btw response.text does one for you
-        f = await fetcher.fetch(url, parts, self.session, self.config,
+        f = await fetcher.fetch(url, self.session, self.config,
                                 headers=headers, proxy=proxy, mock_url=mock_url)
 
-        json_log = {'type':'get', 'url':url, 'priority':priority,
-                    't_first_byte':f.t_first_byte, 'time':time.time()}
+        json_log = {'type': 'get', 'url': url.url, 'priority': priority,
+                    't_first_byte': f.t_first_byte, 'time': time.time()}
         if tries:
             json_log['retry'] = tries
 
@@ -289,10 +273,9 @@ class Crawler:
         if is_redirect(f.response):
             headers = f.response.headers
             location = f.response.headers.get('location')
-            location = urls.clean_webpage_links(location)
-            next_url = urllib.parse.urljoin(url, location)
+            next_url = urls.URL(location, urljoin=url)
 
-            kind = urls.special_redirect(url, next_url, parts=parts)
+            kind = urls.special_redirect(url, next_url)
             if kind is not None:
                 if 'seed' in work:
                     prefix = 'redirect seed'
@@ -303,7 +286,7 @@ class Crawler:
             if kind is None:
                 pass
             elif kind == 'same':
-                LOGGER.info('attempted redirect to myself: %s to %s', url, next_url)
+                LOGGER.info('attempted redirect to myself: %s to %s', url.url, next_url.url)
                 # fall through; will fail seen-url test in addurl
             else:
                 # XXX push this info onto a last-k for the host
@@ -311,7 +294,7 @@ class Crawler:
                 pass
 
             priority += 1
-            json_log['redirect'] = next_url
+            json_log['redirect'] = next_url.url
 
             kwargs = {}
             if 'seed' in work:
@@ -341,7 +324,7 @@ class Crawler:
                 content_type, _ = cgi.parse_header(content_type)
             else:
                 content_type = 'Unknown'
-            LOGGER.debug('url %r came back with content type %r', url, content_type)
+            LOGGER.debug('url %r came back with content type %r', url.url, content_type)
             json_log['content_type'] = content_type
             stats.stats_sum('content-type=' + content_type, 1)
             # PLUGIN: post_crawl_200 by content type
@@ -368,17 +351,16 @@ class Crawler:
                 json_log['checksum'] = sha1
 
                 LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
-                             url, len(links), len(embeds))
+                             url.url, len(links), len(embeds))
                 json_log['found_links'] = len(links) + len(embeds)
                 stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
                 new_links = 0
-                # TODO: note that we also have u.{hostname,domain}, use them
                 for u in links:
-                    if self.add_url(priority + 1, u.u, parts=u.parts):
+                    if self.add_url(priority + 1, u):
                         new_links += 1
                 for u in embeds:
-                    if self.add_url(priority - 1, u.u, parts=u.parts):
+                    if self.add_url(priority - 1, u):
                         new_links += 1
 
                 if new_links:
@@ -500,8 +482,7 @@ class Crawler:
                 urls_with_tries += 1
             priority_count[v['priority']] += 1
             url = v['url']
-            parts = urllib.parse.urlparse(url)
-            netlocs[parts.netloc] += 1
+            netlocs[url.urlparse.netloc] += 1
         print('{} items in crawl queue are retries'.format(urls_with_tries))
         print('{} different hosts in the queue'.format(len(netlocs)))
         print('Queue counts by priority:')

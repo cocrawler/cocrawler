@@ -8,6 +8,7 @@ import os
 
 import cocrawler
 import conf
+from urls import URL
 
 def test_cocrawler(capsys):
     config = conf.config(None, None, confighome=False)
@@ -19,9 +20,9 @@ def test_cocrawler(capsys):
     loop = asyncio.get_event_loop()
     crawler = cocrawler.Crawler(loop, config)
 
-    crawler.add_url(0, 'http://example1.com/', seed=True)
-    crawler.add_url(0, 'http://example2.com/', seed=True)
-    crawler.add_url(0, 'http://example3.com/', seed=True)
+    crawler.add_url(0, URL('http://example1.com/'), seed=True)
+    crawler.add_url(0, URL('http://example2.com/'), seed=True)
+    crawler.add_url(0, URL('http://example3.com/'), seed=True)
     assert crawler.qsize == 3
 
     f = tempfile.NamedTemporaryFile(delete=False)
@@ -31,7 +32,7 @@ def test_cocrawler(capsys):
         crawler.save(f)
     assert crawler.qsize == 0
 
-    crawler.add_url(0, 'http://example4.com/', seed=True)
+    crawler.add_url(0, URL('http://example4.com/'), seed=True)
     assert crawler.qsize == 1
 
     with open(name, 'rb') as f:

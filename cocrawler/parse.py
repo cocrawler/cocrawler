@@ -5,13 +5,11 @@ XXX also need a gumbocy version
 '''
 
 import logging
-from collections import namedtuple
 import re
-import urllib.parse
 import hashlib
 
 import stats
-import urls
+from urls import URL
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,19 +72,10 @@ def find_css_links(css, url=None):
     links = url_clean_join(links, url=url)
     return links, set()
 
-parse_tuple = namedtuple('parse_tuple', ['u', 'parts', 'hostname', 'domain'])
-
 def url_clean_join(links, url=None):
     ret = set()
     for u in links:
-        u = urls.clean_webpage_links(u)
-        if url is not None:
-            u = urllib.parse.urljoin(url, u)
-        u, _ = urls.safe_url_canonicalization(u) # XXX I'm discarding the frag here
-        parts = urllib.parse.urlparse(u)
-        hostname = urls.get_hostname(None, parts)
-        domain = urls.get_domain(hostname)
-        ret.add(parse_tuple(u, parts, hostname, domain))
+        ret.add(URL(u, urljoin=url))
     return ret
 
 def report():

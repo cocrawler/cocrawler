@@ -15,8 +15,8 @@ b = burner.Burner(config, loop, 'parser')
 queue = asyncio.Queue()
 
 def parse_all(name, string):
-    links1, _ = parse.find_html_links(string, url=name)
-    links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)
+    links1, _ = parse.find_html_links(string)
+    links2, embeds2 = parse.find_html_links_and_embeds(string)
 
     all2 = links2.union(embeds2)
 

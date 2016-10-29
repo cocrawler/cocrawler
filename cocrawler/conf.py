@@ -53,8 +53,6 @@ Fetcher:
 #  Port: 2004
 
 Plugins:
-  Path:
-  - ./plugins/generic
   url_allowed: SeedsHostname
 
 Multiprocess:
