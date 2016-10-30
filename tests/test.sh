@@ -58,3 +58,9 @@ echo run_burner
 echo
 
 $COVERAGE ../cocrawler/run_burner.py ./test_burner.html
+
+echo
+echo bench_burner
+echo
+
+$COVERAGE ../cocrawler/bench_burner.py --count 100
