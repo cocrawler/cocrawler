@@ -1,13 +1,13 @@
-sudo: required
-dist: trusty
+#to get 14.04:
+#sudo: required
+#dist: trusty
 
 language: python
 python:
-#  - "3.5.1"
-#  - "3.5.2"
-#  - "3.5"
+  - "3.5.1"
+  - "3.5"
 
-  - "3.6.0b2"
+#  - "3.6.0b2"
 #  - "3.6.0b1 # builds on my CentOS 7 host, segfaults in pytest
 #  - "3.6-dev" # same segfault, does not build on my COS7 host
 #  - "nightly" # same segfault, does not build on my COS7 host
