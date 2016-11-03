@@ -19,17 +19,44 @@ def test_sum():
 def test_burn():
     with stats.record_burn('foo', url='http://example.com/'):
         t0 = time.clock()
-        while time.clock() < t0 + 0.2:
+        while time.clock() < t0 + 0.001:
             pass
 
     assert stats.burners['foo']['count'] == 1
     assert stats.burners['foo']['time'] > 0 and stats.burners['foo']['time'] < 0.3
-    assert 'list' not in stats.burners['foo']
+    assert 'list' not in stats.burners['foo'] # first burn never goes on the list
+
+    with stats.record_burn('foo', url='http://example.com/'):
+        t0 = time.clock()
+        while time.clock() < t0 + 0.2:
+            pass
+
+    assert stats.burners['foo']['count'] == 2
+    assert stats.burners['foo']['time'] > 0 and stats.burners['foo']['time'] < 0.3
+    assert len(stats.burners['foo']['list']) == 1
 
     stats.update_cpu_burn('foo', 3, 3.0, set())
-    assert stats.burners['foo']['count'] == 4
+    assert stats.burners['foo']['count'] == 5
     assert stats.burners['foo']['time'] > 3.0 and stats.burners['foo']['time'] < 3.3
-    assert len(stats.burners['foo']['list']) == 0
+    assert len(stats.burners['foo']['list']) == 1
+
+def test_latency():
+    with stats.record_latency('foo', url='http://example.com/'):
+        t0 = time.time()
+        while time.time() < t0 + 0.001:
+            pass
+
+    assert stats.latencies['foo']['count'] == 1
+    assert stats.latencies['foo']['time'] > 0 and stats.latencies['foo']['time'] < 0.3
+    assert 'list' not in stats.latencies['foo'] # first latency never goes on the list
+    assert 'hist' in stats.latencies['foo']
+
+    with stats.record_latency('foo', url='http://example.com/', elapsedmin=0.1):
+        time.sleep(0.3)
+
+    assert stats.latencies['foo']['count'] == 2
+    assert stats.latencies['foo']['time'] > 0 and stats.latencies['foo']['time'] < 20.0
+    assert 'list' in stats.latencies['foo']
 
 def test_update():
     # I suppose the contents of stats.* depends on what order the tests are run in.

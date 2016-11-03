@@ -55,7 +55,7 @@ def record_a_burn(name, start, url=None):
     burn['avg'] = burn['time']/burn['count']
     burners[name] = burn
 
-def record_a_latency(name, start, url=None):
+def record_a_latency(name, start, url=None, elapsedmin=10.0):
     if isinstance(url, URL):
         url = url.url
     elapsed = time.time() - start
@@ -67,7 +67,7 @@ def record_a_latency(name, start, url=None):
     latency['hist'].record_value(elapsed * 1000) # ms
 
     # show the 10 most recent latencies > 10 seconds
-    if elapsed > 10:
+    if elapsed > elapsedmin:
         if 'list' not in latency:
             latency['list'] = ValueSortedDict()
         url = url or 'none'
@@ -101,12 +101,12 @@ def record_burn(name, url=None):
         record_a_burn(name, start, url=url)
 
 @contextmanager
-def record_latency(name, url=None):
+def record_latency(name, url=None, elapsedmin=10.0):
     try:
         start = time.time()
         yield
     finally:
-        record_a_latency(name, start, url=url)
+        record_a_latency(name, start, url=url, elapsedmin=elapsedmin)
 
 @contextmanager
 def coroutine_state(k):
