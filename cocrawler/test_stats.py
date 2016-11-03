@@ -40,6 +40,8 @@ def test_burn():
     assert stats.burners['foo']['time'] > 3.0 and stats.burners['foo']['time'] < 3.3
     assert len(stats.burners['foo']['list']) == 1
 
+    stats.report()
+
 def test_latency():
     with stats.record_latency('foo', url='http://example.com/'):
         t0 = time.time()
@@ -57,6 +59,8 @@ def test_latency():
     assert stats.latencies['foo']['count'] == 2
     assert stats.latencies['foo']['time'] > 0 and stats.latencies['foo']['time'] < 20.0
     assert 'list' in stats.latencies['foo']
+
+    stats.report()
 
 def test_update():
     # I suppose the contents of stats.* depends on what order the tests are run in.
