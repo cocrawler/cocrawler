@@ -8,6 +8,8 @@ import logging
 import re
 import hashlib
 
+from bs4 import BeautifulSoup
+
 import stats
 from urls import URL
 
@@ -45,22 +47,15 @@ def find_html_links_and_embeds(html, url=None):
     stats.stats_sum('parser html bytes', len(html))
 
     with stats.record_burn('find_html_links_and_embeds re', url=url):
-        try:
-            head, body = html.split('<body>', maxsplit=1)
-        except ValueError:
-            try:
-                head, body = html.split('</head>', maxsplit=1)
-            except ValueError:
-                head = ''
-                body = html
+        head, body = split_head_body_re(html)
         embeds_head = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', head, re.I))
         embeds_body = set(re.findall(r'''\ssrc=['"]?([^\s'"<>]+)''', body, re.I))
-        links_body = set(re.findall(r'''\shref=['"]?([^\s'"<>]+)''', body, re.I))
+        links = set(re.findall(r'''\shref=['"]?([^\s'"<>]+)''', body, re.I))
     embeds = embeds_head.union(embeds_body)
 
-    links_body = url_clean_join(links_body, url=url)
+    links = url_clean_join(links, url=url)
     embeds = url_clean_join(embeds, url=url)
-    return links_body, embeds
+    return links, embeds
 
 def find_css_links(css, url=None):
     '''
@@ -71,6 +66,28 @@ def find_css_links(css, url=None):
 
     links = url_clean_join(links, url=url)
     return links, set()
+
+def soup_and_find(html, url=None):
+    head, body = split_head_body_re(html)
+    head_soup = BeautifulSoup(head)
+    body_soup = BeautifulSoup(body)
+    return find_links_from_soup(head_soup, body_soup, url=url)
+
+def find_links_from_soup(head_soup, body_soup, url=None):
+    links = set()
+    embeds = set()
+    for tag in head_soup.find_all(src=True):
+        embeds.add(tag.get('src'))
+    for tag in head_soup.find_all(href=True):
+        embeds.add(tag.get('href'))
+    for tag in body_soup.find_all(src=True):
+        embeds.add(tag.get('src'))
+    for tag in body_soup.find_all(href=True):
+        links.add(tag.get('href'))
+
+    links = url_clean_join(links, url=url)
+    embeds = url_clean_join(embeds, url=url)
+    return links, embeds
 
 def url_clean_join(links, url=None):
     ret = set()
@@ -91,3 +108,30 @@ def report():
     t, c = stats.burn_values('find_html_links url_clean_join')
     if c is not None and c > 0 and t is not None and t > 0:
         LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
+
+def split_head_body_re(html):
+    try:
+        head, body = html.split('<body>', maxsplit=1)
+    except ValueError:
+        try:
+            head, body = html.split('</head>', maxsplit=1)
+        except ValueError:
+            head = ''
+            body = html
+    return head, body
+
+# try to minimize how many bytes we have to html parse
+# of course, these are all dangerous, but they might be useful
+# if the <head> of a webpage is abnormally large
+
+def regex_out_comments(html):
+    return re.sub('<!--.*?-->', '', html, flags=re.S)
+
+def regex_out_some_scripts(html):
+    '''
+    This nukes most inline scripts... although some are <script type="...
+    '''
+    return re.sub('<script>.*?</script>', '', html, flags=re.S)
+
+def regex_out_all_scripts(html):
+    return re.sub('<script[ >].*?</script>', '', html, flags=re.S)
