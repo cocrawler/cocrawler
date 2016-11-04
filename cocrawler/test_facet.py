@@ -157,7 +157,7 @@ def test_facets_grep():
                       ('google analytics', 'UA-8162380-2'),
                       ('google analytics', 'UA-1234567-6')]
 
-def test_langauge():
+def test_misc():
     t = '''
     <html lang="fr">
     '''
@@ -168,6 +168,25 @@ def test_langauge():
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('html xml:lang', 'fr')]
+    t = '''
+    <base href="http://example.com/">
+    '''
+    facets = facet.find_head_facets(t)
+    assert facets == [('base', 'http://example.com/')]
+
+# ----------------------------------------------------------------------
+# A collection of stuff I may get to later
+# ----------------------------------------------------------------------
+
+# perhaps collect google tag manager IDs? these are multi-page
+'''
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M9L9Q5&gtm_auth=GTM-M9L9Q5" height="0" width="0" style="display:none;visibility:hidden">
+    # I think gtm_auth can be ignored?
+
+    # js version
+    })(window,document,'script','dataLayer','GTM-XXXX');</script>
+
+'''
 
 # fb like button? script with
 '''

@@ -44,6 +44,11 @@ def find_head_facets(head, url=None):
         if html.get('xml:lang'):
             facets.append(('html xml:lang', html.get('xml:lang')))
 
+    base = soup.find('base')
+    if base:
+        if base.get('href'):
+            facets.append(('base', base.get('href')))
+
     meta = soup.find_all('meta', attrs={'name': True}) # 'name' collides, so use dict
     for m in meta:
         n = m.get('name').lower()
@@ -131,5 +136,10 @@ def facets_from_embeds(embeds, facets):
             facets.append(('google adsense', True))
         if 'google.com/adsense/domains' in u:
             facets.append(('google adsense for domains', True))
+        '''
+        TODO: Google tag manager <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M9L9Q5
+        also has a js version
+        '''
+
     return facets
 
