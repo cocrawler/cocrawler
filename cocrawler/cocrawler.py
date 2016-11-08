@@ -281,7 +281,7 @@ class Crawler:
 
         if is_redirect(f.response):
             headers = f.response.headers
-            location = f.response.headers.get('location')
+            location = headers.get('location')
             next_url = urls.URL(location, urljoin=url)
 
             kind = urls.special_redirect(url, next_url)
