@@ -188,7 +188,7 @@ def test_misc():
 
 
 def test_response_header_facets():
-    h = {'Server': 'Foo'}
+    h = {'server': 'Foo'}
     facets = []
     facets = facet.facets_from_response_headers(h, facets)
     assert facets == [('Server', 'Foo')]

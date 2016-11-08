@@ -23,6 +23,14 @@ get_property_prefix = (('al:', 'applinks'),
 get_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 
 
+def compute_all(html, head, headers, embeds, url=None):
+    facets = find_head_facets(head, url=url)
+    facets = facets_grep(head, facets)
+    facets = facets_from_response_headers(headers, facets)
+    facets = facets_from_embeds(embeds, facets)
+
+    return facet_dedup(facets)
+
 def find_head_facets(head, url=None):
     '''
     We use html parsing, because the head is smallish and friends don't let
@@ -136,8 +144,9 @@ def facets_from_response_headers(headers, facets):
     X-Powered-By:
     '''
     for rh in save_response_headers:
-        if rh in headers:
-            facets.append((rh, headers.get(rh)))
+        # lower because the special header dict can't be passed into a burner
+        if rh.lower() in headers:
+            facets.append((rh, headers.get(rh.lower())))
 
     return facets
 

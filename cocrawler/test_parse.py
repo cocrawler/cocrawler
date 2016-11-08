@@ -50,7 +50,8 @@ href=foo2.htm></a>
 def test_do_burner_work_html():
     urlj = URL('http://example.com')
     test_html_bytes = test_html.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1 = parse.do_burner_work_html(test_html, test_html_bytes, url=urlj)
+    headers = {}
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
     assert len(links) == 5
     assert len(embeds) == 0
     linkset = set(u.url for u in links)

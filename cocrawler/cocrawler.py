@@ -328,7 +328,7 @@ class Crawler:
         # if 200, parse urls out of body
         if f.response.status == 200:
             headers = f.response.headers
-            content_type = f.response.headers.get('content-type')
+            content_type = headers.get('content-type')
             if content_type:
                 content_type, _ = cgi.parse_header(content_type)
             else:
@@ -351,12 +351,16 @@ class Crawler:
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
                 if len(body) > self.burner_parseinburnersize:
-                    links, embeds, sha1 = await self.burner.burn(
-                        partial(parse.do_burner_work_html, body, f.body_bytes, url=url),
+                    passable = {}
+                    for h in headers:
+                        passable[h.lower()] = headers[h]
+                    links, embeds, sha1, facets = await self.burner.burn(
+                        partial(parse.do_burner_work_html, body, f.body_bytes, passable, url=url),
                         url=url)
                 else:
                     with stats.coroutine_state('await main thread parser'):
-                        links, embeds, sha1 = parse.do_burner_work_html(body, f.body_bytes, url=url)
+                        links, embeds, sha1, facets = parse.do_burner_work_html(
+                            body, f.body_bytes, headers, url=url)
                 json_log['checksum'] = sha1
 
                 LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
