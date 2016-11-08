@@ -123,8 +123,26 @@ def facets_grep(head, facets):
 
     return facets
 
+save_response_headers = ('Refresh', 'Server', 'Set-Cookie', 'Strict-Transport-Security', 'X-Powered-By')
 
-# XXX not tested
+
+# XXX unused
+def facets_from_response_headers(headers, facets):
+    '''
+    Refresh: N; url=http://...
+    Server: ...
+    Set-Cookie: ... (note Secure or HttpOnly) (note Secure sent over HTTP)
+    Strict-Transport-Security:
+    X-Powered-By:
+    '''
+    for rh in save_response_headers:
+        if rh in headers:
+            facets.append((rh, headers.get(rh)))
+
+    return facets
+
+
+# XXX not used, should be generalized using lists from adblockers
 def facets_from_embeds(embeds, facets):
     for url in embeds:  # this is both href and src embeds, but whatever
         u = url.url

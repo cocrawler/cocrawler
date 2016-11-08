@@ -1,6 +1,7 @@
 import pytest
 
 import facet
+from urls import URL
 
 
 def test_double_entries():
@@ -184,6 +185,20 @@ def test_misc():
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('base', 'http://example.com/')]
+
+
+def test_response_header_facets():
+    h = {'Server': 'Foo'}
+    facets = []
+    facets = facet.facets_from_response_headers(h, facets)
+    assert facets == [('Server', 'Foo')]
+
+
+def test_facets_from_embeds():
+    embeds = set((URL('http://example.com'), URL('http://cdn.ampproject.org')))
+    facets = []
+    facets = facet.facets_from_embeds(embeds, facets)
+    assert facets == [('google amp', True)]
 
 # ----------------------------------------------------------------------
 # A collection of stuff I may get to later
