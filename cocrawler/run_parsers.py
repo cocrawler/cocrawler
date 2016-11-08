@@ -12,6 +12,7 @@ import logging
 import stats
 import parse
 
+
 def parse_all(name, string):
     links1, _ = parse.find_html_links(string, url=name)
     links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)

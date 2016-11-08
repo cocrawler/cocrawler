@@ -1,7 +1,7 @@
 # datalayer, naieve implemenetion.
 # all in-process-memory
 
-#database layer spec
+# database layer spec
 
 # host database
 #   counters: urls crawled, urls in queue, seen urls, hostrank info like unique incoming C's
@@ -22,11 +22,12 @@
 
 import pickle
 import logging
-#import sortedcontainers - I wish!
+# import sortedcontainers - I wish!
 import cachetools.ttl
 
 LOGGER = logging.getLogger(__name__)
 __NAME__ = 'datalayer seen_urls memory'
+
 
 class Datalayer:
     def __init__(self, config):
@@ -42,7 +43,7 @@ class Datalayer:
     # we need to remember all queued urls.
 
     def add_seen_url(self, url):
-        self.seen_urls.add(url.url) # should be a SURT
+        self.seen_urls.add(url.url)  # should be a SURT
 
     def seen_url(self, url):
         # do this with a honking bloom filter?

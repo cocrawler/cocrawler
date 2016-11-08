@@ -83,8 +83,10 @@ Testing:
 
 '''
 
+
 def print_default():
     print(default_yaml)
+
 
 def merge_dicts(a, b):
     '''
@@ -101,6 +103,7 @@ def merge_dicts(a, b):
                 c[k1][k2] = {}
             c[k1][k2] = v
     return c
+
 
 def config(configfile, configlist, confighome=True):
     '''

@@ -14,6 +14,7 @@ loop = asyncio.get_event_loop()
 b = burner.Burner(config, loop, 'parser')
 queue = asyncio.Queue()
 
+
 def parse_all(name, string):
     links1, _ = parse.find_html_links(string)
     links2, embeds2 = parse.find_html_links_and_embeds(string)
@@ -28,6 +29,7 @@ def parse_all(name, string):
         print('  extra in links and embeds: {!r}'.format(extra2))
     return 1,
 
+
 async def work():
     while True:
         w = await queue.get()
@@ -36,6 +38,7 @@ async def work():
         partial = functools.partial(parse_all, w, string)
         await b.burn(partial)
         queue.task_done()
+
 
 async def crawl():
     workers = [asyncio.Task(work(), loop=loop) for _ in range(int(config['Multiprocess']['BurnerThreads']))]

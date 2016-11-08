@@ -1,5 +1,6 @@
 import conf
 
+
 def test_merge_dicts():
     a = {'a': {'a': 1}}
     b = {'b': {'b': 2}}

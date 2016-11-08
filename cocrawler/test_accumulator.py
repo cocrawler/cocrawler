@@ -2,6 +2,7 @@ from pytest import approx
 
 import accumulator
 
+
 def test_event_accumulator():
     A = accumulator.EventAccumulator()
     assert A.read() == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -25,7 +26,8 @@ def test_event_accumulator():
 
     # we don't expect it to change until we have 100 values
     [A.accumulate(x) for x in (2.0,)*100]
-    assert A.read() == [2.0, approx(1.99), approx(1.99), approx(1.99), approx(1.99), approx(1.99)]
+    assert A.read() == [2.0, approx(1.99), approx(1.99),
+                        approx(1.99), approx(1.99), approx(1.99)]
 
     A = accumulator.EventAccumulator()
     [A.accumulate(x) for x in range(0, 110)]
@@ -49,10 +51,11 @@ def test_event_accumulator():
     [A.accumulate(1.0) for x in range(0, 20)]
     assert A.read() == [1.0, 2.0, 2.0, 2.0, 2.0, 2.0]
 
+
 def test_event_accumulator_debug(capsys):
     A = accumulator.EventAccumulator(function='max')
     A.accumulate(1.0, debug=True)
     out, err = capsys.readouterr()
-    assert len(out) > 85 # not a very good test!
-    assert len(out) < 200 # not a very good test!
+    assert len(out) > 85  # not a very good test!
+    assert len(out) < 200  # not a very good test!
     assert err == ''

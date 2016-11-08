@@ -2,7 +2,6 @@
 Code related to generating webpage facets.
 '''
 
-import time
 import re
 
 from bs4 import BeautifulSoup
@@ -49,7 +48,7 @@ def find_head_facets(head, url=None):
         if base.get('href'):
             facets.append(('base', base.get('href')))
 
-    meta = soup.find_all('meta', attrs={'name': True}) # 'name' collides, so use dict
+    meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
         n = m.get('name').lower()
         if n in get_name_content:
@@ -89,6 +88,7 @@ def find_head_facets(head, url=None):
 
     return facets
 
+
 def facet_dedup(facets):
     '''
     Remove duplicate ('foo', True) facets. Keep all the ones with other values.
@@ -105,12 +105,13 @@ def facet_dedup(facets):
             ret.append((a, b))
     return ret
 
+
 def facets_grep(head, facets):
     # look for this one as a grep, because if present, it's embedded in a <script> jsonl
     if 'http://schema.org' in head:
         facets.append(('schema.org', True))
 
-    pub_matches = re.findall(r'[\'"]pub-\d{15,18}[\'"]', head) # actually 16 digits
+    pub_matches = re.findall(r'[\'"]pub-\d{15,18}[\'"]', head)  # actually 16 digits
     if pub_matches:
         for p in pub_matches:
             facets.append(('google publisher id', p.strip('\'"')))
@@ -122,9 +123,10 @@ def facets_grep(head, facets):
 
     return facets
 
+
 # XXX not tested
 def facets_from_embeds(embeds, facets):
-    for url in embeds: # this is both href and src embeds, but whatever
+    for url in embeds:  # this is both href and src embeds, but whatever
         u = url.url
         if 'cdn.ampproject.org' in u:
             facets.append(('google amp', True))
@@ -142,4 +144,3 @@ def facets_from_embeds(embeds, facets):
         '''
 
     return facets
-

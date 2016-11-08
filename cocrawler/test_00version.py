@@ -5,8 +5,10 @@ Misc unit tests, run first in Makefile.
 import sys
 import magic
 
+
 def test_python_version():
     assert sys.version_info >= (3, 5), 'Python 3.5+ needed for async def syntax'
+
 
 def test_magic():
     '''

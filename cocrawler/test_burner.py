@@ -1,8 +1,10 @@
 import functools
 import burner
 
+
 def trivial():
     return 42,
+
 
 def test_stats_wrap():
     '''

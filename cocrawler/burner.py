@@ -9,15 +9,17 @@ import stats
 
 LOGGER = logging.getLogger(__name__)
 
+
 def stats_wrap(partial, name, url=None):
     '''
     Helper function to propagate stats back to main thread
     '''
     stats.clear()
     with stats.record_burn(name, url=url):
-        ret = list(partial()) # XXX what's pythonic here?
+        ret = list(partial())  # XXX what's pythonic here?
     s = stats.raw()
     return s, ret
+
 
 def set_an_affinity(cpu):
     '''
@@ -27,7 +29,8 @@ def set_an_affinity(cpu):
     '''
     p = psutil.Process()
     p.cpu_affinity([cpu])
-    time.sleep(1) # no asyncio in this process
+    time.sleep(1)  # no asyncio in this process
+
 
 class Burner:
     '''
@@ -41,6 +44,7 @@ class Burner:
         self.executor = ProcessPoolExecutor(thread_count)
         self.loop = loop
         self.name = name
+        self.f = []
 
         if config['Multiprocess'].get('Affinity'):
             p = psutil.Process()
@@ -48,7 +52,9 @@ class Burner:
             for _ in range(thread_count):
                 cpu = all_cpus.pop()
                 wrap = functools.partial(set_an_affinity, cpu)
-                f = asyncio.ensure_future(self.loop.run_in_executor(self.executor, wrap)) # pylint: disable=unused-variable
+                f = asyncio.ensure_future(
+                    self.loop.run_in_executor(self.executor, wrap))  # pylint: disable=unused-variable
+                self.f.append(f)
                 # I can't await f because I'm not async, and the StackOverflow
                 # answers I see regarding this issue in __init__ look ugly
 

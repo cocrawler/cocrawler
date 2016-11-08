@@ -5,8 +5,10 @@ Various routines related to counting things
 from collections import namedtuple
 from sortedcollections import ItemSortedDict
 
+
 def getvaluevalue(k, v):
-    return -v.value # minus to invert sort
+    return -v.value  # minus to invert sort
+
 
 class topK_max:
     '''
@@ -32,6 +34,7 @@ class topK_max:
         return [(k, list(v)) for k, v in self.d.iteritems()]
 
     # XXX to do: union, update
+
 
 class topK_sum:
     '''
@@ -71,6 +74,7 @@ class topK_sum:
 
     # XXX to do: union, update
 
+
 class topK_sum_hhh:
     '''
     Hierarchical heavy hitter.
@@ -80,6 +84,7 @@ class topK_sum_hhh:
 
     Example: given a list uf url paths within a website, remember the most popular ones
     '''
+
 
 class topK_sum_hll:
     '''

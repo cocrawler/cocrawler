@@ -24,14 +24,18 @@ latencies = {}
 coroutine_states = {}
 exitstatus = 0
 
+
 def stats_max(name, value):
     maxes[name] = max(maxes.get(name, value), value)
+
 
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
 
+
 def stats_fixed(name, value):
     fixed[name] = value
+
 
 def record_a_burn(name, start, url=None):
     if isinstance(url, URL):
@@ -55,6 +59,7 @@ def record_a_burn(name, start, url=None):
     burn['avg'] = burn['time']/burn['count']
     burners[name] = burn
 
+
 def record_a_latency(name, start, url=None, elapsedmin=10.0):
     if isinstance(url, URL):
         url = url.url
@@ -63,8 +68,8 @@ def record_a_latency(name, start, url=None, elapsedmin=10.0):
     latency['count'] = latency.get('count', 0) + 1
     latency['time'] = latency.get('time', 0.0) + elapsed
     if 'hist' not in latency:
-        latency['hist'] = HdrHistogram(1, 30 * 1000, 2) # 1ms-30sec, 2 sig figs
-    latency['hist'].record_value(elapsed * 1000) # ms
+        latency['hist'] = HdrHistogram(1, 30 * 1000, 2)  # 1ms-30sec, 2 sig figs
+    latency['hist'].record_value(elapsed * 1000)  # ms
 
     # show the 10 most recent latencies > 10 seconds
     if elapsed > elapsedmin:
@@ -73,10 +78,11 @@ def record_a_latency(name, start, url=None, elapsedmin=10.0):
         url = url or 'none'
         length = len(latency['list'])
         for _ in range(9, length):
-            latency['list'].popitem(last=False) # throwing away biggest value(s)
+            latency['list'].popitem(last=False)  # throwing away biggest value(s)
         latency['list'][url] = -elapsed
 
     latencies[name] = latency
+
 
 def update_cpu_burn(name, count, t, l):
     burn = burners.get(name, {})
@@ -85,12 +91,13 @@ def update_cpu_burn(name, count, t, l):
     if l is not None:
         l = ValueSortedDict(l)
         burn['list'] = burn.get('list', ValueSortedDict())
-        for k in l: # XXX replace this loop with .update()
+        for k in l:  # XXX replace this loop with .update()
             burn['list'][k] = l[k]
         length = len(burn['list'])
         for _ in range(10, length):
             burn['list'].popitem()
     burners[name] = burn
+
 
 @contextmanager
 def record_burn(name, url=None):
@@ -100,6 +107,7 @@ def record_burn(name, url=None):
     finally:
         record_a_burn(name, start, url=url)
 
+
 @contextmanager
 def record_latency(name, url=None, elapsedmin=10.0):
     try:
@@ -107,6 +115,7 @@ def record_latency(name, url=None, elapsedmin=10.0):
         yield
     finally:
         record_a_latency(name, start, url=url, elapsedmin=elapsedmin)
+
 
 @contextmanager
 def coroutine_state(k):
@@ -116,6 +125,7 @@ def coroutine_state(k):
         yield
     finally:
         coroutine_states[k] -= 1
+
 
 def report():
     LOGGER.info('Stats report:')
@@ -171,6 +181,7 @@ def report():
     if sums.get('fetch bytes', 0) and elapsed > 0:
         LOGGER.info('  Crawl rate is %.2f gigabits/s', sums['fetch bytes']/elapsed*8/1000000000.)
 
+
 def stat_value(name):
     if name in maxes:
         return maxes[name]
@@ -185,11 +196,13 @@ def stat_value(name):
         return coroutine_states[name]
     return 0.0
 
+
 def burn_values(name):
     if name in burners:
         return burners[name].get('time', 0), burners[name].get('count', 0)
     else:
         return None, None
+
 
 def check(config, no_test=False):
     if no_test:
@@ -217,6 +230,7 @@ def check(config, no_test=False):
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, sge[s])
 
+
 def raw():
     '''
     Return a list of stuff suitable to feeding to stats.update() in a different thread.
@@ -229,6 +243,7 @@ def raw():
 
     # note, not including latency
     return maxes, sums, d
+
 
 def update(l):
     '''
@@ -243,6 +258,7 @@ def update(l):
         update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list'))
     stats_fixed('parser cpu time', burners.get('burner thread parser total cpu time', {}).get('time', 0))
 
+
 def clear():
     '''
     After raw(), this clears stats to prevent double-counting
@@ -256,12 +272,14 @@ def clear():
     for l in latencies:
         latencies[l] = {'avg': latencies[l].get('avg'), 'count': 0, 'time': 0}
 
+
 def save(f):
     pickle.dump('stats', f)
     pickle.dump(start_time, f)
     pickle.dump(burners, f)
     pickle.dump(maxes, f)
     pickle.dump(sums, f)
+
 
 def load(f):
     if pickle.load(f) != 'stats':

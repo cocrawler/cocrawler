@@ -12,6 +12,7 @@ import stats
 
 LOGGER = logging.getLogger(__name__)
 
+
 async def prefetch_dns(url, mock_url, session):
     '''
     So that we can track DNS transactions, and log them, we try to make sure
@@ -48,7 +49,7 @@ async def prefetch_dns(url, mock_url, session):
         with stats.record_latency('fetcher DNS lookup', url=host):
             with stats.coroutine_state('fetcher DNS lookup'):
                 # we want to use this protected thing because we want the result cached in the connector
-                answer = await session.connector._resolve_host(host, port) # pylint: disable=protected-access
+                answer = await session.connector._resolve_host(host, port)  # pylint: disable=protected-access
                 stats.stats_sum('DNS prefetches', 1)
     else:
         answer = session.connector.cached_hosts[(host, port)]
@@ -62,7 +63,7 @@ async def prefetch_dns(url, mock_url, session):
         if mock_url is None and ipaddress.ip_address(ip).is_private:
             LOGGER.info('host %s has private ip of %s, ignoring', host, ip)
             continue
-        if ':' in ip: # is this a valid sign of ipv6? XXX policy
+        if ':' in ip:  # is this a valid sign of ipv6? XXX policy
             LOGGER.info('host %s has ipv6 result of %s, ignoring', host, ip)
             continue
         iplist.append(ip)
@@ -74,9 +75,11 @@ async def prefetch_dns(url, mock_url, session):
 
 res = None
 
+
 def setup_resolver(ns):
     global res
     res = aiodns.DNSResolver(nameservers=ns, rotate=True)
+
 
 async def query(host, qtype):
     '''

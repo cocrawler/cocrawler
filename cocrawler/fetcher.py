@@ -29,6 +29,7 @@ import dns
 
 LOGGER = logging.getLogger(__name__)
 
+
 # XXX should be a policy plugin
 def apply_url_policies(url, config):
     headers = {}
@@ -53,7 +54,7 @@ async def fetch(url, session, config,
     pagetimeout = float(config['Crawl']['PageTimeout'])
     retrytimeout = float(config['Crawl']['RetryTimeout'])
 
-    if proxy: # pragma: no cover
+    if proxy:  # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
         # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
         # XXX we should rotate proxies every fetch in case some are borked
@@ -91,7 +92,7 @@ async def fetch(url, session, config,
 
                     # fully receive headers and body.
                     # XXX if we want to limit bytecount, do it here?
-                    body_bytes = await response.read() # this does a release if an exception is not thrown
+                    body_bytes = await response.read()  # this does a release if an exception is not thrown
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
                     header_bytes = response.raw_headers
 
@@ -118,7 +119,7 @@ async def fetch(url, session, config,
             last_exception = repr(e)
             LOGGER.debug('we choose to fail, url is %s, exception is %s', url.url, last_exception)
             subtries += maxsubtries
-            continue # fall out of the loop as if we exhausted subtries
+            continue  # fall out of the loop as if we exhausted subtries
         except asyncio.CancelledError:
             raise
         except Exception as e:
@@ -155,6 +156,7 @@ async def fetch(url, session, config,
     # generate warc here? both normal and robots fetches go through here.
 
     return FetcherResponse(response, body_bytes, header_bytes, t_first_byte, t_last_byte, None)
+
 
 def upgrade_scheme(url):
     '''

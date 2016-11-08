@@ -1,5 +1,6 @@
 from aiohttp import web
 
+
 def make_app(loop, config):
     # TODO switch this to socket.getaddrinfo() -- see https://docs.python.org/3/library/socket.html
     serverip = config['REST'].get('ServerIP')
@@ -19,6 +20,7 @@ def make_app(loop, config):
     app['cocrawler'] = handler, srv, loop
     return app
 
+
 def close(app):
     if app is None:
         return
@@ -30,8 +32,10 @@ def close(app):
     loop.run_until_complete(handler.finish_connections(60.0))
     loop.run_until_complete(app.cleanup())
 
+
 async def frontpage(request):
     return web.Response(text='Hello, world!')
+
 
 async def api(request):
     name = request.match_info['name']

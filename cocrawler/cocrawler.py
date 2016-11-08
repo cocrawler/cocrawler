@@ -29,15 +29,17 @@ import fetcher
 import useragent
 import urls
 import burner
-import url_allowed # XXX policy
+import url_allowed  # XXX policy
 
 LOGGER = logging.getLogger(__name__)
 
 __version__ = '0.01'
 
+
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
     return response.status in (300, 301, 302, 303, 307)
+
 
 class DefectiveCookieJar:
     '''
@@ -45,18 +47,25 @@ class DefectiveCookieJar:
     '''
     def __init__(self, unsafe=False, loop=None):
         pass
+
     def __iter__(self):
         return iter(dict())
+
     def __contains__(self, item):
         return False
+
     def __hash__(self):
         return 0
+
     def __len__(self):
         return 0
+
     def update_cookies(self, cookies, response_url=None):
         pass
+
     def filter_cookies(self, request_url):
         return None
+
 
 class Crawler:
     def __init__(self, loop, config, load=None, no_test=False):
@@ -87,19 +96,19 @@ class Crawler:
         self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver}
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
-        self.conn_kwargs['family'] = socket.AF_INET # XXX config option
+        self.conn_kwargs['family'] = socket.AF_INET  # XXX config option
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
         if config['Crawl'].get('CookieJar', '') == 'Defective':
             cookie_jar = DefectiveCookieJar()
         else:
-            cookie_jar = None # which means a normal cookie jar
+            cookie_jar = None  # which means a normal cookie jar
         self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar,
                                              headers={'User-Agent': self.ua})
 
         self.q = asyncio.PriorityQueue(loop=self.loop)
         self.ridealong = {}
-        self.ridealongmaxid = 1 # XXX switch this to using url_canon as the id
+        self.ridealongmaxid = 1  # XXX switch this to using url_canon as the id
 
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
@@ -312,7 +321,7 @@ class Crawler:
                         priority -= 1
                     json_log['seedredirs'] = work['seedredirs']
 
-            if self.add_url(priority+1, next_url, **kwargs): # XXX add more policy regarding priorities
+            if self.add_url(priority+1, next_url, **kwargs):  # XXX add more policy regarding priorities
                 json_log['found_new_links'] = 1
             # fall through to release and json logging
 
@@ -333,7 +342,7 @@ class Crawler:
             if content_type == 'text/html':
                 try:
                     with stats.record_burn('response.text() decode', url=url):
-                        body = await f.response.text() # do not use encoding found in the headers -- policy
+                        body = await f.response.text()  # do not use encoding found in the headers -- policy
                         # XXX consider using 'ascii' for speed, if all we want to do is regex in it
                 except (UnicodeDecodeError, LookupError):
                     # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
@@ -410,7 +419,7 @@ class Crawler:
 
     def save(self, f):
         # XXX make this more self-describing
-        pickle.dump('Put the XXX header here', f) # XXX date, conf file name, conf file checksum
+        pickle.dump('Put the XXX header here', f)  # XXX date, conf file name, conf file checksum
         pickle.dump(self.ridealongmaxid, f)
         pickle.dump(self.ridealong, f)
         pickle.dump(self._seeds, f)
@@ -421,7 +430,7 @@ class Crawler:
             pickle.dump(entry, f)
 
     def load(self, f):
-        header = pickle.load(f) # XXX check that this is a good header... log it
+        header = pickle.load(f)  # XXX check that this is a good header... log it
         self.ridealongmaxid = pickle.load(f)
         self.ridealong = pickle.load(f)
         self._seeds = pickle.load(f)
@@ -465,7 +474,7 @@ class Crawler:
             stats.report()
 
     def update_cpu_stats(self):
-        elapsedc = time.clock() # should be since process start
+        elapsedc = time.clock()  # should be since process start
         stats.stats_fixed('main thread cpu time', elapsedc)
 
     def summarize(self):

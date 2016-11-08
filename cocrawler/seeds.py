@@ -4,6 +4,7 @@ import urls
 
 LOGGER = logging.getLogger(__name__)
 
+
 def expand_seeds(seeds):
     ret = []
 

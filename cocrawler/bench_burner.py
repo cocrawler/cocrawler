@@ -1,12 +1,12 @@
 import functools
 import time
 import argparse
+import sys
 
 import asyncio
 
 import burner
-import parse
-import stats
+
 
 def burn(dt, data):
     t0 = time.clock()
@@ -15,12 +15,14 @@ def burn(dt, data):
         pass
     return 1,
 
+
 async def work():
     while True:
         dt, data = await queue.get()
         partial = functools.partial(burn, dt, data)
         await b.burn(partial)
         queue.task_done()
+
 
 async def crawl():
     workers = [asyncio.Task(work(), loop=loop) for _ in range(100)]

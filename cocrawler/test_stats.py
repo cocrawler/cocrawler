@@ -2,6 +2,7 @@ import time
 
 import stats
 
+
 def test_max():
     stats.stats_max('foo', 3)
     stats.stats_max('bar', 2)
@@ -9,12 +10,14 @@ def test_max():
     assert stats.stat_value('foo') == 5
     assert stats.stat_value('bar') == 2
 
+
 def test_sum():
     stats.stats_sum('foo2', 3)
     stats.stats_sum('bar2', 2)
     stats.stats_sum('foo2', 5)
     assert stats.stat_value('foo2') == 8
     assert stats.stat_value('bar2') == 2
+
 
 def test_burn():
     with stats.record_burn('foo', url='http://example.com/'):
@@ -24,7 +27,7 @@ def test_burn():
 
     assert stats.burners['foo']['count'] == 1
     assert stats.burners['foo']['time'] > 0 and stats.burners['foo']['time'] < 0.3
-    assert 'list' not in stats.burners['foo'] # first burn never goes on the list
+    assert 'list' not in stats.burners['foo']  # first burn never goes on the list
 
     with stats.record_burn('foo', url='http://example.com/'):
         t0 = time.clock()
@@ -42,6 +45,7 @@ def test_burn():
 
     stats.report()
 
+
 def test_latency():
     with stats.record_latency('foo', url='http://example.com/'):
         t0 = time.time()
@@ -50,7 +54,7 @@ def test_latency():
 
     assert stats.latencies['foo']['count'] == 1
     assert stats.latencies['foo']['time'] > 0 and stats.latencies['foo']['time'] < 0.3
-    assert 'list' not in stats.latencies['foo'] # first latency never goes on the list
+    assert 'list' not in stats.latencies['foo']  # first latency never goes on the list
     assert 'hist' in stats.latencies['foo']
 
     with stats.record_latency('foo', url='http://example.com/', elapsedmin=0.1):
@@ -61,6 +65,7 @@ def test_latency():
     assert 'list' in stats.latencies['foo']
 
     stats.report()
+
 
 def test_update():
     # I suppose the contents of stats.* depends on what order the tests are run in.

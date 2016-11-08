@@ -10,6 +10,7 @@ import cocrawler
 import conf
 from urls import URL
 
+
 def test_cocrawler(capsys):
     config = conf.config(None, None, confighome=False)
 
@@ -51,4 +52,4 @@ def test_cocrawler(capsys):
     out, err = capsys.readouterr()
 
     assert err == ''
-    assert len(out) >= 242 # not a very good test, but at least it is something
+    assert len(out) >= 242  # not a very good test, but at least it is something

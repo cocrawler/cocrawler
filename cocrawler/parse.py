@@ -15,6 +15,7 @@ from urls import URL
 
 LOGGER = logging.getLogger(__name__)
 
+
 def do_burner_work_html(html, html_bytes, url=None):
     stats.stats_sum('parser html bytes', len(html_bytes))
 
@@ -30,6 +31,7 @@ def do_burner_work_html(html, html_bytes, url=None):
 
     return links, embeds, sha1
 
+
 def find_html_links(html, url=None):
     '''
     Find the outgoing links and embeds in html. If url passed in, urljoin to it.
@@ -38,6 +40,7 @@ def find_html_links(html, url=None):
     '''
     links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
     return links, set()
+
 
 def find_html_links_and_embeds(html, url=None):
     '''
@@ -57,6 +60,7 @@ def find_html_links_and_embeds(html, url=None):
     embeds = url_clean_join(embeds, url=url)
     return links, embeds
 
+
 def find_css_links(css, url=None):
     '''
     Finds the links embedded in css files
@@ -67,11 +71,13 @@ def find_css_links(css, url=None):
     links = url_clean_join(links, url=url)
     return links, set()
 
+
 def soup_and_find(html, url=None):
     head, body = split_head_body_re(html)
     head_soup = BeautifulSoup(head)
     body_soup = BeautifulSoup(body)
     return find_links_from_soup(head_soup, body_soup, url=url)
+
 
 def find_links_from_soup(head_soup, body_soup, url=None):
     links = set()
@@ -89,11 +95,13 @@ def find_links_from_soup(head_soup, body_soup, url=None):
     embeds = url_clean_join(embeds, url=url)
     return links, embeds
 
+
 def url_clean_join(links, url=None):
     ret = set()
     for u in links:
         ret.add(URL(u, urljoin=url))
     return ret
+
 
 def report():
     b = stats.stat_value('parser html bytes')
@@ -108,6 +116,7 @@ def report():
     t, c = stats.burn_values('find_html_links url_clean_join')
     if c is not None and c > 0 and t is not None and t > 0:
         LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
+
 
 def split_head_body_re(html):
     try:
@@ -124,14 +133,17 @@ def split_head_body_re(html):
 # of course, these are all dangerous, but they might be useful
 # if the <head> of a webpage is abnormally large
 
+
 def regex_out_comments(html):
     return re.sub('<!--.*?-->', '', html, flags=re.S)
+
 
 def regex_out_some_scripts(html):
     '''
     This nukes most inline scripts... although some are <script type="...
     '''
     return re.sub('<script>.*?</script>', '', html, flags=re.S)
+
 
 def regex_out_all_scripts(html):
     return re.sub('<script[ >].*?</script>', '', html, flags=re.S)

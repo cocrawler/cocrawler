@@ -6,6 +6,7 @@ import tldextract
 import urls
 from urls import URL
 
+
 def test_urllib_parse():
     # This is just here so I can understand what urllib is doing with these:
     assert urllib.parse.urljoin('http://example.com/foo', '///bar') == 'http://example.com/bar'
@@ -20,6 +21,7 @@ def test_urllib_parse():
     assert urllib.parse.urljoin('http://example.com/foo', '////bar.com') == 'http://example.com//bar.com'
     assert urllib.parse.urljoin('http://example.com/foo', '/////bar.com') == 'http://example.com///bar.com'
 
+
 def test_clean_webpage_links():
     assert urls.clean_webpage_links(' foo ') == 'foo'
     assert urls.clean_webpage_links(' foo\t ') == 'foo'
@@ -31,11 +33,13 @@ def test_clean_webpage_links():
 
     # XXX tests for embedded spaces etc.
 
+
 def test_special_seed_handling():
     assert urls.special_seed_handling('foo') == 'http://foo'
     assert urls.special_seed_handling('//foo') == 'http://foo'
     assert urls.special_seed_handling('https://foo') == 'https://foo'
     assert urls.special_seed_handling('mailto:foo') == 'mailto:foo'
+
 
 def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?') == ('http://example.com/', '')
@@ -53,6 +57,7 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == \
         ('http://example.com/?foo=bar', '#frag')
     assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
+
 
 def test_special_redirect():
     assert urls.special_redirect(URL('foo'), URL('bar')) is None
@@ -80,16 +85,18 @@ def test_special_redirect():
     url4 = URL('https://example.com/')
     assert urls.special_redirect(url4, URL('http://www.example.com/')) == 'towww+tohttp'
 
+
 def test_get_domain():
     assert urls.get_domain('http://www.bbc.co.uk') == 'bbc.co.uk'
-    assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk' # nhs.uk is a public suffix, surprise
-    assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk' # ditto
+    assert urls.get_domain('http://www.nhs.uk') == 'www.nhs.uk'  # nhs.uk is a public suffix, surprise
+    assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk'  # ditto
     assert urls.get_domain('http://www.example.com') == 'example.com'
     assert urls.get_domain('http://sub.example.com') == 'example.com'
-    assert urls.get_domain('http://sub.blogspot.com') == 'sub.blogspot.com' # we want this behavior
+    assert urls.get_domain('http://sub.blogspot.com') == 'sub.blogspot.com'  # we want this behavior
     # if the blogspot test doesn't work, try this from the shell: "tldextract -u -p"
     # unfortunately, all tldextract users use the same cache
     assert urls.get_domain('http://www.com') == 'www.com'
+
 
 def test_get_hostname():
     assert urls.get_hostname('http://www.bbc.co.uk') == 'www.bbc.co.uk'
@@ -102,6 +109,7 @@ def test_get_hostname():
     assert urls.get_hostname('http://www.com') == 'www.com'
     assert urls.get_hostname('http://www.com', remove_www=True) == 'www.com'
 
+
 def test_tldextract():
     '''
     verify that tldextract parses just the netloc
@@ -109,6 +117,7 @@ def test_tldextract():
     '''
     assert tldextract.extract('example.com').registered_domain == 'example.com'
     assert tldextract.extract('www.example.com').registered_domain == 'example.com'
+
 
 def test_URL():
     url = URL('http://www.example.com/')

@@ -6,6 +6,7 @@ def average(l):
 
 functions = {'average': average, 'max': max, 'min': min, 'sum': sum}
 
+
 class EventAccumulator:
     '''
     Accumulate a stream of values over powers of ten, i.e.,
@@ -32,10 +33,10 @@ class EventAccumulator:
         for l in range(0, self.levels):
             self.data[l].append(value)
             if len(self.data[l]) == 1:
-                self.data[l].append(value) # only at startup
+                self.data[l].append(value)  # only at startup
             if len(self.data[l]) > 10:
                 # this confuses pylint. all of the functions return floats
-                value = self.function(self.data[l][1:]) # pylint: disable=redefined-variable-type
+                value = self.function(self.data[l][1:])  # pylint: disable=redefined-variable-type
                 self.data[l] = [value]
             else:
                 break
@@ -50,7 +51,7 @@ class EventAccumulator:
     def read(self):
         ret = []
         last = 0.0
-        if len(self.data[0]) > 1: # immediate update for this one
+        if len(self.data[0]) > 1:  # immediate update for this one
             value = self.function(self.data[0][1:])
             self.data[0][0] = value
         for l in range(0, self.levels):
@@ -61,7 +62,7 @@ class EventAccumulator:
                 ret.append(last)
         return ret
 
-#class TimeAccumulator:
+# class TimeAccumulator:
 #    '''
 #    Accumulate event counts by time, over the past second, 10 seconds, minute,
 #    10 minutes, hour, day, month. Kind of like an in-memory RRD.

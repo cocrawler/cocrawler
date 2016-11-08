@@ -2,6 +2,7 @@ import pytest
 
 import facet
 
+
 def test_double_entries():
     t = '''
     <meta name="robots" content="noarchive" />
@@ -21,6 +22,7 @@ def test_double_entries():
                       ('format-detection', 'telephone=no'),
                       ('format-detection', 'email=no')]
 
+
 def test_generator():
     t = '''
     <meta name="generator" content="WordPress 2.5.1" />
@@ -38,6 +40,7 @@ def test_generator():
                       ('generator', 'Drupal 7 (http://drupal.org)'),
                       ('drupal', True)]
 
+
 def test_link_rel():
     t = '''
     <link rel="amphtml" href="http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092" />
@@ -52,6 +55,7 @@ def test_link_rel():
                       ('canonical',
                        ('https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort',
                         'notype'))]
+
 
 def test_facebook():
     t = '''
@@ -69,6 +73,7 @@ def test_facebook():
                       ('fb instant', True),
                       ('opengraph', ('...', 'notype')),
                       ('origin', ('...', 'notype'))]
+
 
 def test_twitter():
     t = '''
@@ -91,7 +96,8 @@ def test_twitter():
                       ('twitter:site', '@ABC'),
                       ('twitter:creator', '@brianross')]
 
-def test_applinks(): # fb + Parse
+
+def test_applinks():  # fb + Parse
     t = '''
     <meta property="al:ios:url" content="applinks://docs" />
     <meta property="al:ios:app_store_id" content="12345" />
@@ -99,6 +105,7 @@ def test_applinks(): # fb + Parse
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('applinks', True), ('applinks', True), ('applinks', True)]
+
 
 def test_misc_meta_name():
     t = '''
@@ -109,6 +116,7 @@ def test_misc_meta_name():
                        'Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising '
                        'Effort')]
 
+
 @pytest.mark.skip(reason='not yet implemented')
 def test_google_stuff():
     t = '''
@@ -118,6 +126,7 @@ def test_google_stuff():
     '''
     facets = facet.find_head_facets(t)
     assert facets == 'foo'
+
 
 def test_integrity():
     t = '''
@@ -140,6 +149,7 @@ def test_integrity():
                       ('amphtml', ('http://example.com/amp', 'notype')),
                       ('script integrity', 3)]
 
+
 def test_facets_grep():
     t = '''
     # 3 different styles of configuring google analytics
@@ -156,6 +166,7 @@ def test_facets_grep():
                       ('google analytics', 'UA-63787687-1'),
                       ('google analytics', 'UA-8162380-2'),
                       ('google analytics', 'UA-1234567-6')]
+
 
 def test_misc():
     t = '''

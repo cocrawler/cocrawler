@@ -25,12 +25,14 @@ ARGS.add_argument('--printdefault', action='store_true')
 ARGS.add_argument('--loglevel', action='store', type=int, default=2)
 ARGS.add_argument('--load', action='store')
 
+
 def limit_resources(config):
     _, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 
-    _, hard = resource.getrlimit(resource.RLIMIT_AS) # RLIMIT_VMEM does not exist?!
-    resource.setrlimit(resource.RLIMIT_AS, (16 * 1024 * 1024 * 1024, hard)) # XXX config
+    _, hard = resource.getrlimit(resource.RLIMIT_AS)  # RLIMIT_VMEM does not exist?!
+    resource.setrlimit(resource.RLIMIT_AS, (16 * 1024 * 1024 * 1024, hard))  # XXX config
+
 
 def main():
     '''

@@ -33,6 +33,7 @@ tablet = 'Mozilla/5.0 (iPad; CPU OS 9_3_5 like Mac OS X) AppleWebKit/601.1.46 (K
 phone = ('Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_5 like Mac OS X) '
          'AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13G36 Safari/601.1')
 
+
 def useragent(config, version):
     uac = config['UserAgent']
 

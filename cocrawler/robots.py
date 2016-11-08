@@ -18,6 +18,7 @@ import fetcher
 
 LOGGER = logging.getLogger(__name__)
 
+
 class Robots:
     def __init__(self, robotname, session, datalayer, config):
         self.robotname = robotname
@@ -45,7 +46,7 @@ class Robots:
                                              headers=headers, proxy=proxy)
 
         if robots is None:
-            self.jsonlog(schemenetloc, {'error':'unable to find robots information', 'action':'deny'})
+            self.jsonlog(schemenetloc, {'error': 'unable to find robots information', 'action': 'deny'})
             stats.stats_sum('robots denied - robots not found', 1)
             stats.stats_sum('robots denied', 1)
             return False
@@ -68,7 +69,7 @@ class Robots:
             stats.stats_sum('robots allowed', 1)
             return True
 
-        self.jsonlog(schemenetloc, {'url':pathplus, 'action':'deny'})
+        self.jsonlog(schemenetloc, {'url': pathplus, 'action': 'deny'})
         stats.stats_sum('robots denied', 1)
         return False
 
@@ -103,25 +104,25 @@ class Robots:
             # fetch failed. if we just fell through there would be a
             # big race. treat this as a failure.
             # XXX note that we have no negative caching
-            LOGGER.debug('some other fetch of robots has failed.') # XXX make this a stat
+            LOGGER.debug('some other fetch of robots has failed.')  # XXX make this a stat
             return None
 
         self.in_progress.add(schemenetloc)
 
-        #XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
+        # XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
         f = await fetcher.fetch(url, self.session, self.config,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, stats_me=False)
         if f.last_exception:
-            self.jsonlog(schemenetloc, {'error':'max tries exceeded, final exception is: ' + f.last_exception,
-                                        'action':'fetch'})
+            self.jsonlog(schemenetloc, {'error': 'max tries exceeded, final exception is: ' + f.last_exception,
+                                        'action': 'fetch'})
             self.in_progress.discard(schemenetloc)
             return None
 
         stats.stats_sum('robots fetched', 1)
 
         # If the url was redirected to a different host/robots.txt, let's cache that too
-        #final_url = f.response.url.human_repr() # a YARL thing
+        # final_url = f.response.url.human_repr() # a YARL thing
         final_url = f.response.url
         final_schemenetloc = None
         if final_url != url.url:
@@ -156,8 +157,8 @@ class Robots:
         if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte):
             # policy: treat as empty
             self.jsonlog(schemenetloc,
-                         {'warning':'saw an implausible robots.txt, treating as empty',
-                          'action':'fetch', 't_first_byte':f.t_first_byte})
+                         {'warning': 'saw an implausible robots.txt, treating as empty',
+                          'action': 'fetch', 't_first_byte': f.t_first_byte})
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
             parsed.parse('')
             self.datalayer.cache_robots(schemenetloc, parsed)
@@ -170,14 +171,14 @@ class Robots:
         # one last thing... go from bytes to a string, despite bogus utf8
         try:
             body = await f.response.text()
-        except UnicodeError: # pragma: no cover
+        except UnicodeError:  # pragma: no cover
             # something went wrong. try again assuming utf8 and ignoring errors
             body = str(f.body_bytes, 'utf-8', 'ignore')
-        except Exception as e: # pragma: no cover
+        except Exception as e:  # pragma: no cover
             # something unusual went wrong. treat like a fetch error.
             # (could be a broken tcp session etc.) XXX use list from cocrawler.py
-            self.jsonlog(schemenetloc, {'error':'robots body decode threw an exception: ' + repr(e),
-                                        'action':'fetch', 't_first_byte':f.t_first_byte})
+            self.jsonlog(schemenetloc, {'error': 'robots body decode threw an exception: ' + repr(e),
+                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
             await f.response.release()
             return None
@@ -189,7 +190,7 @@ class Robots:
         self.in_progress.discard(schemenetloc)
         if final_schemenetloc:
             self.in_progress.discard(final_schemenetloc)
-        self.jsonlog(schemenetloc, {'action':'fetch', 't_first_byte':f.t_first_byte})
+        self.jsonlog(schemenetloc, {'action': 'fetch', 't_first_byte': f.t_first_byte})
         return parsed
 
     def is_plausible_robots(self, schemenetloc, body_bytes, t_first_byte):
@@ -197,30 +198,30 @@ class Robots:
         Did you know that some sites have a robots.txt that's a 100 megabyte video file?
         '''
         # Not OK: html or xml or something else bad
-        if body_bytes.startswith(b'<'): # pragma: no cover
-            self.jsonlog(schemenetloc, {'error':'robots appears to be html or xml, ignoring',
-                                        'action':'fetch', 't_first_byte':t_first_byte})
+        if body_bytes.startswith(b'<'):  # pragma: no cover
+            self.jsonlog(schemenetloc, {'error': 'robots appears to be html or xml, ignoring',
+                                        'action': 'fetch', 't_first_byte': t_first_byte})
             return False
 
         # OK: BOM, it signals a text file ... utf8 or utf16 be/le
         # (this info doesn't appear to be recognized by libmagic?!)
         if (body_bytes.startswith(b'\xef\xbb\xbf') or
                 body_bytes.startswith(b'\xfe\xff') or
-                body_bytes.startswith(b'\xff\xfe')): # pragma: no cover
+                body_bytes.startswith(b'\xff\xfe')):  # pragma: no cover
             return True
 
         # OK: file magic mimetype is 'text' or similar -- too expensive, 3ms per call
-        #mime_type = self.magic.id_buffer(body_bytes)
-        #if not (mime_type.startswith('text') or mime_type == 'application/x-empty'):
+        # mime_type = self.magic.id_buffer(body_bytes)
+        # if not (mime_type.startswith('text') or mime_type == 'application/x-empty'):
         #    self.jsonlog(schemenetloc, {'error':
         #                                'robots has unexpected mimetype {}, ignoring'.format(mime_type),
         #                                'action':'fetch', 't_first_byte':t_first_byte})
         #    return False
 
         # not OK: too big
-        if len(body_bytes) > 1000000: # pragma: no cover
-            self.jsonlog(schemenetloc, {'error':'robots is too big, ignoring',
-                                        'action':'fetch', 't_first_byte':t_first_byte})
+        if len(body_bytes) > 1000000:  # pragma: no cover
+            self.jsonlog(schemenetloc, {'error': 'robots is too big, ignoring',
+                                        'action': 'fetch', 't_first_byte': t_first_byte})
             return False
 
         return True

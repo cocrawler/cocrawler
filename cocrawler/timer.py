@@ -58,6 +58,7 @@ slow_stats = [
     {'name': 'main thread cpu time', 'kind': 'delta'},
 ]
 
+
 def timer_exception_complaint(name, fut):
     exc = fut.exception()
     if exc:
@@ -66,6 +67,7 @@ def timer_exception_complaint(name, fut):
 
 ft = None
 st = None
+
 
 def start_carbon(loop, config):
     server = config['CarbonStats'].get('Server', 'localhost')
@@ -81,11 +83,13 @@ def start_carbon(loop, config):
     st = asyncio.Task(slow.timer(), loop=loop)
     st.add_done_callback(functools.partial(timer_exception_complaint, 'slow carbon timer'))
 
+
 def close():
     if not ft.done():
         ft.cancel()
     if not st.done():
         st.cancel()
+
 
 async def carbon_push(server, port, tuples, loop):
     payload = pickle.dumps(tuples, protocol=2)
@@ -99,6 +103,7 @@ async def carbon_push(server, port, tuples, loop):
     except OSError:
         # XXX do something useful here
         stats.stats_sum('carbon stats push fail', 1)
+
 
 class CarbonTimer:
     def __init__(self, dt, prefix, stats_list, server, port, loop):

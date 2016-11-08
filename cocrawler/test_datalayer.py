@@ -5,24 +5,27 @@ import pytest
 from urls import URL
 import datalayer
 
+
 def test_seen():
-    dl = datalayer.Datalayer({'Robots':{'RobotsCacheSize':1, 'RobotsCacheTimeout': 1}})
+    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
     assert not dl.seen_url(URL('http://example.com'))
     dl.add_seen_url(URL('http://example.com'))
     assert dl.seen_url(URL('http://example.com'))
 
+
 def test_robotscache():
-    dl = datalayer.Datalayer({'Robots':{'RobotsCacheSize':1, 'RobotsCacheTimeout': 1}})
+    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
     with pytest.raises(KeyError):
         dl.read_robots_cache('http://example.com')
     dl.cache_robots('http://example.com', b'THIS IS A TEST')
     assert dl.read_robots_cache('http://example.com') == b'THIS IS A TEST'
 
+
 def test_saveload():
     tf = tempfile.NamedTemporaryFile(delete=False)
     name = tf.name
 
-    dl = datalayer.Datalayer({'Robots':{'RobotsCacheSize':1, 'RobotsCacheTimeout': 1}})
+    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
     dl.add_seen_url(URL('http://example.com'))
     assert dl.seen_url(URL('http://example.com'))
 
@@ -37,8 +40,9 @@ def test_saveload():
     os.unlink(name)
     assert not os.path.exists(name)
 
+
 def test_summarize(capsys):
-    dl = datalayer.Datalayer({'Robots':{'RobotsCacheSize':1, 'RobotsCacheTimeout': 1}})
+    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
     dl.add_seen_url(URL('http://example.com'))
     dl.add_seen_url(URL('http://example2.com'))
     dl.summarize()

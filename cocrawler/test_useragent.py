@@ -3,6 +3,7 @@ import pytest
 
 import useragent
 
+
 def test_useragent():
 
     config = {'UserAgent': {'Style': 'crawler',

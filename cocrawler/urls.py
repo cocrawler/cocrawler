@@ -14,6 +14,7 @@ TODO: SURT
 import urllib.parse
 import tldextract
 
+
 def clean_webpage_links(link):
     '''
     Webpage links have lots of random crap in them that we'd like to
@@ -40,6 +41,7 @@ def clean_webpage_links(link):
 
     return link
 
+
 def special_seed_handling(url):
     '''
     We don't expect seed-lists to be very clean.
@@ -57,6 +59,7 @@ def special_seed_handling(url):
 
 valid_hex = set('%02x' % i for i in range(256))
 valid_hex.update(set('%02X' % i for i in range(256)))
+
 
 def safe_url_canonicalization(url):
     '''
@@ -90,6 +93,7 @@ def safe_url_canonicalization(url):
         fragment = '#' + fragment
     return urllib.parse.urlunparse((scheme, netloc, path, parms, query, None)), fragment
 
+
 def upgrade_url_to_https(url):
     # TODO
     #  use browser HSTS list to upgrade to https:
@@ -97,13 +101,14 @@ def upgrade_url_to_https(url):
     #  use HTTPSEverwhere? would have to have a fallback if https failed / redir to http
     return
 
+
 def special_redirect(url, next_url):
     '''
     Detect redirects like www to non-www, http to https
 
     TODO: detect adding '/' on the end of a path. Removing '/' is rare, normally a 404
     '''
-    if abs(len(url.url) - len(next_url.url)) > 5: # 5 = 'www.' + 's'
+    if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'
         return None
 
     if url.url == next_url.url:
@@ -135,10 +140,12 @@ def special_redirect(url, next_url):
 
     return None
 
+
 def get_domain(hostname):
     # TODOconfig option to set include_psl_private_domains=True ?
     #  sometimes we do want *.blogspot.com to all be different tlds
     return tldextract.extract(hostname).registered_domain
+
 
 def get_hostname(url, parts=None, remove_www=False):
     # TODO: also duplicated in url_allowed.py
@@ -152,6 +159,7 @@ def get_hostname(url, parts=None, remove_www=False):
         if not domain.startswith('www.'):
             hostname = hostname[4:]
     return hostname
+
 
 class URL(object):
     '''
@@ -171,7 +179,7 @@ class URL(object):
             elif url.startswith('/') and not url.startswith('//'):
                 url = urljoin.urlparse.scheme + '://' + urljoin.hostname + url
             else:
-                url = urllib.parse.urljoin(urljoin.url, url) # expensive
+                url = urllib.parse.urljoin(urljoin.url, url)  # expensive
 
         # XXX incorporate safe_url_canonicalization() with the below frag and / handling
 
@@ -184,19 +192,19 @@ class URL(object):
         else:
             self._original_frag = None
 
-        self._urlparse = urllib.parse.urlparse(url) # expensive
+        self._urlparse = urllib.parse.urlparse(url)  # expensive
 
-        if self._urlparse.path == '': # we want this to be '/'
+        if self._urlparse.path == '':  # we want this to be '/'
             # pretty much a design error, but I digress.
             urlp = list(self._urlparse)
             urlp[2] = '/'
             url = urllib.parse.urlunparse(urlp)
-            self._urlparse = urllib.parse.urlparse(url) # expensive
+            self._urlparse = urllib.parse.urlparse(url)  # expensive
 
         # url is currently decoded, and may or may not have parts of the hostname in idna
         # XXX make sure it's valid encoding, canonicalize hostname to idna encoding ('xn--...')
 
-        self._url = urllib.parse.urlunparse(self._urlparse) # final canonicalization
+        self._url = urllib.parse.urlunparse(self._urlparse)  # final canonicalization
 
         self._netloc = self.urlparse.netloc
         self._hostname = get_hostname(None, parts=self._urlparse)
@@ -208,21 +216,27 @@ class URL(object):
     @property
     def url(self):
         return self._url
+
     @property
     def urlparse(self):
         return self._urlparse
+
     @property
     def netloc(self):
         return self._netloc
+
     @property
     def hostname(self):
         return self._hostname
+
     @property
     def hostname_without_www(self):
         return self._hostname_without_www
+
     @property
     def registered_domain(self):
         return self._registered_domain
+
     @property
     def original_frag(self):
         return self._original_frag

@@ -15,7 +15,8 @@ from urls import URL
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])
 
-ns = ['8.8.8.8', '8.8.4.4'] # google
+ns = ['8.8.8.8', '8.8.4.4']  # google
+
 
 @pytest.mark.asyncio
 async def test_prefetch_dns():
@@ -30,6 +31,7 @@ async def test_prefetch_dns():
     iplist = await dns.prefetch_dns(url, mock_url, session)
 
     assert len(iplist) > 0
+
 
 @pytest.mark.asyncio
 async def test_resolver():
