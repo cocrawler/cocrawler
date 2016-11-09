@@ -170,7 +170,7 @@ def report():
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
     if elapsed > 0:
-        LOGGER.info('  Main thread cpu %.1f', elapsedc/elapsed*100)
+        LOGGER.info('  Main thread cpu %.1f%%', elapsedc/elapsed*100)
     bt = burners.get('burner thread parser total cpu time', {}).get('time', 0.)
     if bt > 0:
         LOGGER.info('  Burner thread burned %.3f cpu seconds', bt)
