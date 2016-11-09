@@ -72,6 +72,7 @@ Logging: {}
 #  Crawllog: crawllog.jsonl
 #  Robotslog: robotslog.jsonl
 #  RejectedAddUrllog: rejectedaddurl.log
+#  Facetlog: facet.log
 
 Testing:
   TestHostmapAll: False

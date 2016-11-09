@@ -112,16 +112,24 @@ class Crawler:
 
         self.datalayer = datalayer.Datalayer(config)
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
+
         self.crawllog = config['Logging'].get('Crawllog')
         if self.crawllog:
             self.crawllogfd = open(self.crawllog, 'a')
         else:
             self.crawllogfd = None
+
         self.rejectedaddurl = config['Logging'].get('RejectedAddUrllog')
         if self.rejectedaddurl:
             self.rejectedaddurlfd = open(self.rejectedaddurl, 'a')
         else:
             self.rejectedaddurlfd = None
+
+        self.facetlog = config['Logging'].get('Facetlog')
+        if self.facetlog:
+            self.facetlogfd = open(self.facetlog, 'a')
+        else:
+            self.facetlogfd = None
 
         if load is not None:
             self.load_all(load)
@@ -363,8 +371,11 @@ class Crawler:
                             body, f.body_bytes, headers, url=url)
                 json_log['checksum'] = sha1
 
-                LOGGER.debug('parsing content of url %r returned %d links, %d embeds',
-                             url.url, len(links), len(embeds))
+                if self.facetlogfd:
+                    print(json.dumps({'url': url.url, 'facets': facets}, sort_keys=True), file=self.facetlogfd)
+
+                LOGGER.debug('parsing content of url %r returned %d links, %d embeds, %d facets',
+                             url.url, len(links), len(embeds), len(facets))
                 json_log['found_links'] = len(links) + len(embeds)
                 stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
