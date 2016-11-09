@@ -39,6 +39,7 @@ fast_stats = [
     {'name': 'fetcher retry sleep'},
     {'name': 'fetching/checking robots'},
     {'name': 'robots collision sleep'},
+    {'name': 'fetcher DNS lookup'},
     {'name': 'priority'},
 ]
 
