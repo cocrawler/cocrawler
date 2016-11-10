@@ -188,7 +188,7 @@ def facets_from_embeds(embeds):
 cookie_matches = {
     'CAKEPHP': 'CAKE PHP framework',
     'ci_session': 'CodeIgniter PHP framework',
-    '__cfduid': 'CloudFlare',
+    '__cfduid': 'cloudflare',
     'PHPSESSID': 'PHP',
     'ASP.NET': 'aspx',
     'JSESSIONID': 'java',

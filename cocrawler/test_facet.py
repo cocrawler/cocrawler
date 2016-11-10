@@ -209,13 +209,13 @@ def test_facets_from_cookies_mysteries():
 
 
 def test_facets_from_cookies_matches():
-    f = facet.facets_from_cookies((('set-cookie', 'PHPSESSID=foo'),))
-    assert f[0][0] == 'PHP'
+    f = facet.facets_from_cookies((('set-cookie', 'PHPSESSID=foo'), ('set-cookie', '__cfduid=1')))
+    assert f == [('PHP', True), ('cloudflare', True)]
 
 
 def test_facets_from_cookies_prefixes():
-    f = facet.facets_from_cookies((('set-cookie', 'phpbb_2354'),))
-    assert f[0][0] == 'PHPBB'
+    f = facet.facets_from_cookies((('set-cookie', 'phpbb_2354=1'),))
+    assert f == [('PHPBB', True)]
 
 
 # ----------------------------------------------------------------------
