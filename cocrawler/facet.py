@@ -245,7 +245,7 @@ def facets_from_cookies(headers):
             continue
         for cp in cookie_prefixes:
             if key.startswith(cp):
-                facets.append((cookie_prefixes[key], True))
+                facets.append((cookie_prefixes[cp], True))
                 break
         else:
             if (len(key) == 32 and

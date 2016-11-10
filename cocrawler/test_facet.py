@@ -214,7 +214,7 @@ def test_facets_from_cookies_matches():
 
 
 def test_facets_from_cookies_prefixes():
-    f = facet.facets_from_cookies((('set-cookie', 'phpbb_'),))
+    f = facet.facets_from_cookies((('set-cookie', 'phpbb_2354'),))
     assert f[0][0] == 'PHPBB'
 
 
