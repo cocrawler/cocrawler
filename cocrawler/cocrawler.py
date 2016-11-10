@@ -358,17 +358,19 @@ class Crawler:
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
+                headers_list = []
+                for k, v in headers.items():
+                    headers_list.append((k.lower(), v))
                 if len(body) > self.burner_parseinburnersize:
-                    passable = {}
-                    for h in headers:
-                        passable[h.lower()] = headers[h]
+                    # headers is a funky object that's allergic to getting pickled.
+                    # let's make something more boring
                     links, embeds, sha1, facets = await self.burner.burn(
-                        partial(parse.do_burner_work_html, body, f.body_bytes, passable, url=url),
+                        partial(parse.do_burner_work_html, body, f.body_bytes, headers_list, url=url),
                         url=url)
                 else:
                     with stats.coroutine_state('await main thread parser'):
                         links, embeds, sha1, facets = parse.do_burner_work_html(
-                            body, f.body_bytes, headers, url=url)
+                            body, f.body_bytes, headers_list, url=url)
                 json_log['checksum'] = sha1
 
                 if self.facetlogfd:

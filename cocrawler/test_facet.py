@@ -161,8 +161,7 @@ def test_facets_grep():
     # adense embeds the external script name in inline js
     google_ad_client = "pub-5692821333050410"; # publisher ID
     '''
-    facets = []
-    facet.facets_grep(t, facets)
+    facets = facet.facets_grep(t)
     assert facets == [('google publisher id', 'pub-5692821333050410'),
                       ('google analytics', 'UA-63787687-1'),
                       ('google analytics', 'UA-8162380-2'),
@@ -188,16 +187,14 @@ def test_misc():
 
 
 def test_response_header_facets():
-    h = {'server': 'Foo'}
-    facets = []
-    facets = facet.facets_from_response_headers(h, facets)
-    assert facets == [('Server', 'Foo')]
+    h = (('server', 'Foo'),)
+    facets = facet.facets_from_response_headers(h)
+    assert facets == [('server', 'Foo')]
 
 
 def test_facets_from_embeds():
     embeds = set((URL('http://example.com'), URL('http://cdn.ampproject.org')))
-    facets = []
-    facets = facet.facets_from_embeds(embeds, facets)
+    facets = facet.facets_from_embeds(embeds)
     assert facets == [('google amp', True)]
 
 def test_facets_from_cookies_mysteries():
@@ -207,21 +204,17 @@ def test_facets_from_cookies_mysteries():
                  'TS0103d65d': 'Mystery 4',
                  'wordpress_07dcfa44f6c1a509a602e92e749c7b6d': 'WordPress'}
     for m in mysteries:
-        f = facet.facets_from_cookies([m+'=foo'], [])
-        print('input', m)
-        print('output', f)
+        f = facet.facets_from_cookies((('set-cookie', m+'=foo'),))
         assert f[0][0] == mysteries[m]
 
 
 def test_facets_from_cookies_matches():
-    f = facet.facets_from_cookies(['PHPSESSID=foo'], [])
-    print('output', f)
+    f = facet.facets_from_cookies((('set-cookie', 'PHPSESSID=foo'),))
     assert f[0][0] == 'PHP'
 
 
 def test_facets_from_cookies_prefixes():
-    f = facet.facets_from_cookies(['phpbb_'], [])
-    print('output', f)
+    f = facet.facets_from_cookies((('set-cookie', 'phpbb_'),))
     assert f[0][0] == 'PHPBB'
 
 

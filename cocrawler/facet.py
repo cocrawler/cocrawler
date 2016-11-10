@@ -24,10 +24,12 @@ get_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 
 
 def compute_all(html, head, headers, embeds, url=None):
-    facets = find_head_facets(head, url=url)
-    facets = facets_grep(head, facets)
-    facets = facets_from_response_headers(headers, facets)
-    facets = facets_from_embeds(embeds, facets)
+    facets = []
+    facets.extend(find_head_facets(head, url=url))
+    facets.extend(facets_grep(head))
+    facets.extend(facets_from_response_headers(headers))
+    facets.extend(facets_from_embeds(embeds))
+    facets.extend(facets_from_cookies(headers))
 
     return facet_dedup(facets)
 
@@ -106,6 +108,9 @@ def facet_dedup(facets):
     '''
     Remove duplicate ('foo', True) facets. Keep all the ones with other values.
     '''
+    if not facets:
+        return []
+
     dups = set()
     ret = []
     for f in facets:
@@ -119,7 +124,8 @@ def facet_dedup(facets):
     return ret
 
 
-def facets_grep(head, facets):
+def facets_grep(head):
+    facets = []
     # look for this one as a grep, because if present, it's embedded in a <script> jsonl
     if 'http://schema.org' in head:
         facets.append(('schema.org', True))
@@ -136,11 +142,10 @@ def facets_grep(head, facets):
 
     return facets
 
-save_response_headers = ('Refresh', 'Server', 'Set-Cookie', 'Strict-Transport-Security', 'X-Powered-By')
+save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'x-powered-by')
 
 
-# XXX unused
-def facets_from_response_headers(headers, facets):
+def facets_from_response_headers(headers):
     '''
     Refresh: N; url=http://...
     Server: ...
@@ -148,16 +153,18 @@ def facets_from_response_headers(headers, facets):
     Strict-Transport-Security:
     X-Powered-By:
     '''
-    for rh in save_response_headers:
-        # lower because the special header dict can't be passed into a burner
-        if rh.lower() in headers:
-            facets.append((rh, headers.get(rh.lower())))
+    facets = []
+    for h in headers:
+        k, v = h
+        if k in save_response_headers:
+            facets.append((k, v))
 
     return facets
 
 
-# XXX not used, should be generalized using lists from adblockers
-def facets_from_embeds(embeds, facets):
+# XXX should be generalized using lists from adblockers
+def facets_from_embeds(embeds):
+    facets = []
     for url in embeds:  # this is both href and src embeds, but whatever
         u = url.url
         if 'cdn.ampproject.org' in u:
@@ -227,9 +234,12 @@ cookie_prefixes = {
 }
 
 
-def facets_from_cookies(cookies, facets):
-    for c in cookies:
-        key = c.partition('=')[0]
+def facets_from_cookies(headers):
+    facets = []
+    for k, v in headers:
+        if k != 'set-cookie':
+            continue
+        key = v.partition('=')[0]
         if key in cookie_matches:
             facets.append((cookie_matches[key], True))
             continue
