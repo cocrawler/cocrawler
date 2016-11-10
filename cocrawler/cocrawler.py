@@ -555,7 +555,7 @@ class Crawler:
             if self.awaiting_work == len(self.workers) and self.q.qsize() == 0:
                 # this is a little racy with how awaiting work is set and the queue is read
                 # while we're in this join we aren't looking for STOPCRAWLER etc
-                LOGGER.warning('all workers appear idle, executing join')
+                LOGGER.warning('all workers appear idle, queue appears empty, executing join')
                 await self.q.join()
                 break
 
