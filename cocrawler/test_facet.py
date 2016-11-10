@@ -200,6 +200,31 @@ def test_facets_from_embeds():
     facets = facet.facets_from_embeds(embeds, facets)
     assert facets == [('google amp', True)]
 
+def test_facets_from_cookies_mysteries():
+    mysteries = {'0b2a2ea1719965db9784044304710a9c': 'Mystery 1',
+                 'SESS0084bfbcced439ebac5f559df8dd21e0': 'Mystery 2',
+                 'SN54bceb45e3fd0': 'Mystery 3',
+                 'TS0103d65d': 'Mystery 4',
+                 'wordpress_07dcfa44f6c1a509a602e92e749c7b6d': 'WordPress'}
+    for m in mysteries:
+        f = facet.facets_from_cookies([m+'=foo'], [])
+        print('input', m)
+        print('output', f)
+        assert f[0][0] == mysteries[m]
+
+
+def test_facets_from_cookies_matches():
+    f = facet.facets_from_cookies(['PHPSESSID=foo'], [])
+    print('output', f)
+    assert f[0][0] == 'PHP'
+
+
+def test_facets_from_cookies_prefixes():
+    f = facet.facets_from_cookies(['phpbb_'], [])
+    print('output', f)
+    assert f[0][0] == 'PHPBB'
+
+
 # ----------------------------------------------------------------------
 # A collection of stuff I may get to later
 # ----------------------------------------------------------------------

@@ -40,6 +40,7 @@ def find_head_facets(head, url=None):
     '''
     facets = []
 
+    # XXX this belongs moved up a couple into the parser
     stats.stats_sum('beautiful soup head bytes', len(head))
     with stats.record_burn('beautiful soup head', url=url):
         soup = BeautifulSoup(head, 'html.parser')
@@ -55,6 +56,10 @@ def find_head_facets(head, url=None):
     if base:
         if base.get('href'):
             facets.append(('base', base.get('href')))
+            # can also have target= but we don't care
+            # TODO base affects all relative URLs in doc
+            # XXX when I hoist the soup, hoist this code too
+            # can get clues here that www. or https is really the canonical site
 
     meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
@@ -170,4 +175,82 @@ def facets_from_embeds(embeds, facets):
         also has a js version
         '''
 
+    return facets
+
+
+cookie_matches = {
+    'CAKEPHP': 'CAKE PHP framework',
+    'ci_session': 'CodeIgniter PHP framework',
+    '__cfduid': 'CloudFlare',
+    'PHPSESSID': 'PHP',
+    'ASP.NET': 'aspx',
+    'JSESSIONID': 'java',
+    'ldblog_u': 'ldblog_u',
+    'bloguid': 'bloguid',
+    'XSRF-TOKEN': 'Angular',  # might be true
+    'laravel_session': 'laravel',
+    'safedog-flow-item': 'safedog',
+    'mirtesen': 'mirtesen',
+    'csrftoken': 'Django',
+    'yunsuo_session_verify': 'yunsuo',
+    'AWSELB': 'AWSELB',
+    'gvc': 'gvc',
+    'CFID': 'ColdFusion',
+    'bb_lastvisit': 'vBulletin',
+    'ARRAffinity': 'Windows Azure lb',
+    'SERVERID': 'HAProxy lb',
+    'CMSPreferredCulture': 'Kentico CMS',
+    '_icl_current_language': 'WPML multilingual',
+    '__RequestVerificationToken': 'aspx',
+    'fe_typo_user': 'Typo3 CMS',
+    'symfony': 'Symfony PHP framework',
+    'EktGUID': 'Ektron CMS',
+    'bbsessionhash': 'vBulletin',
+    'wordpress_test_cookie': 'WordPress',
+    'plack_session': 'perl plack framework',
+    'rack.session': 'ruby rack webserver',
+    'wpSGCacheBypass': 'SG CachePress Wordpress plugin',
+    'BlueStripe.PVN': 'Bluestripe perf monitoring',
+}
+
+cookie_prefixes = {
+    '.ASPX': 'aspx',
+    'AspNet': 'aspx',
+    'ASPSESSIONID': 'aspx',
+    'BIGipServer': 'F5 BIG-IP',
+    'phpbb_': 'PHPBB',
+    'phpbb2': 'PHPBB2',
+    'phpbb3_': 'PHPBB3',
+    'visid_incap_': 'Incapsula Security CDN',  # has a site id
+    'wfvt_': 'WordPress Wordfence plugin',
+    'X-Mapping-': 'Riverbed Stingray Traffic Manager',
+}
+
+
+def facets_from_cookies(cookies, facets):
+    for c in cookies:
+        key = c.partition('=')[0]
+        if key in cookie_matches:
+            facets.append((cookie_matches[key], True))
+            continue
+        for cp in cookie_prefixes:
+            if key.startswith(cp):
+                facets.append((cookie_prefixes[key], True))
+                break
+        else:
+            if (len(key) == 32 and
+                re.fullmatch(r'[0-9a-f]{32}', key)):
+                facets.append(('Mystery 1', True))
+            elif (len(key) == 36 and key.startswith('SESS') and
+                  re.fullmatch(r'SESS[0-9a-f]{32}', key)):
+                facets.append(('Mystery 2', True))
+            elif (len(key) == 15 and key.startswith('SN') and
+                  re.fullmatch(r'SN[0-9a-f]{13}', key)):
+                facets.append(('Mystery 3', True))
+            elif (len(key) == 10 and key.startswith('TS') and
+                  re.fullmatch(r'TS[0-9a-f]{8}', key)):
+                facets.append(('Mystery 4', True))
+            elif (len(key) == 42 and key.startswith('wordpress_') and
+                  re.fullmatch(r'wordpress_[0-9a-f]{32}', key)):
+                facets.append(('WordPress', True))
     return facets
