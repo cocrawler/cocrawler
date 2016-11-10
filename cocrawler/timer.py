@@ -48,7 +48,7 @@ slow_prefix = 'cocrawler.slow'
 slow_stats = [
     {'name': 'initial seeds'},
     {'name': 'added seeds'},
-    {'name': 'fetch URL'},
+    {'name': 'fetch URLs'},
     {'name': 'fetch bytes', 'normalize': 1/1000000000.},
     {'name': 'robots denied'},
     {'name': 'tries completely exhausted'},
