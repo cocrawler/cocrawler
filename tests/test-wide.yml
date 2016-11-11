@@ -18,6 +18,7 @@ Seeds:
 Logging:
   Crawllog: crawllog.jsonl
   Robotslog: robotslog.jsonl
+  Facetlog: facetlog.jsonl
 
 UserAgent:
   Style: crawler
