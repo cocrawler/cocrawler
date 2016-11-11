@@ -17,7 +17,7 @@ import facet
 LOGGER = logging.getLogger(__name__)
 
 
-def do_burner_work_html(html, html_bytes, headers, url=None):
+def do_burner_work_html(html, html_bytes, headers_list, url=None):
     stats.stats_sum('parser html bytes', len(html_bytes))
 
     with stats.record_burn('find_html_links re', url=url):
@@ -35,7 +35,7 @@ def do_burner_work_html(html, html_bytes, headers, url=None):
         head, _ = split_head_body_re(html)
         # find_html_links doesn't actually produce embeds,
         # so we're going to parse links for now XXX config
-        facets = facet.compute_all(html, head, headers, links)
+        facets = facet.compute_all(html, head, headers_list, links)
 
     return links, embeds, sha1, facets
 
