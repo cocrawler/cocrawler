@@ -189,7 +189,7 @@ def test_misc():
 def test_response_header_facets():
     h = (('server', 'Foo'),)
     facets = facet.facets_from_response_headers(h)
-    assert facets == [('server', 'Foo')]
+    assert facets == [('header-server', 'Foo')]
 
 
 def test_facets_from_embeds():
@@ -201,7 +201,7 @@ def test_facets_from_cookies_mysteries():
     mysteries = {'0b2a2ea1719965db9784044304710a9c': 'Mystery 1',
                  'SESS0084bfbcced439ebac5f559df8dd21e0': 'Mystery 2',
                  'SN54bceb45e3fd0': 'Mystery 3',
-                 'TS0103d65d': 'Mystery 4',
+                 'TS0103d65d': 'BIG-IP Application Security Manager (F5)',
                  'wordpress_07dcfa44f6c1a509a602e92e749c7b6d': 'WordPress'}
     for m in mysteries:
         f = facet.facets_from_cookies((('set-cookie', m+'=foo'),))
