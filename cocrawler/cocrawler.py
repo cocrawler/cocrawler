@@ -30,6 +30,7 @@ import useragent
 import urls
 import burner
 import url_allowed  # XXX policy
+import cookies
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,32 +40,6 @@ __version__ = '0.01'
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
     return response.status in (300, 301, 302, 303, 307)
-
-
-class DefectiveCookieJar:
-    '''
-    Defective cookie jar loses cookies. Cookies are a lot of cpu burn in top-1k.
-    '''
-    def __init__(self, unsafe=False, loop=None):
-        pass
-
-    def __iter__(self):
-        return iter(dict())
-
-    def __contains__(self, item):
-        return False
-
-    def __hash__(self):
-        return 0
-
-    def __len__(self):
-        return 0
-
-    def update_cookies(self, cookies, response_url=None):
-        pass
-
-    def filter_cookies(self, request_url):
-        return None
 
 
 class Crawler:
@@ -100,7 +75,7 @@ class Crawler:
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
         if config['Crawl'].get('CookieJar', '') == 'Defective':
-            cookie_jar = DefectiveCookieJar()
+            cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
         self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar,
