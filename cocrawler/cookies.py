@@ -1,5 +1,5 @@
 '''
-Code related to cookies. The standard Python cookie jar is the least
+Code related to cookies. The standard aiohttp cookie jar is the least
 scalable possible implementation, examining every cookie for every web
 request.
 
