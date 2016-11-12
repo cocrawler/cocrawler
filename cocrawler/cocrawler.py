@@ -304,8 +304,16 @@ class Crawler:
                 pass
             elif kind == 'same':
                 LOGGER.info('attempted redirect to myself: %s to %s', url.url, next_url.url)
+                if 'Set-Cookie' not in headers:
+                    LOGGER.info('redirect to myself had no cookies.')
+                    # XXX try swapping www/not-www? or use a non-crawler UA.
+                    # looks like some hosts have extra defenses on their redir servers!
+                else:
+                    # XXX we should use a cookie jar with this domain?
+                    pass
                 # fall through; will fail seen-url test in addurl
             else:
+                LOGGER.info('special redirect of type %s for url %s', kind, url.url)
                 # XXX push this info onto a last-k for the host
                 # to be used pre-fetch to mutate urls we think will redir
                 pass
