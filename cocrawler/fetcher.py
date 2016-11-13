@@ -106,18 +106,16 @@ async def fetch(url, session, config,
             LOGGER.info('will retry a %d for %s', response.status, url.url)
 
         except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
-                aiodns.error.DNSError, asyncio.TimeoutError) as e:
+                aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
             last_exception = repr(e)
             LOGGER.debug('we sub-failed once, url is %s, exception is %s', url.url, last_exception)
             if response is not None:
                 response.release()
-        except (ssl.CertificateError, ValueError, AttributeError, TypeError) as e:
+        except (ssl.CertificateError, ValueError, AttributeError) as e:
             # ValueError = 'Can redirect only to http or https'
             #  (XXX BUG in aiohttp: not case blind comparison - no bug opened yet)
             # Value Error Location: https:/// 'Host could not be detected'
             # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
-            # XXX I opened a bug against aiohttp for it throwing TypeError for redirs lacking Location: header
-            # remove when fixed https://github.com/KeepSafe/aiohttp/issues/1396
             # XXX ssl.CertificateErrors are not yet propagating -- missing a Raise
             # https://github.com/python/asyncio/issues/404
             last_exception = repr(e)
