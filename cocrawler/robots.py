@@ -122,7 +122,7 @@ class Robots:
         stats.stats_sum('robots fetched', 1)
 
         # If the url was redirected to a different host/robots.txt, let's cache that too
-        # final_url = f.response.url.human_repr() # a YARL thing
+        # XXX use f.response.history to get them all
         final_url = f.response.url
         final_schemenetloc = None
         if final_url != url.url:
