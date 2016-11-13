@@ -1,4 +1,7 @@
+import logging
 from aiohttp import web
+
+LOGGER = logging.getLogger(__name__)
 
 
 def make_app(loop, config):
@@ -15,7 +18,7 @@ def make_app(loop, config):
     handler = app.make_handler()
     f = loop.create_server(handler, serverip, serverport)
     srv = loop.run_until_complete(f)
-    print('REST serving on', srv.sockets[0].getsockname())
+    LOGGER.info('REST serving on %s', srv.sockets[0].getsockname())
 
     app['cocrawler'] = handler, srv, loop
     return app
