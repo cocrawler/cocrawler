@@ -7,7 +7,7 @@ Hardwired stuff: "fast" and "slow" set to 1 second and 30 seconds
 
 Record delta, Send stats to Carbon
 
-TODO rebin to actual "fast" and "slow" durations
+TODO rebin to actual "fast" and "slow" durations, instead of my 29 second hack
 
 TODO option to spit out text, since setting up carbon/graphite is kinda annoying
 
@@ -20,10 +20,13 @@ import struct
 import time
 import resource
 import functools
+import logging
 
 import asyncio
 
 import stats
+
+LOGGER = logging.getLogger(__name__)
 
 fast_prefix = 'cocrawler.fast'
 
@@ -60,11 +63,11 @@ slow_stats = [
 ]
 
 
-def timer_exception_complaint(name, fut):
-    exc = fut.exception()
-    if exc:
-        # this raises, but the stack trace points here
-        _ = fut.result()
+async def exception_wrapper(partial, name):
+    try:
+        await partial()
+    except Exception as e:
+        LOGGER.error('timer %s threw an exception %r', name, e)
 
 ft = None
 st = None
@@ -76,13 +79,12 @@ def start_carbon(loop, config):
 
     global ft
     fast = CarbonTimer(1, fast_prefix, fast_stats, server, port, loop)
-    ft = asyncio.Task(fast.timer(), loop=loop)
-    ft.add_done_callback(functools.partial(timer_exception_complaint, 'fast carbon timer'))
+    ft = asyncio.Task(exception_wrapper(fast.timer, 'fast carbon timer'), loop=loop)
 
     global st
-    slow = CarbonTimer(30, slow_prefix, slow_stats, server, port, loop)
-    st = asyncio.Task(slow.timer(), loop=loop)
-    st.add_done_callback(functools.partial(timer_exception_complaint, 'slow carbon timer'))
+    # 29 seconds, because if it's 30, we end up occasionally having a missing value
+    slow = CarbonTimer(29, slow_prefix, slow_stats, server, port, loop)
+    st = asyncio.Task(exception_wrapper(slow.timer, 'slow carbon timer'), loop=loop)
 
 
 def close():
