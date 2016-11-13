@@ -119,10 +119,7 @@ class Crawler:
         url_allowed.setup(self._seeds, config)
 
         self.max_workers = int(self.config['Crawl']['MaxWorkers'])
-        self.remaining_url_budget = self.config['Crawl'].get('MaxCrawledUrls')
-        # XXX surely there's a less ugly way to do the following:
-        if self.remaining_url_budget is not None:
-            self.remaining_url_budget = int(self.remaining_url_budget)
+        self.remaining_url_budget = int(self.config['Crawl'].get('MaxCrawledUrls', 0)) or None  # 0 => None
         self.awaiting_work = 0
 
         self.workers = []
@@ -265,6 +262,9 @@ class Crawler:
         if is_redirect(f.response):
             headers = f.response.headers
             location = headers.get('location')
+            if location is None:
+                LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
+                raise ValueError(url.url + ' sent a redirect with no Location: header')
             next_url = urls.URL(location, urljoin=url)
 
             kind = urls.special_redirect(url, next_url)
@@ -288,7 +288,7 @@ class Crawler:
                     pass
                 # fall through; will fail seen-url test in addurl
             else:
-                LOGGER.info('special redirect of type %s for url %s', kind, url.url)
+                #LOGGER.info('special redirect of type %s for url %s', kind, url.url)
                 # XXX push this info onto a last-k for the host
                 # to be used pre-fetch to mutate urls we think will redir
                 pass
