@@ -4,6 +4,9 @@ Code related to generating webpage facets.
 For normal crawling, we only parse facets we think might be useful
 for crawling and ranking: STS, twitter cards, facebook opengraph.
 
+TODO: find rss feeds (both link alternate and plain href to .xml)
+TODO: probe with DNT:1 and see who replies TK: N
+
 This module also contains code to post-facto process headers to
 figure out what technologies are used in a website.
 
@@ -15,19 +18,19 @@ from bs4 import BeautifulSoup
 
 import stats
 
-get_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
-                        'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',
-                        'parsely-title'))
-get_name_generator_special = ('wordpress', 'movable type', 'drupal')
-get_name_prefix = (('twitter:', 'twitter card'),)
+meta_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
+                         'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',
+                         'parsely-title'))
+meta_name_generator_special = ('wordpress', 'movable type', 'drupal')
+meta_name_prefix = (('twitter:', 'twitter card'),)
 
-get_property_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
-                            'fb:app_id', 'fb:admins'))
-get_property_prefix = (('al:', 'applinks'),
-                       ('og:', 'opengraph'),
-                       ('op:', 'fb instant'))
+meta_property_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
+                             'fb:app_id', 'fb:admins'))
+meta_property_prefix = (('al:', 'applinks'),
+                        ('og:', 'opengraph'),
+                        ('op:', 'fb instant'))
 
-get_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
+meta_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security',)
 
@@ -75,15 +78,15 @@ def find_head_facets(head, url=None):
     meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
         n = m.get('name').lower()
-        if n in get_name_content:
+        if n in meta_name_content:
             facets.append((n, m.get('content')))
         if n == 'generator':
             g = m.get('content', '')
             gl = g.lower()
-            for s in get_name_generator_special:
+            for s in meta_name_generator_special:
                 if s in gl:
                     facets.append((s, True))
-        for pre in get_name_prefix:
+        for pre in meta_name_prefix:
             prefix, title = pre
             if n.startswith(prefix):
                 facets.append((title, True))
@@ -91,9 +94,9 @@ def find_head_facets(head, url=None):
     meta = soup.find_all('meta', property=True)
     for m in meta:
         p = m.get('property').lower()
-        if p in get_property_content:
+        if p in meta_property_content:
             facets.append((p, m.get('content')))
-        for pre in get_property_prefix:
+        for pre in meta_property_prefix:
             prefix, title = pre
             if p.startswith(prefix):
                 facets.append((title, True))
@@ -103,7 +106,7 @@ def find_head_facets(head, url=None):
     for l in linkrel:
         for rel in l.get('rel'):
             r = rel.lower()
-            if r in get_link_rel:
+            if r in meta_link_rel:
                 facets.append((r, (l.get('href', 'nohref'), l.get('type', 'notype'))))
 
     count = len(soup.find_all(integrity=True))
@@ -196,6 +199,7 @@ cookie_matches = {
     '__jsluid': 'jiasule',
     'PHPSESSID': 'PHP',
     'ASP.NET': 'aspx',
+    '__RequestVerificationToken': 'aspx',
     'JSESSIONID': 'java',
     'ldblog_u': 'ldblog_u',
     'bloguid': 'bloguid',
@@ -209,15 +213,14 @@ cookie_matches = {
     'gvc': 'gvc',
     'CFID': 'ColdFusion',
     'bb_lastvisit': 'vBulletin',
-    'ARRAffinity': 'Windows Azure lb',
-    'SERVERID': 'HAProxy lb',
+    'bbsessionhash': 'vBulletin',
+    'ARRAffinity': 'Windows Azure loadbalancer',
+    'SERVERID': 'HAProxy loadbalancer',
     'CMSPreferredCulture': 'Kentico CMS',
     '_icl_current_language': 'WPML multilingual',
-    '__RequestVerificationToken': 'aspx',
     'fe_typo_user': 'Typo3 CMS',
     'symfony': 'Symfony PHP framework',
     'EktGUID': 'Ektron CMS',
-    'bbsessionhash': 'vBulletin',
     'wordpress_test_cookie': 'WordPress',
     'plack_session': 'perl plack framework',
     'rack.session': 'ruby rack webserver',
@@ -276,19 +279,22 @@ go through headers and save more headers (grep 'not saving')
  p3p
  content-security-policy
  timing-allow-origin
- x-ua-compatible
+ x-ua-compatible  # IE method of selecting which mode for rendering
  x-xss-protection
  x-pingback  # blog of some kind, not necessarily wordpress
  x-runtime  # generic header for timing info
+ x-robots-tag
  x-served-by  # generic load-balancing header
  x-server  # generally a load-balancer, not that interesting ...
- x-robots-tag
- x-host  # not interesting
+ x-host  # load balancing? not interesting
+ servedby  # some kind of load-balancing header for a particular hosting company
+ Tk  # DNT response, "Tk: N" means not tracking.
+ x-frame-option  # values like sameorigin, deny, allow-from uri, blah blah
 
  x-aspnet-version  # asp.net
  x-aspnetmvc-version  # asp.net
  ms-author-via  # value might have "DAV" for WebDAV and/or "MS-FP" for Microsoft FrontPage protocol
- x-drupal-cache  # drupal
+ x-drupal-*  # drupal
  x-via  # value frequently mentions "Cdn Cache Server"
  x-mod-pagespeed  # likely Apache with mod_pagespeed
  x-page-speed  # likely nginx with mod_pagespeed
@@ -301,6 +307,9 @@ go through headers and save more headers (grep 'not saving')
  x-ua-device  # sent by Varnish to backend, appears to leak out?
  x-ah-environment  # Varnish and Acquia.com ?
  xkey  # Varnish xkey module
+ via  # values like "1.1 varnish" which means http 1.1 and varnish is the software... little used except by varnish
+ x-varnish-*  # Varnish cache
+ x-hits  # Varnish
  x-powered-by-plesk  # Plesk WebOps platform
  x-timer  # fastly cached asset ?
  fastly-debug-digest  # fastly
@@ -321,11 +330,9 @@ go through headers and save more headers (grep 'not saving')
  x-amz-delete-marker  # Amazon S3 tombstone (true/false)
  x-content-encoded-by  # {Joomla,Dimofinf Cms 3.0.0}
  x-content-powered-by  # value="K2 ... (by JoomlaWorks)"
- via  # values like "1.1 varnish" which means http 1.1 and varnish is the software... little used except by varnish
- Tk  # DNT response, "Tk: N" means not tracking.
- x-frame-option  # values like sameorigin, deny, allow-from uri, blah blah
  x-sucuri-id  # Sucuri website security
  x-px  # CDNetworks
+ px-uncompress-origin
  x-litespeed-cache # LiteSpeed Cache WordPress plugin
  x-safe-firewall  # value contains 'webscan.360.cn' == 360webscan
  x-powered-by-360wzb  # 360wzb
@@ -340,12 +347,29 @@ go through headers and save more headers (grep 'not saving')
  x-pad  # old Apache server
  x-dynatrace-js-agent  # Dynatrace Application Performance Management
  x-dynatrace  # Dynatrace Application Performance Management
+ dynatrace
  liferay-portal  # "Community Edition", "Enterprise Edition" Enterprise web platform
  x-framework # value="JP" or "Samurai" (PHP Full stack framework)
  cc-cache  # CC-Cache Wordpress plugin
  x-xrds-location  # Yadis service discovery
+ x-atg-version  # Oracle ATG Web Commerce
+ x-spip-cache  # SPIP CMS
+ composed-by  # value contains SPIP, SPIP CMS
+ x-hyper-cache  # Hyper Cache WordPress plugin
+ x-clacks-overhead  # tribute to Terry Prachett
+ x-do-esi  # Edge Side Includes, standard implemented by CDNs and caching proxies
+ rtss  # IBM Tivoli runtime security services
+ sprequestguid  # Microsoft SharePoint
+ microsoftsharepointteamservices  # Microsoft SharePoint
+ sprequestduration  # Microsoft SharePoint
+ spiislatency  # Microsoft SharePoint
+ x-sharepointhealthscore  # Microsoft SharePoint
+ x-yottaa-*  # Yottaa eCommerce Acceleration
+ commerce-server-software  # value=Microsoft Commerce Server
+ tp-cache  # Travelport Cache ??
+ tp-l2-cache  # ??
 
-# lots of fingerprints https://github.com/sqlmapproject/sqlmap/tree/master/waf -- web application firewallsy
+# https://github.com/sqlmapproject/sqlmap/tree/master/waf -- web application firewall fingerprints
 
  referrer-policy  # rare so far
  retry-after  # goes with a 503, is HTTP-date | delta-seconds ... also 3XX
@@ -353,7 +377,7 @@ go through headers and save more headers (grep 'not saving')
 
  x-dw-request-base-id  # ???
 
- server: ECS == edgecast CDN
+ server: ECS == Edgecast CDN
  server: Windows-Azure-Blob == Azure CDN
  server: PWS == CDNetworks
 
