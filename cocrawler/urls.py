@@ -12,7 +12,11 @@ TODO: SURT
 '''
 
 import urllib.parse
+import logging
+
 import tldextract
+
+LOGGER = logging.getLogger(__name__)
 
 
 def clean_webpage_links(link):
@@ -192,7 +196,12 @@ class URL(object):
         else:
             self._original_frag = None
 
-        self._urlparse = urllib.parse.urlparse(url)  # expensive
+        try:
+            self._urlparse = urllib.parse.urlparse(url)  # expensive
+        except ValueError:
+            LOGGER.info('invalid url %s sent into URL constructor', url)
+            # TODO: my code assumes URL() returns something valid, so...
+            raise
 
         if self._urlparse.path == '':  # we want this to be '/'
             # pretty much a design error, but I digress.
