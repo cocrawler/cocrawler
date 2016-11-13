@@ -59,7 +59,11 @@ def find_head_facets(head, url=None):
     # XXX this belongs moved up a couple into the parser
     stats.stats_sum('beautiful soup head bytes', len(head))
     with stats.record_burn('beautiful soup head', url=url):
-        soup = BeautifulSoup(head, 'html.parser')
+        try:
+            soup = BeautifulSoup(head, 'html.parser')
+        except Exception as e:
+            facets.append(('BeautifulSoupException', repr(e)))
+            return facets
 
     html = soup.find('html')
     if html:
