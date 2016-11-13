@@ -28,7 +28,9 @@ meta_property_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator
                              'fb:app_id', 'fb:admins'))
 meta_property_prefix = (('al:', 'applinks'),
                         ('og:', 'opengraph'),
-                        ('op:', 'fb instant'))
+                        ('article:', 'opengraph'),
+                        ('op:', 'fb instant'),
+                        ('bt:', 'boomtrain'),)
 
 meta_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 
