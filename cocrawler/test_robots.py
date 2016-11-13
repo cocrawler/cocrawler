@@ -32,7 +32,7 @@ def test_robots():
 
 @pytest.mark.xfail
 def test_magic():
-    # magic is 3 milliseconds so this is currently comented out in robots.py
+    # magic is 3 milliseconds of cpu burn/call so this is currently comented out in robots.py
     r = robots.Robots('foo', None, None, {'Robots': {'MaxTries': 4}, 'Logging': {}})
     robots_txt = b'%PDF-1.3\n'
     assert not r.is_plausible_robots('example.com', robots_txt, 1.0)
