@@ -308,7 +308,7 @@ class Crawler:
                 else:
                     kwargs['seed'] = work['seed']
                     kwargs['seedredirs'] = work['seedredirs']
-                    if self.config['SeedRedirsFree']:
+                    if self.config['Seeds'].get('SeedRedirsFree'):
                         priority -= 1
                     json_log['seedredirs'] = work['seedredirs']
 
