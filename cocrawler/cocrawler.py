@@ -319,7 +319,9 @@ class Crawler:
         # if 200, parse urls out of body
         if f.response.status == 200:
             headers = f.response.headers
-            content_type = headers.get('content-type')
+            content_type = headers.get('content-type', 'None')
+            # sometimes content_type comes back multiline. whack it with a wrench.
+            content_type = content_type.replace('\r', '\n').partition('\n')[0]
             if content_type:
                 content_type, _ = cgi.parse_header(content_type)
             else:
