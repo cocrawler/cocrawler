@@ -103,7 +103,7 @@ async def fetch(url, session, config,
             if response.status < 500:
                 break
 
-            print('will retry a {} for {}'.format(response.status, url.url))
+            LOGGER.info('will retry a %d for %s', response.status, url.url)
 
         except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
                 aiodns.error.DNSError, asyncio.TimeoutError) as e:
@@ -124,10 +124,9 @@ async def fetch(url, session, config,
             raise
         except Exception as e:
             last_exception = repr(e)
-            print('UNKNOWN EXCEPTION SEEN in the fetcher')
             traceback.print_exc()
-            LOGGER.debug('we sub-failed once WITH UNKNOWN EXCEPTION, url is %s, exception is %s',
-                         url.url, last_exception)
+            LOGGER.info('we sub-failed once: url is %s, exception is %s',
+                        url.url, last_exception)
             if response is not None:
                 response.release()
 
