@@ -8,6 +8,7 @@ Hardwired stuff: "fast" and "slow" set to 1 second and 30 seconds
 Record delta, Send stats to Carbon
 
 TODO rebin to actual "fast" and "slow" durations, instead of my 29 second hack
+ (which is failing to eliminate gaps in the .slow. stats)
 
 TODO option to spit out text, since setting up carbon/graphite is kinda annoying
 
@@ -19,7 +20,6 @@ import pickle
 import struct
 import time
 import resource
-import functools
 import logging
 
 import asyncio
@@ -66,6 +66,9 @@ slow_stats = [
 async def exception_wrapper(partial, name):
     try:
         await partial()
+    except asyncio.CancelledError:
+        # this happens during teardown
+        pass
     except Exception as e:
         LOGGER.error('timer %s threw an exception %r', name, e)
 
