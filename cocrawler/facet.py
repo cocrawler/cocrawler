@@ -192,7 +192,8 @@ def facets_from_embeds(embeds):
             facets.append(('google adsense for domains', True))
         '''
         TODO: Google tag manager <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M9L9Q5
-        also has a js version
+        this appears in the body, so...
+        also has a js version?
         '''
 
     return facets
@@ -327,6 +328,8 @@ go through headers and save more headers (grep 'not saving')
  x-powered-cms  # value=Bitrix Site Manager
  cf-railgun  # CloudFlare RailGun site
  x-info-cf-ray  # CloudFlare
+ cf-cache-status  # CloudFlare
+ cf-ray  # CloudFlare
  cf-cache-status  # CloudFlare
  x-amz-cf-id  # Amazon CloudFront
  x-amz-id-1  # Amazon AWS debugging info
