@@ -16,6 +16,7 @@ psutil==5.0.0
 hdrhistogram==0.5.2
 fakeredis==0.8.1
 beautifulsoup4==4.5.1
+lxml==3.6.4
 
 # used to maintain this file
 pur==4.0.0
