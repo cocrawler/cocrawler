@@ -16,7 +16,11 @@ def stats_wrap(partial, name, url=None):
     '''
     stats.clear()
     with stats.record_burn(name, url=url):
-        ret = list(partial())  # XXX what's pythonic here?
+        try:
+            ret = list(partial())  # XXX what's pythonic here?
+        except Exception as e:
+            LOGGER.info('burner thread sees an exception %r', e)
+            ret = []
     s = stats.raw()
     return s, ret
 
