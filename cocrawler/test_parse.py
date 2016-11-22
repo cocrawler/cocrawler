@@ -7,11 +7,11 @@ test_html = '''
 <html>
 <head><title>Foo</title><link href='link.html'></link></head>
 <body>
-<a href="foo1.html"></a>
+<a href="foo1.html">Anchor 1</a>
 <a
-href=foo2.htm></a>
+href=foo2.htm>Anchor 2</a>
 <a
- href="foo3.html "></a>
+ href="foo3.html ">Anchor 3</a>
 <img src=foo.gif />
 </body>
 '''
@@ -19,32 +19,32 @@ href=foo2.htm></a>
 test_html_no_body = '''
 <html>
 <head><title>Foo</title><link href='link.html'></link></head>
-<a href="foo1.html"></a>
+<a href="foo1.html">Anchor 4</a>
 <a
-href=foo2.htm></a>
+href=foo2.htm>Anchor 5</a>
 <a
- href="foo3.html "></a>
+ href="foo3.html ">Anchor 6</a>
 <img src=foo.gif />
 '''
 
 test_html_no_head = '''
 <html>
 <body>
-<a href="foo1.html"></a>
+<a href="foo1.html">Anchor 7</a>
 <a
-href=foo2.htm></a>
+href=foo2.htm>Anchor 8</a>
 <a
- href="foo3.html "></a>
+ href="foo3.html ">Anchor 9</a>
 <img src=foo.gif />
 </body>
 '''
 
 test_html_no_nothing = '''
-<a href="foo1.html"></a>
+<a href="foo1.html">Anchor 10</a>
 <a
-href=foo2.htm></a>
+href=foo2.htm>Anchor 11</a>
 <a
- href="foo3.html "></a>
+ href="foo3.html ">Anchor 12</a>
 <img src=foo.gif />
 '''
 
@@ -60,7 +60,7 @@ def test_do_burner_work_html():
     embedset = set(u.url for u in embeds)
     assert 'http://example.com/foo3.html' in linkset
     assert 'http://example.com/foo.gif' in embedset
-    assert sha1 == 'sha1:8ea2d7e90c956118c451819330b875994f96f511'
+    assert sha1 == 'sha1:3458e0857ec379ec56d4c7fb39d33c90c8b5ae93'
 
     # as a handwave, let's expect these defective pages to also work.
 
