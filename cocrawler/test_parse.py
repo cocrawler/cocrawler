@@ -1,3 +1,5 @@
+from bs4 import BeautifulSoup
+
 import parse
 from urls import URL
 
@@ -52,43 +54,55 @@ def test_do_burner_work_html():
     test_html_bytes = test_html.encode(encoding='utf-8', errors='replace')
     headers = {}
     links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
-    assert len(links) == 5
-    assert len(embeds) == 0
+    assert len(links) == 3
+    assert len(embeds) == 2
     linkset = set(u.url for u in links)
-    assert 'http://example.com/foo3.html' in linkset  # space?
-    assert 'http://example.com/foo.gif' in linkset  # space?
+    embedset = set(u.url for u in embeds)
+    assert 'http://example.com/foo3.html' in linkset
+    assert 'http://example.com/foo.gif' in embedset
     assert sha1 == 'sha1:8ea2d7e90c956118c451819330b875994f96f511'
 
+    # as a handwave, let's expect these defective pages to also work.
 
-def test_misc_parsers():
-    urlj = URL('http://example.com')
-    links, embeds = parse.find_html_links_and_embeds(test_html, url=urlj)
-    assert len(links) == 3
-    assert len(embeds) == 2
-    linkset = set(u.url for u in links)
-    embedset = set(u.url for u in embeds)
-    assert 'http://example.com/foo3.html' in linkset  # space?
-    assert 'http://example.com/foo.gif' in embedset  # space?
-
-    links, embeds = parse.soup_and_find(test_html, url=urlj)
-    assert len(links) == 3
-    assert len(embeds) == 2
-    linkset = set(u.url for u in links)
-    embedset = set(u.url for u in embeds)
-    assert 'http://example.com/foo3.html' in linkset  # space?
-    assert 'http://example.com/foo.gif' in embedset  # space?
-
-    links, embeds = parse.find_html_links_and_embeds(test_html_no_body)
+    test_html_bytes = test_html_no_body.encode(encoding='utf-8', errors='replace')
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 2
 
-    links, embeds = parse.find_html_links_and_embeds(test_html_no_head)
+    test_html_bytes = test_html_no_head.encode(encoding='utf-8', errors='replace')
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
+    assert len(links) == 3
+    assert len(embeds) == 2
+
+    test_html_bytes = test_html_no_nothing.encode(encoding='utf-8', errors='replace')
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
+    assert len(links) == 3
+    assert len(embeds) == 2
+
+def test_individual_parsers():
+    links, embeds = parse.find_html_links_re(test_html)
+    assert len(links) == 5
+    assert len(embeds) == 0
+    assert 'foo3.html' in links
+    assert 'foo.gif' in links
+
+    head, body = parse.split_head_body_re(test_html)
+    links, embeds = parse.find_body_links_re(body)
     assert len(links) == 3
     assert len(embeds) == 1
+    assert 'foo3.html' in links
+    assert 'foo.gif' in embeds
 
-    links, embeds = parse.find_html_links_and_embeds(test_html_no_nothing)
+    head_soup = BeautifulSoup(head, 'lxml')
+    body_soup = BeautifulSoup(body, 'lxml')
+    links, embeds = parse.find_head_links_soup(head_soup)
+    lbody, ebody = parse.find_body_links_soup(body_soup)
+    links.update(lbody)
+    embeds.update(ebody)
     assert len(links) == 3
-    assert len(embeds) == 1
+    assert len(embeds) == 2
+    assert 'foo3.html ' in links  # this space will disapper in urls.URL()
+    assert 'foo.gif' in embeds
 
 test_css = '''
 @import url('foo1.css')
@@ -97,13 +111,11 @@ url( images/foo3.png )
 '''
 
 
-def test_css_parse():
-    urlj = URL('http://example.com')
-    links, embeds = parse.find_css_links(test_css, url=urlj)
-    assert len(links) == 3
-    assert len(embeds) == 0
-    linkset = set(u.url for u in links)
-    assert 'http://example.com/images/foo3.png' in linkset  # space?
+def test_css_parser():
+    links, embeds = parse.find_css_links_re(test_css)
+    assert len(links) == 0
+    assert len(embeds) == 3
+    assert 'images/foo3.png' in embeds
 
 
 def test_regex_out_comments():
