@@ -31,6 +31,7 @@ rm -f robotslog.jsonl crawllog.jsonl
 echo
 echo test-wide with save and load first half
 echo
+rm -f test-wide-save
 cat test-wide.yml test-wide-save.yml > test-wide-tmp.yml
 $COVERAGE ../cocrawler/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.MaxCrawledUrls:5 --config Crawl.MaxWorkers:3 $NOCH
 rm -f test-wide-tmp.yml
