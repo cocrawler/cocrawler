@@ -164,7 +164,7 @@ def facets_grep(head):
 def facets_from_response_headers(headers_list):
     '''
     Extract facets from headers. All are useful for site software fingerprinting but
-    for now we'll just grab the most search-enginey ones
+    for now we'll default to grabbing the most search-enginey ones
     '''
     facets = []
     for h in headers_list:
@@ -192,8 +192,13 @@ def facets_from_embeds(embeds):
             facets.append(('google adsense for domains', True))
         '''
         TODO: Google tag manager <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M9L9Q5
-        this appears in the body, so...
-        also has a js version?
+         this appears in the body, so...
+         is there a pure js version of gtm?
+        <script src="//cdn.optimizely.com/js/860020523.js"></script>
+        <link rel="shortcut icon" href="//d5y6wgst0yi78.cloudfront.net/images/favicon.ico" />
+        <link rel="stylesheet" href="//s3-us-west-1.amazonaws.com/nwusa-cloudfront/font-awesome/css/font-awesome.min.css" />
+        <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+        major cdns: Akami, Amazon CloudFront, MaxCDN, EdgeCast, Amazon S3, CloudFlare, Fastly, Highwinds, KeyCDN, Limelight Networks
         '''
 
     return facets
