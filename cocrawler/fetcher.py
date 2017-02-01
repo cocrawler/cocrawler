@@ -24,8 +24,8 @@ import logging
 import aiohttp
 import aiodns
 
-import cocrawler.stats as stats
-import cocrawler.dns as dns
+from . import stats
+from . import dns
 
 LOGGER = logging.getLogger(__name__)
 

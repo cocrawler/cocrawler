@@ -1,6 +1,6 @@
 import logging
 
-from cocrawler.urls import URL
+from .urls import URL
 
 LOGGER = logging.getLogger(__name__)
 

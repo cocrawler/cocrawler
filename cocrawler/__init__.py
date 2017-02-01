@@ -20,17 +20,17 @@ import aiohttp.resolver
 import aiohttp.connector
 import psutil
 
-import cocrawler.stats as stats
-import cocrawler.seeds as seeds
-import cocrawler.datalayer as datalayer
-import cocrawler.robots as robots
-import cocrawler.parse as parse
-import cocrawler.fetcher as fetcher
-import cocrawler.useragent as useragent
-import cocrawler.urls as urls
-import cocrawler.burner as burner
-import cocrawler.url_allowed as url_allowed
-import cocrawler.cookies as cookies
+from . import stats
+from . import seeds
+from . import datalayer
+from . import robots
+from . import parse
+from . import fetcher
+from . import useragent
+from . import urls
+from . import burner
+from . import url_allowed
+from . import cookies
 
 LOGGER = logging.getLogger(__name__)
 

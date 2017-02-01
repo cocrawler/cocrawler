@@ -16,7 +16,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-import cocrawler.stats as stats
+from . import stats
 
 meta_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
                          'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',

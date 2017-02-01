@@ -6,7 +6,7 @@ import functools
 
 import psutil
 
-import cocrawler.stats as stats
+from . import stats
 
 LOGGER = logging.getLogger(__name__)
 

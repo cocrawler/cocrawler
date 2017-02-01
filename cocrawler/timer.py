@@ -24,7 +24,7 @@ import logging
 
 import asyncio
 
-import cocrawler.stats as stats
+from . import stats
 
 LOGGER = logging.getLogger(__name__)
 
