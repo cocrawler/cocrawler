@@ -4,14 +4,14 @@
 
 language: python
 python:
-  - "3.5.1"
   - "3.5"
   - "3.6"
+  - "3.7-dev"
   - "nightly"
 
 install: "pip install -r requirements.txt"
 
 script:
-  (cd cocrawler; make test_coverage)
+   make test_coverage
 after_success:
-  (cd cocrawler; coveralls)
+  coveralls
