@@ -1,6 +1,6 @@
 import pytest
 
-import robots
+import cocrawler.robots as robots
 
 
 def test_robots():

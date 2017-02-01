@@ -1,4 +1,4 @@
-import topk
+import cocrawler.topk as topk
 
 
 def test_topK_max():

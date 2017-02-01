@@ -12,9 +12,9 @@ import urllib.parse
 import robotexclusionrulesparser
 import magic
 
-from urls import URL
-import stats
-import fetcher
+from cocrawler.urls import URL
+import cocrawler.stats as stats
+import cocrawler.fetcher as fetcher
 
 LOGGER = logging.getLogger(__name__)
 

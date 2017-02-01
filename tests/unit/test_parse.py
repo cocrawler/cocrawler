@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
-import parse
-from urls import URL
+import cocrawler.parse as parse
+from cocrawler.urls import URL
 
 test_html = '''
 <html>

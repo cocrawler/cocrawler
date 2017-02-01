@@ -1,6 +1,5 @@
-from urls import URL
-
-import url_allowed
+from cocrawler.urls import URL
+import cocrawler.url_allowed as url_allowed
 
 
 def test_url_allowed():

@@ -1,4 +1,5 @@
-import cookies
+import cocrawler.cookies as cookies
+
 
 def test_defective_cookie_jar():
     jar = cookies.DefectiveCookieJar()

@@ -1,6 +1,6 @@
 import logging
 
-import urls
+from cocrawler.urls import URL
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +34,6 @@ def expand_seeds(seeds):
 
     seeds = []
     for r in ret:
-        seeds.append(urls.URL(r, seed=True))
+        seeds.append(URL(r, seed=True))
 
     return seeds

@@ -2,8 +2,8 @@ import tempfile
 import os
 import pytest
 
-from urls import URL
-import datalayer
+from cocrawler.urls import URL
+import cocrawler.datalayer as datalayer
 
 
 def test_seen():

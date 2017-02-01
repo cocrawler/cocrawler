@@ -1,7 +1,7 @@
 import copy
 import pytest
 
-import useragent
+import cocrawler.useragent as useragent
 
 
 def test_useragent():

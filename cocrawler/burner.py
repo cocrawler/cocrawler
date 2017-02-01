@@ -5,7 +5,8 @@ from concurrent.futures import ProcessPoolExecutor
 import functools
 
 import psutil
-import stats
+
+import cocrawler.stats as stats
 
 LOGGER = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
 
-from urls import URL
+from cocrawler.urls import URL
 
 LOGGER = logging.getLogger(__name__)
 

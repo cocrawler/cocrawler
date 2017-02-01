@@ -8,7 +8,7 @@ import ipaddress
 
 import aiodns
 
-import stats
+import cocrawler.stats as stats
 
 LOGGER = logging.getLogger(__name__)
 

@@ -16,7 +16,7 @@ NOCH=--no-confighome
 echo
 echo test-deep
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-deep.yml $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-deep.yml $NOCH
 # tests against the logfiles
 grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in robotslog"; exit 1)
 (grep "/denied/" crawllog.jsonl | grep -q -v '"robots"' ) && (echo "FAIL: should not have seen /denied/ in crawllog.jsonl"; exit 1)
@@ -25,7 +25,7 @@ rm -f robotslog.jsonl crawllog.jsonl
 echo
 echo test-wide
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1 $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1 $NOCH
 rm -f robotslog.jsonl crawllog.jsonl
 
 echo
@@ -33,7 +33,7 @@ echo test-wide with save and load first half
 echo
 rm -f test-wide-save
 cat test-wide.yml test-wide-save.yml > test-wide-tmp.yml
-$COVERAGE ../cocrawler/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.MaxCrawledUrls:5 --config Crawl.MaxWorkers:3 $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.MaxCrawledUrls:5 --config Crawl.MaxWorkers:3 $NOCH
 rm -f test-wide-tmp.yml
 
 ls -l test-wide-save
@@ -41,14 +41,14 @@ ls -l test-wide-save
 echo
 echo test wide save and load second half: load
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
 rm -f test-wide-save
 rm -f robotslog.jsonl crawllog.jsonl
 
 echo
 echo test-failures
 echo
-$COVERAGE ../cocrawler/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
 rm -f robotslog.jsonl crawllog.jsonl
 
 # tear down the webserver. fails in travis, so ignore
@@ -58,10 +58,10 @@ echo
 echo run_burner
 echo
 
-$COVERAGE ../cocrawler/run_burner.py ./test_burner.html
+$COVERAGE ../scripts/run_burner.py ./test_burner.html
 
 echo
 echo bench_burner
 echo
 
-$COVERAGE ../cocrawler/bench_burner.py --count 100
+$COVERAGE ../scripts/bench_burner.py --count 100

@@ -1,6 +1,6 @@
 from pytest import approx
 
-import accumulator
+import cocrawler.accumulator as accumulator
 
 
 def test_event_accumulator():

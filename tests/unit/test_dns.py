@@ -9,8 +9,8 @@ import logging
 import aiohttp
 import pytest
 
-import dns
-from urls import URL
+import cocrawler.dns as dns
+from cocrawler.urls import URL
 
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])

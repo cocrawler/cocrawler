@@ -1,4 +1,4 @@
-import conf
+import cocrawler.conf as conf
 
 
 def test_merge_dicts():

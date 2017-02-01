@@ -9,8 +9,8 @@ import sys
 import os
 import logging
 
-import stats
-import parse
+import cocrawler.stats as stats
+import cocrawler.parse as parse
 
 
 def parse_all(name, string):

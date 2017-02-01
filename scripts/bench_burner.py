@@ -5,7 +5,7 @@ import sys
 
 import asyncio
 
-import burner
+import cocrawler.burner as burner
 
 
 def burn(dt, data):

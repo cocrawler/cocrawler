@@ -1,5 +1,6 @@
 import functools
-import burner
+
+import cocrawler.burner as burner
 
 
 def trivial():

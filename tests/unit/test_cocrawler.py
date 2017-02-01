@@ -7,8 +7,8 @@ import tempfile
 import os
 
 import cocrawler
-import conf
-from urls import URL
+import cocrawler.conf as conf
+from cocrawler.urls import URL
 
 
 def test_cocrawler(capsys):

@@ -1,7 +1,7 @@
 import pytest
 
-import facet
-from urls import URL
+import cocrawler.facet as facet
+from cocrawler.urls import URL
 
 
 def test_double_entries():

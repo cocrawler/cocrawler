@@ -1,23 +1,22 @@
-import os
 import sys
 import logging
 import functools
 
 import asyncio
 
-import burner
-import parse
-import stats
+import cocrawler.burner as burner
+import cocrawler.parse as parse
+import cocrawler.stats as stats
 
-config = {'Multiprocess': {'BurnerThreads': 2}}
+test_threadcount = 2
 loop = asyncio.get_event_loop()
-b = burner.Burner(config, loop, 'parser')
+b = burner.Burner(test_threadcount, loop, 'parser')
 queue = asyncio.Queue()
 
 
 def parse_all(name, string):
-    links1, _ = parse.find_html_links(string)
-    links2, embeds2 = parse.find_html_links_and_embeds(string)
+    links1, _ = parse.find_html_links(string, url=name)
+    links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)
 
     all2 = links2.union(embeds2)
 
@@ -33,15 +32,14 @@ def parse_all(name, string):
 async def work():
     while True:
         w = await queue.get()
-        with open(w, 'r', errors='ignore') as fi:
-            string = fi.read()
+        string = ' ' * 10000
         partial = functools.partial(parse_all, w, string)
         await b.burn(partial)
         queue.task_done()
 
 
 async def crawl():
-    workers = [asyncio.Task(work(), loop=loop) for _ in range(int(config['Multiprocess']['BurnerThreads']))]
+    workers = [asyncio.Task(work(), loop=loop) for _ in range(test_threadcount)]
     print('q count is {}'.format(queue.qsize()))
     await queue.join()
     print('join is done')
@@ -51,14 +49,8 @@ async def crawl():
 
 # Main program:
 
-for d in sys.argv[1:]:
-    if os.path.isfile(d):
-        queue.put_nowait(d)
-        continue
-    for root, _, files in os.walk(d):
-        for f in files:
-            if f.endswith('.html') or f.endswith('.htm'):
-                queue.put_nowait(os.path.join(root, f))
+for i in range(10000):
+    queue.put_nowait('foo')
 
 print('Queue size is {}, beginning work.'.format(queue.qsize()))
 
@@ -76,3 +68,4 @@ finally:
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])
 stats.report()
+parse.report()

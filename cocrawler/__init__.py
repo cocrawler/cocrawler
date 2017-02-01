@@ -20,21 +20,26 @@ import aiohttp.resolver
 import aiohttp.connector
 import psutil
 
-import stats
-import seeds
-import datalayer
-import robots
-import parse
-import fetcher
-import useragent
-import urls
-import burner
-import url_allowed  # XXX policy
-import cookies
+import cocrawler.stats as stats
+import cocrawler.seeds as seeds
+import cocrawler.datalayer as datalayer
+import cocrawler.robots as robots
+import cocrawler.parse as parse
+import cocrawler.fetcher as fetcher
+import cocrawler.useragent as useragent
+import cocrawler.urls as urls
+import cocrawler.burner as burner
+import cocrawler.url_allowed as url_allowed
+import cocrawler.cookies as cookies
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '0.01'
+__title__ = 'cocrawler'
+__version__ = '0.1.0'
+__build__ = 0x000100
+__author__ = 'Greg Lindahl and others'
+__license__ = 'Apache 2.0'
+__copyright__ = 'Copyright 2016-2017 Greg Lindahl and others'
 
 
 # aiohttp.ClientReponse lacks this method, so...

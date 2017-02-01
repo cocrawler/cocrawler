@@ -3,8 +3,8 @@ import urllib.parse
 import pytest
 import tldextract
 
-import urls
-from urls import URL
+import cocrawler.urls as urls
+from cocrawler.urls import URL
 
 
 def test_urllib_parse():

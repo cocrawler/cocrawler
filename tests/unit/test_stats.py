@@ -1,6 +1,6 @@
 import time
 
-import stats
+import cocrawler.stats as stats
 
 
 def test_max():

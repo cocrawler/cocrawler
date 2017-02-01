@@ -10,9 +10,9 @@ import hashlib
 
 from bs4 import BeautifulSoup
 
-import stats
-from urls import URL
-import facet
+import cocrawler.stats as stats
+from cocrawler.urls import URL
+import cocrawler.facet as facet
 
 LOGGER = logging.getLogger(__name__)
 

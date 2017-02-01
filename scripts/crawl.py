@@ -10,11 +10,11 @@ import argparse
 import asyncio
 import logging
 
-import conf
 import cocrawler
-import stats
-import timer
-import webserver
+import cocrawler.conf as conf
+import cocrawler.stats as stats
+import cocrawler.timer as timer
+import cocrawler.webserver as webserver
 
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
