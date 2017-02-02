@@ -1,12 +1,14 @@
+.PHONY: dist distclean
+
+init:
+	pip install -r requirements.txt
+
 pytest:
 	tldextract -u -p  # update the database
 	PYTHONPATH=. py.test
 
 test: pytest
 	(cd tests; PYTHONPATH=.. ./test.sh)
-
-init:
-	pip install -r requirements.txt
 
 pylint:
 	PYTHONPATH=. pylint *.py
@@ -27,3 +29,13 @@ test_coverage: clean_coverage
 
 run_parsers:
 	python ./run_parsers.py ~/public_html/
+
+register:
+	python setup.py register -r https://testpypi.python.org/pypi
+
+distclean:
+	rm dist/*
+
+dist: distclean
+	python ./setup.py bdist_wheel
+	twine upload dist/* -r testpypi

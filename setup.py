@@ -31,7 +31,24 @@ packages = [
     'cocrawler',
 ]
 
-requires = []
+requires = [
+    'aiohttp',
+    'aiodns',
+    'pyyaml',
+    'cchardet',
+    'surt',
+    'robotexclusionrulesparser',
+    'cachetools',
+    'filemagic',
+    'tldextract',
+    'sortedcontainers',
+    'sortedcollections',
+    'psutil',
+    'hdrhistogram',
+    'fakeredis',
+    'beautifulsoup4',
+    'lxml']
+
 test_requirements = ['pytest>=3.0.0', 'coverage', 'pytest-cov']
 
 scripts = ['scripts/bench_burner.py',
@@ -48,8 +65,11 @@ with open('cocrawler/__init__.py', 'r') as fd:
 if not version:
     raise RuntimeError('Cannot find version information')
 
-with open('README.md', 'r') as f:
-    readme = f.read()
+try:
+    import pypandoc
+    description = pypandoc.convert('README.md', 'rst')
+except (IOError, ImportError):
+    description = open('README.md').read()
 
 # XXX need to add data_files for all the crap that's text
 
@@ -57,7 +77,7 @@ setup(
     name='cocrawler',
     version=version,
     description='A modern web crawler framework for Python',
-    long_description=readme,
+    long_description=description,
     author='Greg Lindahl and others',
     author_email='lindahl@pbm.com',
     url='https://github.com/cocrawler/cocrawler',
