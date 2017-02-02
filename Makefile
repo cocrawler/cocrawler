@@ -31,11 +31,11 @@ run_parsers:
 	python ./run_parsers.py ~/public_html/
 
 register:
-	python setup.py register -r https://testpypi.python.org/pypi
+	python setup.py register -r https://pypi.python.org/pypi
 
 distclean:
 	rm dist/*
 
 dist: distclean
 	python ./setup.py bdist_wheel
-	twine upload dist/* -r testpypi
+	twine upload dist/* -r pypi
