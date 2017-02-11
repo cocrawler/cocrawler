@@ -19,10 +19,10 @@ async def prefetch_dns(url, mock_url, session):
     DNS answers are in the cache before we try to fetch from a host that's not cached.
 
     TODO: Note that this TCPConnector's cache never expires, so we need to clear it occasionally.
-
     TODO: make multiple source IPs work. Alas this is submerged into pycares.Channel.set_local_ip() :-(
-
     TODO: https://developers.google.com/speed/public-dns/docs/dns-over-https -- optional plugin?
+    TODO: if there are multiple A's, let's make sure they get saved and get used
+
     Note comments about google crawler at https://developers.google.com/speed/public-dns/docs/performance
     RR types A=1 AAAA=28 CNAME=5 NS=2
     The root of a domain cannot have CNAME. NS records are only in the root. These rules are not directly

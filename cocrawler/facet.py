@@ -47,6 +47,7 @@ def compute_all(html, head, headers_list, embeds, url=None):
 
     return facet_dedup(facets)
 
+
 def find_head_facets(head, url=None):
     '''
     We use html parsing, because the head is smallish and friends don't let
@@ -268,8 +269,8 @@ def facets_from_cookies(headers_list):
                 facets.append((cookie_prefixes[cp], True))
                 break
         else:
-            if (len(key) == 32 and
-                re.fullmatch(r'[0-9a-f]{32}', key)):
+            if ((len(key) == 32 and
+                 re.fullmatch(r'[0-9a-f]{32}', key))):
                 facets.append(('Mystery 1', True))
             elif (len(key) == 36 and key.startswith('SESS') and
                   re.fullmatch(r'SESS[0-9a-f]{32}', key)):
