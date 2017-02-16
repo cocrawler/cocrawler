@@ -51,8 +51,9 @@ echo
 $COVERAGE ../scripts/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
 rm -f robotslog.jsonl crawllog.jsonl
 
-# tear down the webserver. fails in travis, so ignore
+# tear down the mock webserver a couple of ways
 kill %1 || true
+pkill -e -f mock-webserver.py || true
 
 echo
 echo run_burner
