@@ -8,6 +8,8 @@ import time
 import json
 import logging
 import urllib.parse
+import aiohttp
+import aiodns
 
 import robotexclusionrulesparser
 import magic
@@ -168,16 +170,27 @@ class Robots:
             await f.response.release()
             return parsed
 
-        # one last thing... go from bytes to a string, despite bogus utf8
+        # go from bytes to a string, despite bogus utf8
         try:
             body = await f.response.text()
         except UnicodeError:  # pragma: no cover
-            # something went wrong. try again assuming utf8 and ignoring errors
+            # try again assuming utf8 and ignoring errors
             body = str(f.body_bytes, 'utf-8', 'ignore')
-        except Exception as e:  # pragma: no cover
-            # something unusual went wrong. treat like a fetch error.
+        except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
+                aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
+            # something unusual went wrong.
+            # policy: treat like a fetch error.
             # (could be a broken tcp session etc.) XXX use list from cocrawler.py
             self.jsonlog(schemenetloc, {'error': 'robots body decode threw an exception: ' + repr(e),
+                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
+            self.in_progress.discard(schemenetloc)
+            await f.response.release()
+            return None
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            # log as surprising, also treat like a fetch error
+            self.jsonlog(schemenetloc, {'error': 'robots body decode threw a surprising exception: ' + repr(e),
                                         'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
             await f.response.release()
