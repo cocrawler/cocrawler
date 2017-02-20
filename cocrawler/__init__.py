@@ -19,6 +19,7 @@ import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
 import psutil
+from setuptools_scm import get_version
 
 from . import stats
 from . import seeds
@@ -35,8 +36,6 @@ from . import cookies
 LOGGER = logging.getLogger(__name__)
 
 __title__ = 'cocrawler'
-__version__ = '0.1.1'
-__build__ = 0x000101
 __author__ = 'Greg Lindahl and others'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2016-2017 Greg Lindahl and others'
@@ -58,7 +57,8 @@ class Crawler:
         self.no_test = no_test
         self.next_minute = 0
 
-        self.robotname, self.ua = useragent.useragent(config, __version__)
+        version = get_version(root='..', relative_to=__file__)
+        self.robotname, self.ua = useragent.useragent(config, version)
 
         ns = config['Fetcher'].get('Nameservers')
         if ns:
