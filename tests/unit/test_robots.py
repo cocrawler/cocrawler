@@ -3,6 +3,19 @@ import pytest
 import cocrawler.robots as robots
 
 
+def test_preprocess_robots():
+    robots_txt = '''
+foo
+#bar
+
+baz
+'''
+    ret = '''foo\nbaz\n'''
+    assert robots.preprocess_robots(robots_txt) == ret
+
+    assert robots.preprocess_robots('') == ''
+    assert robots.preprocess_robots('foo') == 'foo\n'
+
 def test_robots():
     '''
     There's already end-to-end testing for the normal functionality.

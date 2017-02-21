@@ -21,6 +21,24 @@ from . import fetcher
 LOGGER = logging.getLogger(__name__)
 
 
+def preprocess_robots(text):
+    '''
+    robotsexclusionrulesparser does not follow the de-factor robots.txt standard.
+    1) blank lines should not reset user-agent to *
+    2) longest match
+    This code preprocesses robots.txt to mitigate (1)
+    TODO: make wrap robotsexclusionrulesparser in another class?
+    '''
+    ret = ''
+    # convert line endings
+    text = text.replace('\r', '\n')
+    for line in text.split('\n'):
+        line = line.lstrip()
+        if len(line) > 0 and not line.startswith('#'):
+            ret += line + '\n'
+    return ret
+
+
 class Robots:
     def __init__(self, robotname, session, datalayer, config):
         self.robotname = robotname
@@ -198,7 +216,7 @@ class Robots:
 
         with stats.record_burn('robots parse', url=schemenetloc):
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
-            parsed.parse(body)
+            parsed.parse(preprocess_robots(body))
         self.datalayer.cache_robots(schemenetloc, parsed)
         self.in_progress.discard(schemenetloc)
         if final_schemenetloc:
