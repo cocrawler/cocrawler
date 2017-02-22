@@ -106,8 +106,8 @@ async def carbon_push(server, port, tuples, loop):
         w.write(message)
         await w.drain()
         w.close()
-    except OSError:
-        # XXX do something useful here
+    except OSError as e:
+        LOGGER.warn('carbon stats push fail: %r', e)
         stats.stats_sum('carbon stats push fail', 1)
 
 
