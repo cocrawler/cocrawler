@@ -177,6 +177,8 @@ class URL(object):
         url = clean_webpage_links(url)
 
         if urljoin:
+            if isinstance(urljoin, str):
+                urljoin = URL(urljoin)
             # optimize a few common cases to dodge full urljoin cost
             if url.startswith('http://') or url.startswith('https://'):
                 pass
