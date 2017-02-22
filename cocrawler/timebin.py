@@ -46,7 +46,11 @@ class TimeBin:
             delta = fraction / self.interval
             self.value = value * delta
 
-    def gettuples(self):
+    def gettuples(self, path=None):
         tuples = self.tuples
         self.tuples = []
-        return tuples
+
+        if path:
+            return [(path, t) for t in tuples]
+        else:
+            return tuples

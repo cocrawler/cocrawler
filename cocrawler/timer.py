@@ -25,6 +25,7 @@ import logging
 import asyncio
 
 from . import stats
+from . import timebin
 
 LOGGER = logging.getLogger(__name__)
 
@@ -120,6 +121,11 @@ class CarbonTimer:
         self.loop = loop
         self.last_t = None
         self.last = None
+        for sl in stats_list:
+            sl['timebin'] = timebin.TimeBin(dt)
+        self.qps_timebin = timebin.TimeBin(dt)
+        self.elapsed_timebin = timebin.TimeBin(dt)
+        self.vmem_timebin = timebin.TimeBin(dt)
 
     async def timer(self):
         self.last_t = time.time()
@@ -136,6 +142,7 @@ class CarbonTimer:
             for s in self.stats_list:
                 n = s['name']
                 new[n] = stats.stat_value(n)
+
             if self.last:
                 qps_total = 0
                 carbon_tuples = []
@@ -148,16 +155,24 @@ class CarbonTimer:
                     value *= s.get('normalize', 1.0)
                     if s.get('qps_total'):
                         qps_total += value
+                    tb = s['timebin']
+                    tb.point(t, value)
                     path = '{}.{}'.format(self.prefix, n.replace('/', '_').replace(' ', '_'))
-                    carbon_tuples.append((path, (t, value)))
-                carbon_tuples.append((self.prefix+'.qps_total', (t, qps_total)))
-                carbon_tuples.append((self.prefix+'.elapsed', (t, elapsed)))
+                    carbon_tuples += tb.gettuples(path)
+
+                self.qps_timebin.point(t, qps_total)
+                carbon_tuples += self.qps_timebin.gettuples(self.prefix+'.qps_total')
+                self.elapsed_timebin.point(t, elapsed)
+                carbon_tuples += self.elapsed_timebin.gettuples(self.prefix+'.elapsed')
+
                 ru = resource.getrusage(resource.RUSAGE_SELF)
                 vmem = (ru[2])/1000000.
                 # TODO: swapouts in 8, blocks out in 10
-                carbon_tuples.append((self.prefix+'.vmem', (t, vmem)))
+                self.vmem_timebin.point(t, vmem)
+                carbon_tuples += self.vmem_timebin.gettuples(self.prefix+'.vmem')
 
-                await carbon_push(self.server, self.port, carbon_tuples, self.loop)
+                if carbon_tuples:
+                    await carbon_push(self.server, self.port, carbon_tuples, self.loop)
 
             self.last = new
             self.last_t = t
