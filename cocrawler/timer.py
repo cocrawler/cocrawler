@@ -85,8 +85,7 @@ def start_carbon(loop, config):
     ft = asyncio.Task(exception_wrapper(fast.timer, 'fast carbon timer'), loop=loop)
 
     global st
-    # 29 seconds, because if it's 30, we end up occasionally having a missing value
-    slow = CarbonTimer(29, slow_prefix, slow_stats, server, port, loop)
+    slow = CarbonTimer(30, slow_prefix, slow_stats, server, port, loop)
     st = asyncio.Task(exception_wrapper(slow.timer, 'slow carbon timer'), loop=loop)
 
 
@@ -127,7 +126,9 @@ class CarbonTimer:
         self.last = None
 
         while True:
-            await asyncio.sleep(self.last_t + self.dt - time.time())
+            # make this expire just after a timebin boundary
+            deadline = (int(self.last_t / self.dt) + 1) * self.dt + 0.001
+            await asyncio.sleep(deadline - time.time())
             t = time.time()
             elapsed = t - self.last_t
 
