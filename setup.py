@@ -49,7 +49,8 @@ requires = [
 
 test_requirements = ['pytest>=3.0.0', 'coverage', 'pytest-cov']
 
-scripts = ['scripts/bench_burner.py',
+scripts = ['scripts/aiohttp-fetch.py',
+           'scripts/bench_burner.py',
            'scripts/bench_dns.py',
            'scripts/crawl.py',
            'scripts/run_burner_bench.py',
