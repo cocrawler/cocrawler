@@ -118,6 +118,12 @@ def special_redirect(url, next_url):
     if url.url == next_url.url:
         return 'same'
 
+    if not url.url.endswith('/') and url.url + '/' == next_url.url:
+        return 'addslash'
+
+    if url.url.endswith('/') and url.url == next_url.url + '/':
+        return 'removeslash'
+
     if url.url.replace('http', 'https', 1) == next_url.url:
         return 'tohttps'
     if url.url.startswith('https') and url.url.replace('https', 'http', 1) == next_url.url:

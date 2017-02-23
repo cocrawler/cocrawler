@@ -85,6 +85,10 @@ def test_special_redirect():
     url4 = URL('https://example.com/')
     assert urls.special_redirect(url4, URL('http://www.example.com/')) == 'towww+tohttp'
 
+    url5 = URL('https://example.com/foo')
+    url6 = URL('https://example.com/foo/')
+    assert urls.special_redirect(url5, url6) == 'addslash'
+    assert urls.special_redirect(url6, url5) == 'removeslash'
 
 def test_get_domain():
     assert urls.get_domain('http://www.bbc.co.uk') == 'bbc.co.uk'
@@ -146,12 +150,19 @@ def test_URL():
     assert url.url == 'http://www.example.com/foo/'
 
     # urljoin
-    urlj = URL('http://www.example.com/foo/')
-    url = URL('foo', urljoin=urlj)
+    urlj1 = URL('http://www.example.com/foo/')
+    urlj2 = 'http://www.example.com/foo/'
+    url = URL('foo', urljoin=urlj1)
     assert url.url == 'http://www.example.com/foo/foo'
-    url = URL('/bar', urljoin=urlj)
+    url = URL('foo', urljoin=urlj1)
+    assert url.url == 'http://www.example.com/foo/foo'
+    url = URL('/bar', urljoin=urlj1)
     assert url.url == 'http://www.example.com/bar'
-    url = URL('http://sub.example.com/', urljoin=urlj)
+    url = URL('/bar', urljoin=urlj2)
+    assert url.url == 'http://www.example.com/bar'
+    url = URL('http://sub.example.com/', urljoin=urlj1)
+    assert url.url == 'http://sub.example.com/'
+    url = URL('http://sub.example.com/', urljoin=urlj2)
     assert url.url == 'http://sub.example.com/'
 
     # read-only
