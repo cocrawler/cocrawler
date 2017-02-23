@@ -11,6 +11,8 @@ a lot of effort overall.
 TODO: SURT
 '''
 
+from collections import namedtuple
+
 import urllib.parse
 import logging
 
@@ -32,14 +34,16 @@ def clean_webpage_links(link):
     '''
 
     # remove leading and trailing white space, and unescaped control chars.
-    # escaped chars are a different issue.
+    # (this is safe even when we're looking at utf8 -- all utf8 bytes have high bit set)
+    # (don't touch escaped chars)
     link = link.strip(' \x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
                       '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f')
 
     if link.startswith('///'):
         # leaving extra slashes is pretty silly, so trim it down do a
-        # same-host-absolute-path url. unsafe.
+        # same-host-absolute-path url. unsafe, but the url as-is is likely invalid anyway.
         link = '/' + link.lstrip('/')
+        # note that this doesn't touch /// links with schemes or hostnames
 
     # TODO: do something here with mid-url unquoted control chars/spaces/utf-8? or do it elsewhere?
 
@@ -71,8 +75,7 @@ def safe_url_canonicalization(url):
     Good discussion: https://en.wikipedia.org/wiki/URL_normalization
     '''
 
-    # capitalize quotes, without looking at them very carefully
-    # note that this capitalizes invalid things like %0g
+    # capitalize quoted characters
     pieces = url.split('%')
     url = pieces.pop(0)
     for p in pieces:
@@ -83,7 +86,9 @@ def safe_url_canonicalization(url):
     (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
     scheme = scheme.lower()
     netloc = netloc.lower()
+
     # TODO: punycode hostnames (codec='punycode')
+
     if scheme == 'http' and netloc[-3:] == ':80':
         netloc = netloc[:-3]
     if scheme == 'https' and netloc[-4:] == ':443':
@@ -108,9 +113,7 @@ def upgrade_url_to_https(url):
 
 def special_redirect(url, next_url):
     '''
-    Detect redirects like www to non-www, http to https
-
-    TODO: detect adding '/' on the end of a path. Removing '/' is rare, normally a 404
+    Classifies some redirects that we wish to do special processing for
     '''
     if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'
         return None
@@ -152,8 +155,10 @@ def special_redirect(url, next_url):
 
 
 def get_domain(hostname):
-    # TODOconfig option to set include_psl_private_domains=True ?
+    # TODO config option to set include_psl_private_domains=True ?
     #  sometimes we do want *.blogspot.com to all be different tlds
+    #  right now set externally, see https://github.com/john-kurkowski/tldextract/issues/66
+    #  the makefile for this repo sets it to private and there is a unit test for it
     return tldextract.extract(hostname).registered_domain
 
 
@@ -169,6 +174,9 @@ def get_hostname(url, parts=None, remove_www=False):
         if not domain.startswith('www.'):
             hostname = hostname[4:]
     return hostname
+
+# stolen from urllib/parse.py
+ParseResult = namedtuple('ParseResult', 'scheme netloc path params query fragment')
 
 
 class URL(object):
@@ -211,24 +219,25 @@ class URL(object):
             # TODO: my code assumes URL() returns something valid, so...
             raise
 
-        if self._urlparse.path == '':  # we want this to be '/'
-            # pretty much a design error, but I digress.
+        if self._urlparse.path == '':
+            # we want this to be '/' ... pretty much a design error in urllib, but I digress.
             urlp = list(self._urlparse)
             urlp[2] = '/'
-            url = urllib.parse.urlunparse(urlp)
-            self._urlparse = urllib.parse.urlparse(url)  # expensive
+            self._urlparse = ParseResult(*urlp)
 
-        # url is currently decoded, and may or may not have parts of the hostname in idna
-        # XXX make sure it's valid encoding, canonicalize hostname to idna encoding ('xn--...')
+        # url is currently decoded, and may or may not have parts of the hostname in punycode
+        # XXX make sure it's valid encoding, canonicalize hostname to punycode ('xn--...') hint: (codec='punycode')
 
         self._url = urllib.parse.urlunparse(self._urlparse)  # final canonicalization
 
         self._netloc = self.urlparse.netloc
         self._hostname = get_hostname(None, parts=self._urlparse)
+
+        # XXX todo use registered_domain to avoid harming domains like www.com
         self._hostname_without_www = get_hostname(None, parts=self._urlparse, remove_www=True)
 
         # tldextract basically has its own urlparse built-in :-/
-        self._registered_domain = tldextract.extract(url).registered_domain
+        self._registered_domain = tldextract.extract(self._url).registered_domain
 
     @property
     def url(self):
