@@ -73,7 +73,7 @@ class Crawler:
         local_addr = config['Fetcher'].get('LocalAddr')
         # TODO: if local_addr is a list, make up an array of TCPConnecter objects, and rotate
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver}
+        self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver, 'limit': None}
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option
