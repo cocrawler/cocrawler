@@ -75,7 +75,7 @@ def safe_url_canonicalization(url):
     Good discussion: https://en.wikipedia.org/wiki/URL_normalization
     '''
 
-    # capitalize quoted characters
+    # capitalize quoted characters (XXX or should these be lowercased?)
     pieces = url.split('%')
     url = pieces.pop(0)
     for p in pieces:
@@ -97,6 +97,11 @@ def safe_url_canonicalization(url):
     # TODO:
     #  decode unnecessary quoted bytes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E
     #  encode necessary bytes -- need to take the str to bytes first -- different list for each part
+    #
+    #  decide what to do with urls containing invalid utf8, see
+    #   https://github.com/internetarchive/surt/issues/19
+    #   https://github.com/commoncrawl/ia-web-commons/issues/6
+    #   preserve them exactly?
 
     if fragment is not '':
         fragment = '#' + fragment
