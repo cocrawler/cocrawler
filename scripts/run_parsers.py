@@ -14,8 +14,9 @@ import cocrawler.parse as parse
 
 
 def parse_all(name, string):
-    links1, _ = parse.find_html_links(string, url=name)
-    links2, embeds2 = parse.find_html_links_and_embeds(string, url=name)
+    head, body = parse.split_head_body_re(string)
+    links1, _ = parse.find_html_links_re(string, url=name)
+    links2, embeds2 = parse.find_body_links_re(body, url=name)
 
     all2 = links2.union(embeds2)
 
