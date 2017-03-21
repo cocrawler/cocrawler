@@ -28,7 +28,7 @@ test_coverage: clean_coverage
 	coverage report
 
 run_parsers:
-	python ./run_parsers.py ~/public_html/
+	python ./scripts/run_parsers.py ~/public_html/
 
 register:
 	python setup.py register -r https://pypi.python.org/pypi
