@@ -399,8 +399,8 @@ class Crawler:
                 try:
                     work = self.q.get_nowait()
                 except asyncio.queues.QueueEmpty:
-                    # this is racy with the test for all workers awaiting.
-                    # putting it here makes sure the race is rarely run.
+                    # this self.q.get() is racy with the test for all workers awaiting.
+                    # putting it here (except clause) makes sure the race is rarely run.
                     self.awaiting_work += 1
                     with stats.coroutine_state('awaiting work'):
                         work = await self.q.get()
