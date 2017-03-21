@@ -3,6 +3,7 @@
 
 # database layer spec
 
+# domain database
 # host database
 #   counters: urls crawled, urls in queue, seen urls, hostrank info like unique incoming C's
 #   data: landing pages and their anchortext? or in the url db
