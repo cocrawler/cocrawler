@@ -272,6 +272,7 @@ class Crawler:
             location = headers.get('location')
             if location is None:
                 LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
+                # XXX this raise causes "ERROR:asyncio:Task exception was never retrieved"
                 raise ValueError(url.url + ' sent a redirect with no Location: header')
             next_url = urls.URL(location, urljoin=url)
 
@@ -347,7 +348,7 @@ class Crawler:
                         # XXX consider using 'ascii' for speed, if all we want to do is regex in it
                 except (UnicodeDecodeError, LookupError):
                     # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
-                    # XXX if encoding was in header, maybe I should use it?
+                    # XXX if encoding was in header, maybe I should use it here?
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 

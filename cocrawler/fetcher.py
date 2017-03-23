@@ -5,13 +5,13 @@ Assumes robots checks have already been done.
 
 Supports server mocking; proxies are not yet implemented.
 
-Success returns response object (caller must release()) and response
-bytes (which were already read in order to shake out all potential
-exceptions.)
+Success returns response object and response bytes (which were already
+read in order to shake out all potential exceptions.)
 
 Failure returns enough details for the caller to do something smart:
 503, other 5xx, DNS fail, connect timeout, error between connect and
 full response, proxy failure. Plus an errorstring good enough for logging.
+
 '''
 
 import time
