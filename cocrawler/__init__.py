@@ -13,6 +13,7 @@ from operator import itemgetter
 import random
 import socket
 from pkg_resources import get_distribution, DistributionNotFound
+from setuptools_scm import get_version
 
 import asyncio
 import logging
@@ -58,10 +59,12 @@ class Crawler:
         self.next_minute = 0
 
         try:
+            # this works for the installed package
             version = get_distribution(__name__).version
         except DistributionNotFound:
-            version = 'unknown'
-            raise DistributionNotFound
+            # this works for an uninstalled git repo, like in the CI infrastructure
+            version = get_version(root='..', relative_to=__file__)
+
         self.robotname, self.ua = useragent.useragent(config, version)
 
         ns = config['Fetcher'].get('Nameservers')
