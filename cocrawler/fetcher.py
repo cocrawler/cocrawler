@@ -92,7 +92,7 @@ async def fetch(url, session, config,
 
                     # fully receive headers and body.
                     # XXX if we want to limit bytecount, do it here?
-                    body_bytes = await response.read()  # this does a release if an exception is not thrown
+                    body_bytes = await response.read()
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
                     header_bytes = response.raw_headers
 
@@ -105,12 +105,9 @@ async def fetch(url, session, config,
 
             LOGGER.info('will retry a %d for %s', response.status, url.url)
 
-        except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
-                aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
+        except (aiohttp.ClientError, aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
             last_exception = repr(e)
             LOGGER.debug('we sub-failed once, url is %s, exception is %s', url.url, last_exception)
-            if response is not None:
-                response.release()
         except (ssl.CertificateError, ValueError, AttributeError) as e:
             # ValueError = 'Can redirect only to http or https'
             #  (XXX BUG in aiohttp: not case blind comparison - no bug opened yet)
@@ -129,8 +126,6 @@ async def fetch(url, session, config,
             traceback.print_exc()
             LOGGER.info('we sub-failed once: url is %s, exception is %s',
                         url.url, last_exception)
-            if response is not None:
-                response.release()
 
         # treat all 5xx somewhat similar to a 503: slow down and retry
         # also doing this slow down for any exception

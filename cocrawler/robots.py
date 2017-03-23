@@ -129,7 +129,6 @@ class Robots:
 
         self.in_progress.add(schemenetloc)
 
-        # XXX todo: response.release() as soon as possible. btw response.text() does a release for you.
         f = await fetcher.fetch(url, self.session, self.config,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, stats_me=False)
@@ -143,7 +142,7 @@ class Robots:
 
         # If the url was redirected to a different host/robots.txt, let's cache that too
         # XXX use f.response.history to get them all
-        final_url = f.response.url
+        final_url = str(f.response.url)  # this is a yarl.URL object now -- str() or url.human_repr()? XXX
         final_schemenetloc = None
         if final_url != url.url:
             final_parts = urllib.parse.urlparse(final_url)
@@ -160,7 +159,6 @@ class Robots:
             if final_schemenetloc:
                 self.datalayer.cache_robots(final_schemenetloc, parsed)
             self.in_progress.discard(schemenetloc)
-            await f.response.release()
             return parsed
 
         # if we got a non-200, some should be empty and some should be None (XXX Policy)
@@ -171,7 +169,6 @@ class Robots:
                           'got an unexpected status of {}, treating as deny'.format(f.response.status),
                           'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
-            await f.response.release()
             return None
 
         if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte):
@@ -185,7 +182,6 @@ class Robots:
             if final_schemenetloc:
                 self.datalayer.cache_robots(final_schemenetloc, parsed)
             self.in_progress.discard(schemenetloc)
-            await f.response.release()
             return parsed
 
         # go from bytes to a string, despite bogus utf8
@@ -194,15 +190,13 @@ class Robots:
         except UnicodeError:  # pragma: no cover
             # try again assuming utf8 and ignoring errors
             body = str(f.body_bytes, 'utf-8', 'ignore')
-        except (aiohttp.ClientError, aiohttp.DisconnectedError, aiohttp.HttpProcessingError,
-                aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
+        except (aiohttp.ClientError, aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
             # something unusual went wrong.
             # policy: treat like a fetch error.
             # (could be a broken tcp session etc.) XXX use list from cocrawler.py
             self.jsonlog(schemenetloc, {'error': 'robots body decode threw an exception: ' + repr(e),
                                         'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
-            await f.response.release()
             return None
         except asyncio.CancelledError:
             raise
@@ -211,7 +205,6 @@ class Robots:
             self.jsonlog(schemenetloc, {'error': 'robots body decode threw a surprising exception: ' + repr(e),
                                         'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
-            await f.response.release()
             return None
 
         with stats.record_burn('robots parse', url=schemenetloc):

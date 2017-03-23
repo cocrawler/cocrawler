@@ -238,7 +238,6 @@ class Crawler:
             del self.ridealong[ra]
             return
 
-        # XXX response.release asap. btw response.text does one for you
         f = await fetcher.fetch(url, self.session, self.config,
                                 headers=headers, proxy=proxy, mock_url=mock_url)
 
@@ -323,7 +322,7 @@ class Crawler:
 
             if self.add_url(priority+1, next_url, **kwargs):  # XXX add more policy regarding priorities
                 json_log['found_new_links'] = 1
-            # fall through to release and json logging
+            # fall through to json logging
 
         # if 200, parse urls out of body
         if f.response.status == 200:
@@ -390,7 +389,6 @@ class Crawler:
                 stats.stats_fixed('queue size', self.q.qsize())
                 stats.stats_max('max queue size', self.q.qsize())
 
-        await f.response.release()
         if self.crawllogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
 
