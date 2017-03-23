@@ -12,6 +12,7 @@ from collections import defaultdict
 from operator import itemgetter
 import random
 import socket
+from pkg_resources import get_distribution, DistributionNotFound
 
 import asyncio
 import logging
@@ -19,7 +20,6 @@ import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
 import psutil
-from setuptools_scm import get_version
 
 from . import stats
 from . import seeds
@@ -57,7 +57,11 @@ class Crawler:
         self.no_test = no_test
         self.next_minute = 0
 
-        version = get_version(root='..', relative_to=__file__)
+        try:
+            version = get_distribution(__name__).version
+        except DistributionNotFound:
+            version = 'unknown'
+            raise DistributionNotFound
         self.robotname, self.ua = useragent.useragent(config, version)
 
         ns = config['Fetcher'].get('Nameservers')
