@@ -3,6 +3,8 @@
 # make sure we exit immediately when there's an error, for CI:
 set -e
 
+# if there's a stray webserver, kill it
+pkill -U $USER -e -f mock-webserver.py || true
 # start a webserver
 (python -u ./mock-webserver.py 2>&1 | grep -v '" 200 ') &
 # give it a chance to bind
@@ -53,7 +55,7 @@ rm -f robotslog.jsonl crawllog.jsonl
 
 # tear down the mock webserver a couple of ways
 kill %1 || true
-pkill -e -f mock-webserver.py || true
+pkill -U $USER -e -f mock-webserver.py || true
 
 echo
 echo run_burner
