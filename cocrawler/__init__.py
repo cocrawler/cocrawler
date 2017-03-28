@@ -221,9 +221,9 @@ class Crawler:
         '''
         priority, rand, ra = work
         stats.stats_fixed('priority', priority+rand)
-        work = self.ridealong[ra]
-        url = work['url']
-        tries = work.get('tries', 0)
+        ridealong = self.ridealong[ra]
+        url = ridealong['url']
+        tries = ridealong.get('tries', 0)
         maxtries = self.config['Crawl']['MaxTries']
 
         headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.config)
@@ -258,9 +258,9 @@ class Crawler:
                 del self.ridealong[ra]
                 return
             # XXX jsonlog this soft fail?
-            work['tries'] = tries
-            work['priority'] = priority
-            self.ridealong[ra] = work
+            ridealong['tries'] = tries
+            ridealong['priority'] = priority
+            self.ridealong[ra] = ridealong
             # increment random so that we don't immediately retry
             extra = random.uniform(0, 0.5)
             self.q.put_nowait((priority, rand+extra, ra))
@@ -281,7 +281,7 @@ class Crawler:
 
             kind = urls.special_redirect(url, next_url)
             if kind is not None:
-                if 'seed' in work:
+                if 'seed' in ridealong:
                     prefix = 'redirect seed'
                 else:
                     prefix = 'redirect'
@@ -309,20 +309,20 @@ class Crawler:
             json_log['redirect'] = next_url.url
 
             kwargs = {}
-            if 'seed' in work:
-                if 'seedredirs' in work:
-                    work['seedredirs'] += 1
+            if 'seed' in ridealong:
+                if 'seedredirs' in ridealong:
+                    ridealong['seedredirs'] += 1
                 else:
-                    work['seedredirs'] = 1
-                if work['seedredirs'] > self.config['Seeds'].get('SeedRedirsCount', 0):
-                    del work['seed']
-                    del work['seedredirs']
+                    ridealong['seedredirs'] = 1
+                if ridealong['seedredirs'] > self.config['Seeds'].get('SeedRedirsCount', 0):
+                    del ridealong['seed']
+                    del ridealong['seedredirs']
                 else:
-                    kwargs['seed'] = work['seed']
-                    kwargs['seedredirs'] = work['seedredirs']
+                    kwargs['seed'] = ridealong['seed']
+                    kwargs['seedredirs'] = ridealong['seedredirs']
                     if self.config['Seeds'].get('SeedRedirsFree'):
                         priority -= 1
-                    json_log['seedredirs'] = work['seedredirs']
+                    json_log['seedredirs'] = ridealong['seedredirs']
 
             if self.add_url(priority+1, next_url, **kwargs):  # XXX add more policy regarding priorities
                 json_log['found_new_links'] = 1
