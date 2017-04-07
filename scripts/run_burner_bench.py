@@ -40,7 +40,7 @@ async def work():
 
 async def crawl():
     workers = [asyncio.Task(work(), loop=loop) for _ in range(test_threadcount)]
-    print('q count is {}'.format(queue.qsize()))
+    print('queue count is {}'.format(queue.qsize()))
     await queue.join()
     print('join is done')
     for w in workers:
