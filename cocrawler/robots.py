@@ -28,6 +28,8 @@ def preprocess_robots(text):
     2) longest match
     This code preprocesses robots.txt to mitigate (1)
     TODO: make wrap robotsexclusionrulesparser in another class?
+
+    Note: Python's built-in urllib.robotparser definitely breaks (1)
     '''
     ret = ''
     # convert line endings

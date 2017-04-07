@@ -16,12 +16,14 @@ baz
     assert robots.preprocess_robots('') == ''
     assert robots.preprocess_robots('foo') == 'foo\n'
 
+
 def test_robots():
     '''
     There's already end-to-end testing for the normal functionality.
     Exercise only the weird stuff here.
     '''
-    r = robots.Robots('foo', None, None, {'Robots': {'MaxTries': 4}, 'Logging': {}})
+    config = {'Robots': {'MaxTries': 4}, 'Logging': {}}
+    r = robots.Robots('foo', None, None, config)
 
     robots_txt = b'<'
     assert not r.is_plausible_robots('example.com', robots_txt, 1.0)
