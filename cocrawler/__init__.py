@@ -525,6 +525,7 @@ class Crawler:
         # this is now the 'main' coroutine
 
         if self.config['Multiprocess'].get('Affinity'):
+            # set the main thread to run on core 0
             p = psutil.Process()
             p.cpu_affinity([0])
 
