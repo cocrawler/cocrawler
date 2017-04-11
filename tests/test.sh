@@ -53,6 +53,15 @@ echo
 $COVERAGE ../scripts/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
 rm -f robotslog.jsonl crawllog.jsonl
 
+echo
+echo aiohttp-fetch
+echo
+$COVERAGE ../scripts/aiohttp-fetch.py http://127.0.0.1:8080/hello > /dev/null
+
+echo
+echo tearing down mock webserver
+echo
+
 # tear down the mock webserver a couple of ways
 kill %1 || true
 pkill -U $USER -e -f mock-webserver.py || true
@@ -70,7 +79,7 @@ echo
 $COVERAGE ../scripts/bench_burner.py --count 100
 
 echo
-echo bench_dns check with bad nameserver, expected to say it failed
+echo bench_dns check with bad nameserver, expected to say \'not suitable for crawling\'
 echo
 
 set +e
@@ -79,3 +88,7 @@ if [ $? -eq 0 ]; then
     exit 1
 fi
 set -e
+
+echo
+echo reached test.sh exit
+echo
