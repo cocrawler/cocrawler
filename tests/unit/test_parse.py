@@ -65,19 +65,20 @@ def test_do_burner_work_html():
     # as a handwave, let's expect these defective pages to also work.
 
     test_html_bytes = test_html_no_body.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html_no_body, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 2
 
     test_html_bytes = test_html_no_head.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html_no_head, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
-    assert len(embeds) == 2
+    assert len(embeds) == 1
 
     test_html_bytes = test_html_no_nothing.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets = parse.do_burner_work_html(test_html_no_nothing, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
-    assert len(embeds) == 2
+    assert len(embeds) == 1
+
 
 def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
