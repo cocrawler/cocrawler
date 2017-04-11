@@ -68,3 +68,14 @@ echo bench_burner
 echo
 
 $COVERAGE ../scripts/bench_burner.py --count 100
+
+echo
+echo bench_dns check with bad nameserver, expected to say it failed
+echo
+
+set +e
+$COVERAGE ../scripts/bench_dns.py --count=3 --config Fetcher.Nameservers:4.2.2.1
+if [ $? -eq 0 ]; then
+    exit 1
+fi
+set -e

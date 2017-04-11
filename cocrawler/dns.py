@@ -56,7 +56,8 @@ async def prefetch_dns(url, mock_url, session):
 
     # XXX log DNS result to warc here?
     #  we should still log the IP to warc even if private
-    #  note that these results don't have the TTL in them
+    #  note that these results don't have the TTL in them -- need to run query() to get that
+    #  CNAME? -- similar to TTL
 
     for a in answer:
         ip = a['host']
@@ -95,8 +96,13 @@ async def query(host, qtype):
          ares_query_ns_result(host='ns1.google.com', ttl=None),
          ares_query_ns_result(host='ns3.google.com', ttl=None)]
     CNAME: ares_query_cname_result(cname='blogger.l.google.com', ttl=None)
+
     Alas, querying for A www.blogger.com doesn't return both the CNAME and the next A, just the A.
+    Apparently some DNS resolvers will send the next A?
     '''
+    if not res:
+        raise RuntimeError('no nameservers configured')
+
     try:
         return await res.query(host, qtype)
     except aiodns.error.DNSError:
