@@ -97,13 +97,14 @@ async def query(host, qtype):
          ares_query_ns_result(host='ns3.google.com', ttl=None)]
     CNAME: ares_query_cname_result(cname='blogger.l.google.com', ttl=None)
 
-    Alas, querying for A www.blogger.com doesn't return both the CNAME and the next A, just the A.
-    Apparently some DNS resolvers will send the next A?
+    Alas, querying for A www.blogger.com doesn't return both the CNAME and the next A, just the final A.
+    dig shows CNAME and A. aiodns / pycares doesn't seem to ever show the full info.
     '''
     if not res:
         raise RuntimeError('no nameservers configured')
 
     try:
+        # host, ttl
         return await res.query(host, qtype)
     except aiodns.error.DNSError:
         pass
