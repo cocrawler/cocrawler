@@ -90,5 +90,11 @@ fi
 set -e
 
 echo
+echo dns-fetch
+echo
+
+$COVERAGE ../scripts/dns-fetch.py example.com --config Fetcher.Nameservers:8.8.8.8
+
+echo
 echo reached test.sh exit
 echo
