@@ -43,6 +43,8 @@ def apply_url_policies(url, config):
         mock_url = url.urlparse._replace(netloc=test_host).geturl()
         mock_robots = url.urlparse.scheme + '://' + test_host + '/robots.txt'
 
+    # XXX set header Upgrade-Insecure-Requests: 1 ??
+
     return headers, proxy, mock_url, mock_robots
 
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'header_bytes',
