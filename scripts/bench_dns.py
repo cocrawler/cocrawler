@@ -33,9 +33,9 @@ ns = config['Fetcher'].get('Nameservers')
 if not isinstance(ns, list):
     ns = [ns]
 
-resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)  # Can I pass rotate=True into this?
-connector = aiohttp.connector.TCPConnector(resolver=resolver, family=socket.AF_INET)
-session = aiohttp.ClientSession(connector=connector)
+#resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)  # Can I pass rotate=True into this?
+#connector = aiohttp.connector.TCPConnector(resolver=resolver, family=socket.AF_INET)
+#session = aiohttp.ClientSession(connector=connector)
 exit_value = 0
 
 dns.setup_resolver(ns)
@@ -45,12 +45,13 @@ def create_queue():
     queue = asyncio.Queue()
 
     # add a fake domain to make sure the dns doesn't send unknown hosts to a search
+    # note that mail.foo.com and mx.foo.com don't generally get bogus answers, it's foo.com or www.foo.com that do
     for _ in range(2):
         r = random.Random()
         host = str(r.randrange(1000000000)) + str(r.randrange(1000000000)) + str(r.randrange(1000000000))
         queue.put_nowait(host + '.com')
 
-    # XXX read list of domains to query -- from alexa top million
+    # read list of domains to query -- from alexa top million
     head, tail = os.path.split(__file__)
     alexa = os.path.join(head, os.pardir, 'examples', 'top-1k.txt')
     alexa_count = 0
@@ -109,7 +110,7 @@ finally:
     loop.stop()
     loop.run_forever()
     loop.close()
-    session.close()
+    #session.close()
 
 elapsed = time.time() - t0
 if not elapsed:

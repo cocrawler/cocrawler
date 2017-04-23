@@ -53,6 +53,7 @@ scripts = ['scripts/aiohttp-fetch.py',
            'scripts/bench_burner.py',
            'scripts/bench_dns.py',
            'scripts/crawl.py',
+           'scripts/dns-fetch.py',
            'scripts/run_burner_bench.py',
            'scripts/run_burner.py',
            'scripts/run_parsers.py']

@@ -19,6 +19,7 @@ ARGS = argparse.ArgumentParser(description='CoCrawler dns fetcher')
 ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
 ARGS.add_argument('--no-confighome', action='store_true')
+ARGS.add_argument('--type', default='A')
 ARGS.add_argument('hosts', nargs='+', help='list of hostnames to query')
 
 args = ARGS.parse_args()
@@ -36,7 +37,7 @@ print('set nameservers to', ns)
 async def main(hosts):
     for host in hosts:
         try:
-            result = await dns.query(host, 'A')
+            result = await dns.query(host, args.type)
             print(host, result)
         except Exception as e:
             result = None
