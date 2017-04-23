@@ -86,6 +86,8 @@ def safe_url_canonicalization(url):
     (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
     scheme = scheme.lower()
     netloc = netloc.lower()
+    if path == '':
+        path = '/'
 
     # TODO: punycode hostnames (codec='punycode')
 
