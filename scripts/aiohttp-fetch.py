@@ -27,6 +27,12 @@ async def main(urls):
                 print('')
                 continue
 
+            if hasattr(session, 'last_req'):
+                print('final request headers:')
+                for k, v in session.last_req.headers.items():
+                    print(k+':', v)
+                print('')
+
             for h in response.history:
                 print(h)
             print('')
