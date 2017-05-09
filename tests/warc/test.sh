@@ -11,9 +11,12 @@ echo test-warc
 echo
 
 $COVERAGE ./test-warc.py
-ls -l
 
-# there are 3 output files to diff
+# there are 3 output files to diff... move them to canonical names
+mv -u CC-TEST-01-FOO-00001-*.warc CC-TEST-01-FOO-00001-rd.bx9.net.warc
+mv -u CC-TEST-01-FOO-00002-*.warc CC-TEST-01-FOO-00002-rd.bx9.net.warc
+mv -u CC-TEST-01-00001-*.warc.gz CC-TEST-01-00001-rd.bx9.net.warc.gz
+
 $COVERAGE ./warc-diff.py CC-TEST-01-FOO-00001-rd.bx9.net.warc.in CC-TEST-01-FOO-00001-rd.bx9.net.warc
 $COVERAGE ./warc-diff.py CC-TEST-01-FOO-00002-rd.bx9.net.warc.in CC-TEST-01-FOO-00002-rd.bx9.net.warc
 
