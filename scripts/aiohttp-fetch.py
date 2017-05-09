@@ -13,8 +13,11 @@ from traceback import print_exc
 import asyncio
 import aiohttp
 
+
 async def main(urls):
     for url in urls:
+        if not url.startswith('http'):
+            url = 'http://' + url
         async with aiohttp.ClientSession() as session:
             print(url, '\n')
             try:
