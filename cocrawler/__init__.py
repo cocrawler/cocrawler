@@ -226,10 +226,10 @@ class Crawler:
         tries = ridealong.get('tries', 0)
         maxtries = self.config['Crawl']['MaxTries']
 
-        headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.config)
+        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.config)
 
         with stats.coroutine_state('fetching/checking robots'):
-            r = await self.robots.check(url, headers=headers, proxy=proxy, mock_robots=mock_robots)
+            r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
             # XXX treat 'no robots data' as a soft failure?
@@ -242,7 +242,7 @@ class Crawler:
             return
 
         f = await fetcher.fetch(url, self.session, self.config,
-                                headers=headers, proxy=proxy, mock_url=mock_url)
+                                headers=req_headers, proxy=proxy, mock_url=mock_url)
 
         json_log = {'type': 'get', 'url': url.url, 'priority': priority,
                     't_first_byte': f.t_first_byte, 'time': time.time()}
@@ -271,8 +271,8 @@ class Crawler:
         json_log['status'] = f.response.status
 
         if is_redirect(f.response):
-            headers = f.response.headers
-            location = headers.get('location')
+            resp_headers = f.response.headers
+            location = resp_headers.get('location')
             if location is None:
                 LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
                 # XXX this raise causes "ERROR:asyncio:Task exception was never retrieved"
@@ -291,7 +291,7 @@ class Crawler:
                 pass
             elif kind == 'same':
                 LOGGER.info('attempted redirect to myself: %s to %s', url.url, next_url.url)
-                if 'Set-Cookie' not in headers:
+                if 'Set-Cookie' not in resp_headers:
                     LOGGER.info('redirect to myself had no cookies.')
                     # XXX try swapping www/not-www? or use a non-crawler UA.
                     # looks like some hosts have extra defenses on their redir servers!
@@ -330,8 +330,8 @@ class Crawler:
 
         # if 200, parse urls out of body
         if f.response.status == 200:
-            headers = f.response.headers
-            content_type = headers.get('content-type', 'None')
+            resp_headers = f.response.headers
+            content_type = resp_headers.get('content-type', 'None')
             # sometimes content_type comes back multiline. whack it with a wrench.
             content_type = content_type.replace('\r', '\n').partition('\n')[0]
             if content_type:
@@ -357,17 +357,17 @@ class Crawler:
 
                 # headers is a funky object that's allergic to getting pickled.
                 # let's make something more boring
-                headers_list = []
-                for k, v in headers.items():
-                    headers_list.append((k.lower(), v))
+                resp_headers_list = []
+                for k, v in resp_headers.items():
+                    resp_headers_list.append((k.lower(), v))
                 if len(body) > self.burner_parseinburnersize:
                     links, embeds, sha1, facets = await self.burner.burn(
-                        partial(parse.do_burner_work_html, body, f.body_bytes, headers_list, url=url),
+                        partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
                         url=url)
                 else:
                     with stats.coroutine_state('await main thread parser'):
                         links, embeds, sha1, facets = parse.do_burner_work_html(
-                            body, f.body_bytes, headers_list, url=url)
+                            body, f.body_bytes, resp_headers_list, url=url)
                 json_log['checksum'] = sha1
 
                 if self.facetlogfd:
