@@ -10,6 +10,10 @@ possible configuration variables.
 '''
 
 default_yaml = '''
+PluginPath: False
+Plugins:
+- plugins/default-plugins.cfg
+
 Seeds:
 #  Hosts:
 #  - http://xkcd.com/
