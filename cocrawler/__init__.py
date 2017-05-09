@@ -355,12 +355,12 @@ class Crawler:
                     # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
                     body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
+                # headers is a funky object that's allergic to getting pickled.
+                # let's make something more boring
                 headers_list = []
                 for k, v in headers.items():
                     headers_list.append((k.lower(), v))
                 if len(body) > self.burner_parseinburnersize:
-                    # headers is a funky object that's allergic to getting pickled.
-                    # let's make something more boring
                     links, embeds, sha1, facets = await self.burner.burn(
                         partial(parse.do_burner_work_html, body, f.body_bytes, headers_list, url=url),
                         url=url)
