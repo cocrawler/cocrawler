@@ -13,24 +13,24 @@ echo
 $COVERAGE ./test-warc.py
 
 # there are 3 output files to diff... move them to canonical names
-mv -u CC-TEST-01-FOO-00001-*.warc CC-TEST-01-FOO-00001-rd.bx9.net.warc
-mv -u CC-TEST-01-FOO-00002-*.warc CC-TEST-01-FOO-00002-rd.bx9.net.warc
-mv -u CC-TEST-01-00001-*.warc.gz CC-TEST-01-00001-rd.bx9.net.warc.gz
+mv -u CC-TEST-01-FOO-00001-*.warc CC-TEST-01-FOO-00001-hostname.warc
+mv -u CC-TEST-01-FOO-00002-*.warc CC-TEST-01-FOO-00002-hostname.warc
+mv -u CC-TEST-01-00001-*.warc.gz CC-TEST-01-00001-hostname.warc.gz
 
-$COVERAGE ./warc-diff.py CC-TEST-01-FOO-00001-rd.bx9.net.warc.in CC-TEST-01-FOO-00001-rd.bx9.net.warc
-$COVERAGE ./warc-diff.py CC-TEST-01-FOO-00002-rd.bx9.net.warc.in CC-TEST-01-FOO-00002-rd.bx9.net.warc
+$COVERAGE ./warc-diff.py CC-TEST-01-FOO-00001-hostname.warc.in CC-TEST-01-FOO-00001-hostname.warc
+$COVERAGE ./warc-diff.py CC-TEST-01-FOO-00002-hostname.warc.in CC-TEST-01-FOO-00002-hostname.warc
 
-rm -f CC-TEST-01-00001-rd.bx9.net.warc.in
-gunzip -S .gz.in --to-stdout CC-TEST-01-00001-rd.bx9.net.warc.gz.in > CC-TEST-01-00001-rd.bx9.net.warc.in
-rm -f CC-TEST-01-00001-rd.bx9.net.warc
-gunzip CC-TEST-01-00001-rd.bx9.net.warc.gz
-$COVERAGE ./warc-diff.py CC-TEST-01-00001-rd.bx9.net.warc.in CC-TEST-01-00001-rd.bx9.net.warc
+rm -f CC-TEST-01-00001-hostname.warc.in
+gunzip -S .gz.in --to-stdout CC-TEST-01-00001-hostname.warc.gz.in > CC-TEST-01-00001-hostname.warc.in
+rm -f CC-TEST-01-00001-hostname.warc
+gunzip CC-TEST-01-00001-hostname.warc.gz
+$COVERAGE ./warc-diff.py CC-TEST-01-00001-hostname.warc.in CC-TEST-01-00001-hostname.warc
 
 # cleanup
-rm CC-TEST-01-FOO-00001-rd.bx9.net.warc
-rm CC-TEST-01-FOO-00002-rd.bx9.net.warc
-rm CC-TEST-01-00001-rd.bx9.net.warc
-rm CC-TEST-01-00001-rd.bx9.net.warc.in
+rm CC-TEST-01-FOO-00001-hostname.warc
+rm CC-TEST-01-FOO-00002-hostname.warc
+rm CC-TEST-01-00001-hostname.warc
+rm CC-TEST-01-00001-hostname.warc.in
 
 echo
 echo reached warc/test.sh exit
