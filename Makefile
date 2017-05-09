@@ -44,3 +44,9 @@ dist: distclean
 	python ./setup.py --long-description | rst2html --exit-status=2 2>&1 > /dev/null
 	python ./setup.py bdist_wheel
 	twine upload dist/* -r pypi
+
+install:
+	python ./setup.py install
+
+mock-webserver:
+	(cd tests; python -u ./mock-webserver.py 2>&1 | grep -v '" 200 ') &
