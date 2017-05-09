@@ -60,12 +60,12 @@ class Crawler:
 
         try:
             # this works for the installed package
-            version = get_distribution(__name__).version
+            self.version = get_distribution(__name__).version
         except DistributionNotFound:
             # this works for an uninstalled git repo, like in the CI infrastructure
-            version = get_version(root='..', relative_to=__file__)
+            self.version = get_version(root='..', relative_to=__file__)
 
-        self.robotname, self.ua = useragent.useragent(config, version)
+        self.robotname, self.ua = useragent.useragent(config, self.version)
 
         ns = config['Fetcher'].get('Nameservers')
         if ns:
