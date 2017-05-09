@@ -11,6 +11,7 @@ echo test-warc
 echo
 
 $COVERAGE ./test-warc.py
+ls -l
 
 # there are 3 output files to diff
 $COVERAGE ./warc-diff.py CC-TEST-01-FOO-00001-rd.bx9.net.warc.in CC-TEST-01-FOO-00001-rd.bx9.net.warc
