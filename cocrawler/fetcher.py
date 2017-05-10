@@ -31,11 +31,15 @@ LOGGER = logging.getLogger(__name__)
 
 
 # XXX should be a policy plugin
-def apply_url_policies(url, config):
+# XXX cookie handling -- no way to have a cookie jar other than at session level
+# XXX move all ua processing here ? so it appears in the headers that get warc-ed
+def apply_url_policies(url, ua, config):
     headers = {}
     proxy = None
     mock_url = None
     mock_robots = None
+
+    headers['User-Agent'] = ua
 
     test_host = config['Testing'].get('TestHostmapAll')
     if test_host:
@@ -48,7 +52,7 @@ def apply_url_policies(url, config):
     return headers, proxy, mock_url, mock_robots
 
 
-FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes',
+FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_headers',
                                                  't_first_byte', 't_last_byte', 'last_exception'])
 
 
@@ -139,7 +143,7 @@ async def fetch(url, session, config,
     else:
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
-            return FetcherResponse(None, None, None, None, last_exception)
+            return FetcherResponse(None, None, None, None, None, last_exception)
         # fall through for the case of response.status >= 500
 
     stats.stats_sum('fetch bytes', len(body_bytes) + len(response.raw_headers))
@@ -154,7 +158,7 @@ async def fetch(url, session, config,
     # did we receive cookies? was the security bit set?
     # generate warc here? both normal and robots fetches go through here.
 
-    return FetcherResponse(response, body_bytes, t_first_byte, t_last_byte, None)
+    return FetcherResponse(response, body_bytes, headers, t_first_byte, t_last_byte, None)
 
 
 def upgrade_scheme(url):

@@ -91,8 +91,7 @@ class Crawler:
             cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
-        self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar,
-                                             headers={'User-Agent': self.ua})
+        self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar)
 
         self.q = asyncio.PriorityQueue(loop=self.loop)
         self.ridealong = {}
@@ -240,7 +239,7 @@ class Crawler:
         tries = ridealong.get('tries', 0)
         maxtries = self.config['Crawl']['MaxTries']
 
-        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.config)
+        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.ua, self.config)
 
         with stats.coroutine_state('fetching/checking robots'):
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
@@ -356,7 +355,7 @@ class Crawler:
             json_log['content_type'] = content_type
             stats.stats_sum('content-type=' + content_type, 1)
             if self.warcwriter is not None:
-                self.warcwriter.write_request_response_pair(url.url, req_headers, f.response.raw_headers, f.body_bytes)  # XXX digest??
+                self.warcwriter.write_request_response_pair(url.url, f.req_headers, f.response.raw_headers, f.body_bytes)  # XXX digest??
 
             if content_type == 'text/html':
                 try:
