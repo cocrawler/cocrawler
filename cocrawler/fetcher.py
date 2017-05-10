@@ -47,8 +47,10 @@ def apply_url_policies(url, config):
 
     return headers, proxy, mock_url, mock_robots
 
+
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes',
                                                  't_first_byte', 't_last_byte', 'last_exception'])
+
 
 async def fetch(url, session, config,
                 headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
