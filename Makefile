@@ -49,4 +49,5 @@ install:
 	python ./setup.py install
 
 mock-webserver:
+	-pkill -U $$USER -f mock-webserver.py
 	(cd tests; python -u ./mock-webserver.py 2>&1 | grep -v '" 200 ') &
