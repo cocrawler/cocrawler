@@ -4,7 +4,7 @@ Wrappers for WARC stuff
 
 import os
 import socket
-from collections import OrderedDict
+from collections import OrderedDict, abc
 from io import BytesIO
 
 import six
@@ -210,8 +210,7 @@ def headers_to_str_headers(headers):
     '''
     ret = []
 
-    # helpfully, aiohttp's headers are in a multidict.CIMultiDict, which isn't a dict instance
-    if isinstance(headers, dict) or hasattr(headers, 'items'):
+    if isinstance(headers, abc.Mapping):
         h = headers.items()
     else:
         h = headers
