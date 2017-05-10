@@ -47,7 +47,7 @@ def apply_url_policies(url, config):
 
     return headers, proxy, mock_url, mock_robots
 
-FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'header_bytes',
+FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes',
                                                  't_first_byte', 't_last_byte', 'last_exception'])
 
 async def fetch(url, session, config,
@@ -96,7 +96,6 @@ async def fetch(url, session, config,
                     # XXX if we want to limit bytecount, do it here?
                     body_bytes = await response.read()
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
-                    header_bytes = response.raw_headers
 
             if len(iplist) == 0:
                 LOGGER.info('surprised that no-ip-address fetch of %s succeeded', url.urlparse.netloc)
@@ -138,10 +137,10 @@ async def fetch(url, session, config,
     else:
         if last_exception:
             LOGGER.debug('we failed, the last exception is %s', last_exception)
-            return FetcherResponse(None, None, None, None, None, last_exception)
+            return FetcherResponse(None, None, None, None, last_exception)
         # fall through for the case of response.status >= 500
 
-    stats.stats_sum('fetch bytes', len(body_bytes) + len(header_bytes))
+    stats.stats_sum('fetch bytes', len(body_bytes) + len(response.raw_headers))
 
     if stats_me:
         stats.stats_sum('fetch URLs', 1)
@@ -153,7 +152,7 @@ async def fetch(url, session, config,
     # did we receive cookies? was the security bit set?
     # generate warc here? both normal and robots fetches go through here.
 
-    return FetcherResponse(response, body_bytes, header_bytes, t_first_byte, t_last_byte, None)
+    return FetcherResponse(response, body_bytes, t_first_byte, t_last_byte, None)
 
 
 def upgrade_scheme(url):
