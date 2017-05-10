@@ -32,7 +32,13 @@ if [ "$COUNT" != "2001" ]; then
    echo "warc index is the wrong size: saw $COUNT"
    exit 1
 fi
-rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz
+rm -f testing.warc.gz
+warcio recompress Testing-000000-*.warc.gz testing.warc.gz
+if [ `warcio index Testing-000000-*.warc.gz | wc -l` != `warcio index testing.warc.gz | wc -l` ]; then
+    echo "warc index size changed on recompress"
+    exit 1
+fi
+rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz testing.warc.gz
 
 echo
 echo test-wide
