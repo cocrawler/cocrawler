@@ -56,7 +56,7 @@ main.write_dns('google.com', 'A', fake_dns_result)
 
 fake_url = 'https://www.google.com/'
 fake_req_headers = [('Host', 'www.google.com')]
-fake_resp_headers = [('Content-Type', 'text/html; charset=UTF-8')]
+fake_resp_headers = [(b'Content-Type', b'text/html; charset=UTF-8')]
 fake_payload = b'<html><body>Hello, world!</body></html>'
 
 digest = hashlib.sha1(fake_payload).hexdigest()

@@ -33,6 +33,7 @@ from . import urls
 from . import burner
 from . import url_allowed
 from . import cookies
+from .warc import CCWARCWriter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,6 +118,19 @@ class Crawler:
             self.facetlogfd = open(self.facetlog, 'a')
         else:
             self.facetlogfd = None
+
+        if self.config['WARC'].get('WARCAll', False):
+            max_size = self.config['WARC']['WARCMaxSize']
+            prefix = self.config['WARC']['WARCPrefix']
+            subprefix = self.config['WARC'].get('WARCSubPrefix')
+            description = self.config['WARC'].get('WARCDescription')
+            creator = self.config['WARC'].get('WARCCreator')
+            operator = self.config['WARC'].get('WARCOperator')
+            self.warcwriter = CCWARCWriter(prefix, max_size, subprefix=subprefix)  # XXX get_serial lacks a default
+            self.warcwriter.create_default_info(self.version, local_addr,
+                                                description=description, creator=creator, operator=operator)
+        else:
+            self.warcwriter = None
 
         if load is not None:
             self.load_all(load)
@@ -341,9 +355,9 @@ class Crawler:
             LOGGER.debug('url %r came back with content type %r', url.url, content_type)
             json_log['content_type'] = content_type
             stats.stats_sum('content-type=' + content_type, 1)
-            # PLUGIN: post_crawl_200 by content type
-            # post_crawl_raw(header_bytes, body_bytes, response.status, time.time())
-            # for example, add to a WARC, or post to a Kafka queue
+            if self.warcwriter is not None:
+                self.warcwriter.write_request_response_pair(url.url, req_headers, f.response.raw_headers, f.body_bytes)  # XXX digest??
+
             if content_type == 'text/html':
                 try:
                     with stats.record_burn('response.text() decode', url=url):
@@ -357,9 +371,11 @@ class Crawler:
 
                 # headers is a funky object that's allergic to getting pickled.
                 # let's make something more boring
+                # XXX get rid of this for the one in warc?
                 resp_headers_list = []
                 for k, v in resp_headers.items():
                     resp_headers_list.append((k.lower(), v))
+
                 if len(body) > self.burner_parseinburnersize:
                     links, embeds, sha1, facets = await self.burner.burn(
                         partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),

@@ -5,8 +5,9 @@ Wrappers for WARC stuff
 import os
 import socket
 from collections import OrderedDict
-
 from io import BytesIO
+
+import six
 
 from warcio.statusandheaders import StatusAndHeaders
 from warcio.warcwriter import WARCWriter
@@ -68,9 +69,10 @@ class CCWARCWriter:
         self.gzip = gzip
         self.hostname = socket.gethostname()
         if get_serial is not None:
-            self.get_serial = get_serial
+            self.external_get_serial = get_serial
         else:
-            raise NotImplementedError
+            self.external_get_serial = None
+            self.serial = 0
 
     def __del__(self):
         if self.writer is not None:
@@ -111,6 +113,12 @@ class CCWARCWriter:
         self.writer = WARCWriter(self.f, gzip=self.gzip)
         record = self.writer.create_warcinfo_record(self.filename, self.info)
         self.writer.write_record(record)
+
+    def get_serial(self, filename):
+        if self.external_get_serial is not None:
+            return self.external_get_serial(filename)
+        self.serial += 1
+        return '{:06}'.format(self.serial-1)
 
     def maybe_close(self):
         '''
@@ -164,16 +172,22 @@ class CCWARCWriter:
 
         self.writer.write_record(record)
 
-    def write_request_response_pair(self, url, req_headers_list, resp_headers_list, payload, digest=None):
+    def write_request_response_pair(self, url, req_headers, resp_headers, payload, digest=None):
         if self.writer is None:
             self.open()
 
-        req_http_headers = StatusAndHeaders('GET / HTTP/1.1', req_headers_list)
+        # XXX headers format?
+        # warcio expects array of 2ples
+        # aiohttp request headers is a dict, and it's not even complete because of cookies (separate dict)
+        #  after the request is made, it's still a dict but it's complete
+        # aiohttp response raw_headers is a sequence of 2ples, and includes cookies
+
+        req_http_headers = StatusAndHeaders('GET / HTTP/1.1', headers_to_str_headers(req_headers))
 
         request = self.writer.create_warc_record('http://example.com/', 'request',
                                                  http_headers=req_http_headers)
 
-        resp_http_headers = StatusAndHeaders('200 OK', resp_headers_list, protocol='HTTP/1.1')
+        resp_http_headers = StatusAndHeaders('200 OK', headers_to_str_headers(resp_headers), protocol='HTTP/1.1')
 
         #warc_headers = StatusAndHeaders('1.0', [])
         #if digest is not None:
@@ -187,3 +201,26 @@ class CCWARCWriter:
 
         self.writer.write_request_response_pair(request, response)
         self.maybe_close()
+
+
+def headers_to_str_headers(headers):
+    '''
+    Converts dict or tuple-based headers of bytes or str to
+    tuple-based headers of str.
+    '''
+    ret = []
+
+    # helpfully, aiohttp's headers are in a multidict.CIMultiDict, which isn't a dict instance
+    if isinstance(headers, dict) or hasattr(headers, 'items'):
+        h = headers.items()
+    else:
+        h = headers
+
+    for tup in h:
+        k, v = tup
+        if isinstance(k, six.binary_type):
+            k = k.decode('iso-8859-1')
+        if isinstance(v, six.binary_type):
+            v = v.decode('iso-8859-1')
+        ret.append((k, v))
+    return ret

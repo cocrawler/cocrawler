@@ -19,11 +19,20 @@ NOCH=--no-confighome
 echo
 echo test-deep
 echo
-$COVERAGE ../scripts/crawl.py --configfile test-deep.yml $NOCH
+rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz
+$COVERAGE ../scripts/crawl.py --configfile test-deep.yml $NOCH --config WARC.WARCAll:True
+
 # tests against the logfiles
 grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in robotslog"; exit 1)
 (grep "/denied/" crawllog.jsonl | grep -q -v '"robots"' ) && (echo "FAIL: should not have seen /denied/ in crawllog.jsonl"; exit 1)
-rm -f robotslog.jsonl crawllog.jsonl
+
+# and the WARC
+COUNT=`warcio index Testing-000000-*.warc.gz | wc -l`
+if [ "$COUNT" != "2001" ]; then
+   echo "warc index is the wrong size: saw $COUNT"
+   exit 1
+fi
+rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz
 
 echo
 echo test-wide
