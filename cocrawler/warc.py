@@ -1,5 +1,16 @@
 '''
 Wrappers for WARC stuff
+
+TODO
+
+best-practice:
+WARC-Warcinfo-ID for every record
+computation:
+stick pre-computed digest into WARC-Payload-Digest
+
+XXX BUG pbm.yml didn't get UserAgent into the warc
+that's because it's baked into ClientSession
+
 '''
 
 import os
@@ -122,23 +133,12 @@ class CCWARCWriter:
 
     def maybe_close(self):
         '''
-        TODO: always close/reopen if subprefix is not None
+        TODO: always close/reopen if subprefix is not None; minimizes open filehandles
         '''
         fsize = os.fstat(self.f.fileno()).st_size
         if fsize > self.max_size:
             self.f.close()
             self.writer = None
-
-    def write_robots(self, url, robots):
-        '''
-        Treat robots.txt as a normal request/resonse fetch
-        '''
-        if self.writer is None:
-            self.open()
-
-        raise NotImplementedError
-
-        self.maybe_close()
 
     def write_dns(self, host, kind, result):
         #  response record, content-type 'text/dns', contents as defined by rfcs 2540 and 1035
@@ -175,12 +175,6 @@ class CCWARCWriter:
     def write_request_response_pair(self, url, req_headers, resp_headers, payload, digest=None):
         if self.writer is None:
             self.open()
-
-        # XXX headers format?
-        # warcio expects array of 2ples
-        # aiohttp request headers is a dict, and it's not even complete because of cookies (separate dict)
-        #  after the request is made, it's still a dict but it's complete
-        # aiohttp response raw_headers is a sequence of 2ples, and includes cookies
 
         req_http_headers = StatusAndHeaders('GET / HTTP/1.1', headers_to_str_headers(req_headers))
 
