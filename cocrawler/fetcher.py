@@ -32,7 +32,8 @@ LOGGER = logging.getLogger(__name__)
 
 # XXX should be a policy plugin
 # XXX cookie handling -- no way to have a cookie jar other than at session level
-# XXX move all ua processing here ? so it appears in the headers that get warc-ed
+#    need to directly manipulate domain-level cookie jars to get cookies
+#    CookieJar.add_cookie_header(request) is tied to urlllib.request, how does aiohttp use it?!
 def apply_url_policies(url, ua, config):
     headers = {}
     proxy = None
