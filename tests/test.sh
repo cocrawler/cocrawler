@@ -26,6 +26,10 @@ $COVERAGE ../scripts/crawl.py --configfile test-deep.yml $NOCH --config WARC.WAR
 grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in robotslog"; exit 1)
 (grep "/denied/" crawllog.jsonl | grep -q -v '"robots"' ) && (echo "FAIL: should not have seen /denied/ in crawllog.jsonl"; exit 1)
 
+echo
+echo test-deep-warc
+echo
+
 # and the WARC
 COUNT=`warcio index Testing-000000-*.warc.gz | wc -l`
 if [ "$COUNT" != "2001" ]; then

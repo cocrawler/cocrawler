@@ -15,10 +15,15 @@ that's because it's baked into ClientSession
 
 import os
 import socket
-from collections import OrderedDict, abc
+from collections import OrderedDict
 from io import BytesIO
 
 import six
+
+try:
+    import collections.abc as collections_abc  # only works on python 3.3+
+except ImportError:
+    import collections as collections_abc
 
 from warcio.statusandheaders import StatusAndHeaders
 from warcio.warcwriter import WARCWriter
@@ -183,14 +188,14 @@ class CCWARCWriter:
 
         resp_http_headers = StatusAndHeaders('200 OK', headers_to_str_headers(resp_headers), protocol='HTTP/1.1')
 
-        #warc_headers = StatusAndHeaders('1.0', [])
-        #if digest is not None:
-        #    warc_headers.add_header('WARC-Payload-Digest', digest)
+        warc_headers_dict = {}
+        if digest is not None:
+            warc_headers_dict['WARC-Payload-Digest'] = digest
 
         response = self.writer.create_warc_record(url, 'response',
                                                   payload=BytesIO(payload),
                                                   length=len(payload),
-                                                  #warc_headers=warc_headers,
+                                                  warc_headers_dict=warc_headers_dict,
                                                   http_headers=resp_http_headers)
 
         self.writer.write_request_response_pair(request, response)
@@ -200,11 +205,11 @@ class CCWARCWriter:
 def headers_to_str_headers(headers):
     '''
     Converts dict or tuple-based headers of bytes or str to
-    tuple-based headers of str.
+    tuple-based headers of str, which is the python norm (pep 3333)
     '''
     ret = []
 
-    if isinstance(headers, abc.Mapping):
+    if isinstance(headers, collections_abc.Mapping):
         h = headers.items()
     else:
         h = headers
