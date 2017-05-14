@@ -32,3 +32,4 @@ Testing:
     fetch http code=200: 1000
     max urls found on a page: 3
     robots denied: 1
+    warc r/r (prefix Testing): 1000

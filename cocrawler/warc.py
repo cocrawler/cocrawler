@@ -8,13 +8,13 @@ WARC-Warcinfo-ID for every record
 computation:
 stick pre-computed digest into WARC-Payload-Digest
 
-XXX BUG pbm.yml didn't get UserAgent into the warc
-that's because it's baked into ClientSession
+XXX BUG we are not getting the full request headers because the request object is immediately destroyed by aiohttp
 
 '''
 
 import os
 import socket
+import logging
 from collections import OrderedDict
 from io import BytesIO
 
@@ -28,6 +28,11 @@ except ImportError:
 from warcio.statusandheaders import StatusAndHeaders
 from warcio.warcwriter import WARCWriter
 from warcio.timeutils import timestamp_now
+
+from . import stats
+
+LOGGER = logging.getLogger(__name__)
+
 
 '''
 best practices from http://www.netpreserve.org/sites/default/files/resources/WARC_Guidelines_v1.pdf
@@ -168,7 +173,7 @@ class CCWARCWriter:
             try:
                 payload += host + '.\t' + str(r.ttl) + '\tIN\t' + kind + '\t' + r.host + '\r\n'
             except Exception as e:
-                print('problem decoding response', r, e)  # XXX make this a LOGGER
+                LOGGER.info('problem converting dns reply for warcing', r, e)
                 pass
         payload = payload.encode('utf-8')
 
@@ -176,6 +181,8 @@ class CCWARCWriter:
                                                 warc_content_type='text/dns', length=len(payload))
 
         self.writer.write_record(record)
+        LOGGER.debug('wrote warc dns response record'+p(self.prefix), 'for host', host)
+        stats.stats_sum('warc dns'+p(self.prefix), 1)
 
     def write_request_response_pair(self, url, req_headers, resp_headers, payload, digest=None):
         if self.writer is None:
@@ -200,6 +207,8 @@ class CCWARCWriter:
 
         self.writer.write_request_response_pair(request, response)
         self.maybe_close()
+        LOGGER.debug('wrote warc request-response pair'+p(self.prefix), 'for url', url)
+        stats.stats_sum('warc r/r'+p(self.prefix), 1)
 
 
 def headers_to_str_headers(headers):
@@ -222,3 +231,10 @@ def headers_to_str_headers(headers):
             v = v.decode('iso-8859-1')
         ret.append((k, v))
     return ret
+
+
+def p(prefix):
+    if prefix:
+        return ' (prefix '+prefix+')'
+    else:
+        return ''
