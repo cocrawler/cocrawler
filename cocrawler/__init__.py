@@ -300,6 +300,7 @@ class Crawler:
                     prefix = 'redirect'
                 stats.stats_sum(prefix+' '+kind, 1)
 
+            # XXX need to handle 'samesurt' case
             if kind is None:
                 pass
             elif kind == 'same':
