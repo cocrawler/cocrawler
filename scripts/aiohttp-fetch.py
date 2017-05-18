@@ -27,11 +27,13 @@ async def main(urls):
                 print('')
                 continue
 
-            if hasattr(session, 'last_req'):
+            if hasattr(response, 'request'):  # my aiohttp extension
                 print('final request headers:')
-                for k, v in session.last_req.headers.items():
+                for k, v in response.request.headers.items():
                     print(k+':', v)
                 print('')
+            else:
+                print('greg\'s hack to aiohttp not present, request headers not available')
 
             for h in response.history:
                 print(h)
@@ -42,7 +44,8 @@ async def main(urls):
             print('')
 
             try:
-                print(await response.text(errors='ignore'))
+                #print(await response.text(errors='ignore'))
+                pass
             except Exception as e:
                 print_exc()
 
