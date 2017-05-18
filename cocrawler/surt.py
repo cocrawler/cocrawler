@@ -19,9 +19,10 @@ TODO: extend to cover user, pass, port;
       deal with encodings like latin-1, which the canonicalizer should leave as-is
 '''
 
-import logging
 import urllib
+import re
 import unicodedata
+import logging
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,11 +59,17 @@ def parse_netloc(netloc):
     return user, password, hostname, port
 
 
-def hostname_to_canon(hostname):
+def discard_www_from_hostname(hostname):
+    pass
+
+
+def hostname_to_punycanon(hostname):
     '''
     Hostnames are complicated. They may be ascii, latin-1, or utf8. The
     incoming hostname might still have % escapes.
     '''
+
+    hostname = hostname.rstrip('.')
 
     try:
         unquoted = urllib.parse.unquote(hostname, encoding='utf-8', errors='strict')
@@ -94,6 +101,21 @@ def hostname_to_canon(hostname):
     return puny.decode('ascii')
 
 
+def reverse_hostname_parts(hostname):
+    hostname = hostname.rstrip('.')
+
+    # if the hostname is an [ipv6] or ipv4, do not reverse it.
+    if hostname.startswith('[') and hostname.endswith(']'):  # ipv6 SHOULD have []
+        return [hostname]
+    if re.match(r'[1-9][0-9]{0,1}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', hostname):
+        return [hostname]
+
+    parts = hostname.split('.')
+    parts.reverse()
+
+    return [p for p in parts]
+
+
 standard_ports = {'http': '80', 'https': '443'}
 
 
@@ -121,7 +143,10 @@ def surt(url, parts=None):
     (user, password, hostname, port) = parse_netloc(netloc)
     if standard_ports.get(scheme) == port:
         port = ''
-    hostname = hostname_to_canon(hostname)
+
+    hostname = discard_www_from_hostname(hostname)
+    hostname = hostname_to_punycanon(hostname)
+    hostname = reverse_hostname_parts(hostname)
 
     if path == '/':
         path = ''

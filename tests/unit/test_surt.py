@@ -30,30 +30,39 @@ def test_parse_netloc():
     assert surt.parse_netloc('u:p@[foo:foo]') == ('u', 'p', '[foo:foo]', '')
 
 
-def test_hostname_to_canon():
-    assert surt.hostname_to_canon('bücher.com') == 'xn--bcher-kva.com'
-    assert surt.hostname_to_canon('b\u00fccher.com') == 'xn--bcher-kva.com'  # same as ü
-    assert surt.hostname_to_canon('b%C3%BCcher.com') == 'xn--bcher-kva.com'  # unicode bytes
-    assert surt.hostname_to_canon('b%c3%bccher.com') == 'xn--bcher-kva.com'  # unicode bytes, lower-case %
-    assert surt.hostname_to_canon('b%FCcher.com') == 'xn--bcher-kva.com'  # iso-8859-1 byte (latin-1)
+def test_hostname_to_punycanon():
+    assert surt.hostname_to_punycanon('bücher.com') == 'xn--bcher-kva.com'
+    assert surt.hostname_to_punycanon('b\u00fccher.com') == 'xn--bcher-kva.com'  # same as ü
+    assert surt.hostname_to_punycanon('b%C3%BCcher.com') == 'xn--bcher-kva.com'  # unicode bytes
+    assert surt.hostname_to_punycanon('b%c3%bccher.com') == 'xn--bcher-kva.com'  # unicode bytes, lower-case %
+    assert surt.hostname_to_punycanon('b%FCcher.com') == 'xn--bcher-kva.com'  # iso-8859-1 byte (latin-1)
 
-    assert surt.hostname_to_canon('\u00C7.com') == 'xn--7ca.com'  # Ç.com
-    assert surt.hostname_to_canon('\u0043\u0327.com') == 'xn--7ca.com'  # Ç written as combining characters
+    assert surt.hostname_to_punycanon('\u00C7.com') == 'xn--7ca.com'  # Ç.com
+    assert surt.hostname_to_punycanon('\u0043\u0327.com') == 'xn--7ca.com'  # Ç written as combining characters
 
-    assert surt.hostname_to_canon('b%C3%CC%FCcher.com') == 'xn--bcher-9qa7d0g.com'  # mixture result in latin-1 mangle
+    assert surt.hostname_to_punycanon('b%C3%CC%FCcher.com') == 'xn--bcher-9qa7d0g.com'  # mixture result in latin-1 mangle
 
-    assert surt.hostname_to_canon('日本語.jp') == 'xn--wgv71a119e.jp'  # CJKV example
+    assert surt.hostname_to_punycanon('日本語.jp') == 'xn--wgv71a119e.jp'  # CJKV example
 
-    assert surt.hostname_to_canon('العربية.museum') == 'xn--mgbcd4a2b0d2b.museum'  # right-to-left
-    assert surt.hostname_to_canon('עברית.museum') == 'xn--5dbqzzl.museum'  # right-to-left
+    assert surt.hostname_to_punycanon('العربية.museum') == 'xn--mgbcd4a2b0d2b.museum'  # right-to-left
+    assert surt.hostname_to_punycanon('עברית.museum') == 'xn--5dbqzzl.museum'  # right-to-left
 
 
 @pytest.mark.xfail(reason='turkish lower-case FAIL')
-def test_hostname_to_canon_turkish_tricky():
-    if surt.hostname_to_canon('TÜRKIYE.com') == surt.hostname_to_canon('türkiye.com'):
+def test_hostname_to_punycanon_turkish_tricky():
+    if surt.hostname_to_punycanon('TÜRKIYE.com') == surt.hostname_to_punycanon('türkiye.com'):
         pytest.xfail('TÜRKIYE.com should NOT equal türkiye.com, ...')
-    if surt.hostname_to_canon('TÜRKIYE.com') != surt.hostname_to_canon('türkıye.com'):
+    if surt.hostname_to_punycanon('TÜRKIYE.com') != surt.hostname_to_punycanon('türkıye.com'):
         pytest.xfail('TÜRKIYE.com SHOULD equal türkıye.com, ...')
+
+
+def test_reverse_hostname_parts():
+    assert surt.reverse_hostname_parts('example.com') == ['com', 'example']
+    assert surt.reverse_hostname_parts('example.com.') == ['com', 'example']
+    assert surt.reverse_hostname_parts('foo.example.com') == ['com', 'example', 'foo']
+    assert surt.reverse_hostname_parts('com') == ['com']
+    assert surt.reverse_hostname_parts('[ipv6]') == ['[ipv6]']
+    assert surt.reverse_hostname_parts('1.2.3.4') == ['1.2.3.4']
 
 
 def test_surt():
