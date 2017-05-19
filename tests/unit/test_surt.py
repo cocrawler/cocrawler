@@ -55,6 +55,7 @@ def test_hostname_to_punycanon():
     assert surt.hostname_to_punycanon('b%C3%CC%FCcher.com') == 'xn--bcher-9qa7d0g.com'  # mixture result in latin-1 mangle
 
     assert surt.hostname_to_punycanon('日本語.jp') == 'xn--wgv71a119e.jp'  # CJKV example
+    assert surt.hostname_to_punycanon('www.日本語.jp') == 'www.xn--wgv71a119e.jp'
 
     assert surt.hostname_to_punycanon('العربية.museum') == 'xn--mgbcd4a2b0d2b.museum'  # right-to-left
     assert surt.hostname_to_punycanon('עברית.museum') == 'xn--5dbqzzl.museum'  # right-to-left
