@@ -62,6 +62,8 @@ def test_hostname_to_punycanon():
 
 @pytest.mark.xfail(reason='turkish lower-case FAIL')
 def test_hostname_to_punycanon_turkish_tricky():
+    # That's not a normal 'I', it's an upper-case I without a dot. For some Unicode reason
+    # it's something that you can't just lowercase. Python does not make it easy to dtrt here.
     assert surt.hostname_to_punycanon('TÜRKIYE.com') != surt.hostname_to_punycanon('türkiye.com')
     assert surt.hostname_to_punycanon('TÜRKIYE.com') == surt.hostname_to_punycanon('türkıye.com')
 
