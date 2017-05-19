@@ -64,6 +64,7 @@ def test_hostname_to_punycanon():
 def test_hostname_to_punycanon_turkish_tricky():
     # That's not a normal 'I', it's an upper-case I without a dot. For some Unicode reason
     # it's something that you can't just lowercase. Python does not make it easy to dtrt here.
+    # https://www.w3.org/International/wiki/Case_folding#Turkish_i.2FI_etc.
     assert surt.hostname_to_punycanon('TÜRKIYE.com') != surt.hostname_to_punycanon('türkiye.com')
     assert surt.hostname_to_punycanon('TÜRKIYE.com') == surt.hostname_to_punycanon('türkıye.com')
 
@@ -78,7 +79,6 @@ def test_reverse_hostname_parts():
 
 
 def test_surt():
-    return
     assert surt.surt(None) == '-'
     assert surt.surt('') == '-'
     assert surt.surt("filedesc:foo.arc.gz") == 'filedesc:foo.arc.gz'
@@ -87,6 +87,7 @@ def test_surt():
     assert surt.surt("warcinfo:foo.warc.gz") == 'warcinfo:foo.warc.gz'
     assert surt.surt("dns:alexa.com") == 'dns:alexa.com'
     assert surt.surt("dns:archive.org") == 'dns:archive.org'
+    return
 
     assert surt.surt("http://www.archive.org/") == 'org,archive)/'
     assert surt.surt("http://archive.org/") == 'org,archive)/'
