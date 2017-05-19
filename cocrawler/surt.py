@@ -112,12 +112,17 @@ def hostname_to_punycanon(hostname):
         try:
             puny = unquoted.encode('idna', errors='strict')
         except UnicodeError:
-            LOGGER.error('failed trying to puny-code hostname {}'.format(unquoted))
+            LOGGER.error('failed trying to punycode hostname {}'.format(unquoted))
             # return immediately because we can't punycode
             return unquoted
 
-    # puny is now bytes, but they're ascii bytes.
-    return puny.decode('ascii')
+    try:
+        ret = puny.decode('ascii')
+    except UnicodeDecodeError:
+        LOGGER.error('punycod of hostname={} is somehow invalid: {!r}'.format(hostname, puny))
+        return hostname
+
+    return ret
 
 
 def reverse_hostname_parts(hostname):
