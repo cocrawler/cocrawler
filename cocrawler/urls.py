@@ -65,6 +65,7 @@ def special_seed_handling(url):
             url = 'http://' + url
     return url
 
+
 valid_hex = set('%02x' % i for i in range(256))
 valid_hex.update(set('%02X' % i for i in range(256)))
 
@@ -85,11 +86,11 @@ def safe_url_canonicalization(url):
 
     (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
     scheme = scheme.lower()
-    netloc = netloc.lower()
+    netloc = netloc.lower()  # XXX this is wrong because it changes the username/password
     if path == '':
         path = '/'
 
-    # TODO: punycode hostnames (codec='punycode')
+    # XXX TODO use surt hostname canonicalization
 
     if scheme == 'http' and netloc[-3:] == ':80':
         netloc = netloc[:-3]
