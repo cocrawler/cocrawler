@@ -60,11 +60,13 @@ def test_hostname_to_punycanon():
     assert surt.hostname_to_punycanon('עברית.museum') == 'xn--5dbqzzl.museum'  # right-to-left
 
 
-@pytest.mark.xfail(reason='turkish lower-case FAIL')
+@pytest.mark.xfail(reason='turkish lower-case FAIL', strict=True)
 def test_hostname_to_punycanon_turkish_tricky():
-    # That's not a normal 'I', it's an upper-case I without a dot. For some Unicode reason
-    # it's something that you can't just lowercase. Python does not make it easy to dtrt here.
+    # This one is impossible because you have to know that this is Turkish before you can do
+    # the Turkish-specific down case of dotless I (a normal I) to dotless i.
     # https://www.w3.org/International/wiki/Case_folding#Turkish_i.2FI_etc.
+    assert surt.hostname_to_punycanon('TÜRKİYE.com') == surt.hostname_to_punycanon('türkiye.com')
+    assert surt.hostname_to_punycanon('TÜRKİYE.com') != surt.hostname_to_punycanon('türkıye.com')
     assert surt.hostname_to_punycanon('TÜRKIYE.com') != surt.hostname_to_punycanon('türkiye.com')
     assert surt.hostname_to_punycanon('TÜRKIYE.com') == surt.hostname_to_punycanon('türkıye.com')
 
@@ -79,6 +81,8 @@ def test_reverse_hostname_parts():
 
 
 def test_surt():
+    # tests drawn from github.com/internetarchive/surt (accessed may 18, 2017)
+
     assert surt.surt(None) == '-'
     assert surt.surt('') == '-'
     assert surt.surt("filedesc:foo.arc.gz") == 'filedesc:foo.arc.gz'
@@ -87,7 +91,6 @@ def test_surt():
     assert surt.surt("warcinfo:foo.warc.gz") == 'warcinfo:foo.warc.gz'
     assert surt.surt("dns:alexa.com") == 'dns:alexa.com'
     assert surt.surt("dns:archive.org") == 'dns:archive.org'
-    return
 
     assert surt.surt("http://www.archive.org/") == 'org,archive)/'
     assert surt.surt("http://archive.org/") == 'org,archive)/'
@@ -97,15 +100,26 @@ def test_surt():
     assert surt.surt("http://archive.org/goo/?a=2&b&a=1") == 'org,archive)/goo?a=1&a=2&b'
 
     # trailing comma mode
-    assert surt.surt("http://archive.org/goo/?a=2&b&a=1", trailing_comma=True) == 'org,archive,)/goo?a=1&a=2&b'
-    assert surt.surt("dns:archive.org", trailing_comma=True) == 'dns:archive.org'
-    assert surt.surt("warcinfo:foo.warc.gz", trailing_comma=True) == 'warcinfo:foo.warc.gz'
-
+    #assert surt.surt("http://archive.org/goo/?a=2&b&a=1", trailing_comma=True) == 'org,archive,)/goo?a=1&a=2&b'
+    #assert surt.surt("dns:archive.org", trailing_comma=True) == 'dns:archive.org'
+    #assert surt.surt("warcinfo:foo.warc.gz", trailing_comma=True) == 'warcinfo:foo.warc.gz'
     # PHP session id:
-    assert surt.surt("http://archive.org/index.php?PHPSESSID=0123456789abcdefghijklemopqrstuv&action=profile;u=4221") == 'org,archive)/index.php?action=profile;u=4221'
-
+    #assert surt.surt("http://archive.org/index.php?PHPSESSID=0123456789abcdefghijklemopqrstuv&action=profile;u=4221") == 'org,archive)/index.php?action=profile;u=4221'
     # WHOIS url:
-    assert surt.surt("whois://whois.isoc.org.il/shaveh.co.il") == 'il,org,isoc,whois)/shaveh.co.il'
+    #assert surt.surt("whois://whois.isoc.org.il/shaveh.co.il") == 'il,org,isoc,whois)/shaveh.co.il'
 
     # Yahoo web bug. See https://github.com/internetarchive/surt/issues/1
-    assert surt.surt('http://visit.webhosting.yahoo.com/visit.gif?&r=http%3A//web.archive.org/web/20090517140029/http%3A//anthonystewarthead.electric-chi.com/&b=Netscape%205.0%20%28Windows%3B%20en-US%29&s=1366x768&o=Win32&c=24&j=true&v=1.2') == 'com,yahoo,webhosting,visit)/visit.gif?&b=netscape%205.0%20(windows;%20en-us)&c=24&j=true&o=win32&r=http://web.archive.org/web/20090517140029/http://anthonystewarthead.electric-chi.com/&s=1366x768&v=1.2'
+    assert surt.surt("http://example.com/city-of-M%C3%BCnchen.html") == 'com,example)/city-of-m%c3%bcnchen.html'
+
+    # with my preferred downcasing strategy - eh screw it
+    #assert surt.surt('http://visit.webhosting.yahoo.com/visit.gif?&r=http%3A//web.archive.org/web/20090517140029/http%3A//anthonystewarthead.electric-chi.com/&b=Netscape%205.0%20%28Windows%3B%20en-US%29&s=1366x768&o=Win32&c=24&j=true&v=1.2') == 'com,yahoo,webhosting,visit)/visit.gif?&b=Netscape%205.0%20(Windows;%20en-US)&c=24&j=true&o=@in32&r=http://web.archive.org/web/20090517140029/http://anthonystewarthead.electric-chi.com/&s=1366x768&v=1.2'
+
+    # end of tests drawn from github.com/internetarchive/surt
+
+    # from Sebastian Nagel of Common Crawl, but with my preferred utf8 policy
+    #assert surt.surt("http://example.com/city-of-M%FCnchen.html") == 'com,example)/city-of-m%c3%bcnchen.html'
+
+    # and unique to CoCrawler (so far)
+    assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo'  # why isn't this test in the above list? yow
+    assert surt.surt("http://example.com/goo/;FOO=bar") == 'com,example)/goo;FOO=bar'
+    assert surt.surt("http://example.com/goo/;FOO=bar?a=1&A=1&a=2") == 'com,example)/goo;FOO=bar?A=1&a=1&a=2'

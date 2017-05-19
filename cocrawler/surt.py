@@ -136,9 +136,13 @@ def reverse_hostname_parts(hostname):
 
 
 standard_ports = {'http': '80', 'https': '443'}
+no_action_schemes = set(('filedesc', 'warcinfo', 'dns'))
 
 
 def surt(url, parts=None):
+    if url is None or url == '':
+        return '-'
+
     if parts is None:
         parts = urllib.parse.urlparse(url)
 
@@ -154,9 +158,20 @@ def surt(url, parts=None):
     # query is split on '&' and sorted
     # fragment is dropped
 
+    # things IA does that we don't:
+    # PHPSESSIONID etc in the path is an obsolete thing; google was already not crawling such
+    # urls correctly in 2007:
+    # https://yoast.com/dev-blog/phpsessid-url-redirect/
+    # and this from 2008:
+    # https://moz.com/ugc/removing-phpsessid-from-an-url
+    # ditto for these in the path: jsessionid=, aspsessionid=, sid=, dtstamp=, dt=, r=, CFID=, requestID=
+    # (everyone started putting these in cookies long, long ago)
+
     (scheme, netloc, path, params, query, fragment) = parts
 
     scheme = scheme.lower()
+    if scheme in no_action_schemes:
+        return url
 
     # urlparse lacks a parser to split 'user:password@host.name:port'
     (user, password, hostname, port) = parse_netloc(netloc)
@@ -165,16 +180,29 @@ def surt(url, parts=None):
 
     hostname = discard_www_from_hostname(hostname)
     hostname = hostname_to_punycanon(hostname)
-    hostname = reverse_hostname_parts(hostname)
+    hostname_parts = reverse_hostname_parts(hostname)
 
-    if path == '/':
-        path = ''
+    if path == '' or path == '/':
+        path = '/'
+    else:
+        path = path.rstrip('/')
     path = path.lower()
 
-    params = params.lower()
+    # params is not processed, keeps its case
 
-    # XXX query
+    if query is not '':
+        query_parts = sorted(query.split('&'))
+    else:
+        query_parts = ()
 
-    fragment = ''
+    fragment = ''  # we don't use this anyway
 
-    return urllib.parse.urlunparse((scheme, netloc, path, params, query, fragment))
+    ret = ','.join(hostname_parts) + ')' + path
+
+    if len(params) > 0:
+        ret += ';' + params
+
+    if len(query_parts) > 0:
+        ret += '?' + '&'.join(query_parts)
+
+    return ret
