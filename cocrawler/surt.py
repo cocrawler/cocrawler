@@ -24,6 +24,8 @@ import re
 import unicodedata
 import logging
 
+import tldextract
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -60,7 +62,24 @@ def parse_netloc(netloc):
 
 
 def discard_www_from_hostname(hostname):
-    pass
+    '''
+    Useful for treating www.example.com the same as example.com
+
+    ibm.com and hp.com are famous for using www3.ibm.com etc as equivalents to ibm.com,
+    it was the lazy way to load-balance when the web was new. Now there are a bazillion links
+    to these hosts out there in the wild, so we also remove www<small integer>.foo.com
+
+    Traditionally, this transformation has been blindly applied and thus breaks hosts like www1.com.
+    We use the public suffix list to avoid doing that.
+    '''
+
+    if not hostname.lower().startswith('www'):
+        return hostname
+
+    if tldextract.extract(hostname).registered_domain == hostname:
+        return hostname
+
+    return re.sub(r'^www\d{0,2}\.', '', hostname, count=1, flags=re.I)
 
 
 def hostname_to_punycanon(hostname):

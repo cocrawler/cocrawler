@@ -30,6 +30,17 @@ def test_parse_netloc():
     assert surt.parse_netloc('u:p@[foo:foo]') == ('u', 'p', '[foo:foo]', '')
 
 
+def test_discard_www_from_hostname():
+    assert surt.discard_www_from_hostname('example.com') == 'example.com'
+    assert surt.discard_www_from_hostname('ww.example.com') == 'ww.example.com'
+    assert surt.discard_www_from_hostname('www99.example.com') == 'example.com'
+    assert surt.discard_www_from_hostname('WWW99.example.com') == 'example.com'
+    assert surt.discard_www_from_hostname('www99.www1.example.com') == 'www1.example.com'
+    assert surt.discard_www_from_hostname('www1.com') == 'www1.com'
+    assert surt.discard_www_from_hostname('www1www.example.com') == 'www1www.example.com'
+    assert surt.discard_www_from_hostname('www999.com') == 'www999.com'
+    assert surt.discard_www_from_hostname('www999.example.com') == 'www999.example.com'
+
 def test_hostname_to_punycanon():
     assert surt.hostname_to_punycanon('bücher.com') == 'xn--bcher-kva.com'
     assert surt.hostname_to_punycanon('b\u00fccher.com') == 'xn--bcher-kva.com'  # same as ü
@@ -58,7 +69,7 @@ def test_hostname_to_punycanon_turkish_tricky():
 
 def test_reverse_hostname_parts():
     assert surt.reverse_hostname_parts('example.com') == ['com', 'example']
-    assert surt.reverse_hostname_parts('example.com.') == ['com', 'example']
+    assert surt.reverse_hostname_parts('example.com') == ['com', 'example']
     assert surt.reverse_hostname_parts('foo.example.com') == ['com', 'example', 'foo']
     assert surt.reverse_hostname_parts('com') == ['com']
     assert surt.reverse_hostname_parts('[ipv6]') == ['[ipv6]']
