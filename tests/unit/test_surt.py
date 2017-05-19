@@ -41,6 +41,7 @@ def test_discard_www_from_hostname():
     assert surt.discard_www_from_hostname('www999.com') == 'www999.com'
     assert surt.discard_www_from_hostname('www999.example.com') == 'www999.example.com'
 
+
 def test_hostname_to_punycanon():
     assert surt.hostname_to_punycanon('bücher.com') == 'xn--bcher-kva.com'
     assert surt.hostname_to_punycanon('b\u00fccher.com') == 'xn--bcher-kva.com'  # same as ü
@@ -61,10 +62,8 @@ def test_hostname_to_punycanon():
 
 @pytest.mark.xfail(reason='turkish lower-case FAIL')
 def test_hostname_to_punycanon_turkish_tricky():
-    if surt.hostname_to_punycanon('TÜRKIYE.com') == surt.hostname_to_punycanon('türkiye.com'):
-        pytest.xfail('TÜRKIYE.com should NOT equal türkiye.com, ...')
-    if surt.hostname_to_punycanon('TÜRKIYE.com') != surt.hostname_to_punycanon('türkıye.com'):
-        pytest.xfail('TÜRKIYE.com SHOULD equal türkıye.com, ...')
+    assert surt.hostname_to_punycanon('TÜRKIYE.com') != surt.hostname_to_punycanon('türkiye.com')
+    assert surt.hostname_to_punycanon('TÜRKIYE.com') == surt.hostname_to_punycanon('türkıye.com')
 
 
 def test_reverse_hostname_parts():
