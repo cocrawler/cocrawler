@@ -34,7 +34,11 @@ def test_clean_webpage_links():
     assert urls.clean_webpage_links('///foo ') == '/foo'
     assert urls.clean_webpage_links('////foo ') == '/foo'
 
-    # XXX tests for embedded spaces etc.
+    assert urls.clean_webpage_links('"') == ''
+    assert urls.clean_webpage_links('http://foo.com">') == 'http://foo.com'
+    assert urls.clean_webpage_links('x'*100 + ' ' + 'x') == 'x' * 100  # only for long strings
+    assert urls.clean_webpage_links('') == ''
+    assert urls.clean_webpage_links('') == ''
 
 
 def test_special_seed_handling():

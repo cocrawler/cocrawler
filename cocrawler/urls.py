@@ -18,19 +18,33 @@ import logging
 
 import tldextract
 
+from . import surt
+
 LOGGER = logging.getLogger(__name__)
 
 
 def clean_webpage_links(link):
     '''
-    Webpage links have lots of random crap in them that we'd like to
-    clean up before calling urljoin() on them.
+    Webpage links have lots of random crap in them, which browsers tolerate,
+    that we'd like to clean up before calling urljoin() on them.
 
+    Also, since cocrawler allows a variety of html parsers, it's likely that
+    we will get improperly-terminated urls that result in the parser returning
+    the rest of the webpage as an url, etc etc.
+
+    TODO: headless browser testing to find out what browsers actually tolerate.
+    e.g. embedded spaces in urls
+    '''
+
+    for sep in ('>', '"', "'"):  # these characters are illegal in urls
+        link, _, _ = link.partition(sep)
+    if len(link) > 100:
+        link, _, _ = link.partition(' ')
+
+    '''
     Some of these come from
     https://github.com/django/django/blob/master/django/utils/http.py#L287
     and https://bugs.chromium.org/p/chromium/issues/detail?id=476478
-
-    The following seem to be browser-universals?
     '''
 
     # remove leading and trailing white space, and unescaped control chars.
@@ -45,17 +59,15 @@ def clean_webpage_links(link):
         link = '/' + link.lstrip('/')
         # note that this doesn't touch /// links with schemes or hostnames
 
-    # TODO: do something here with mid-url unquoted control chars/spaces/utf-8? or do it elsewhere?
+    # TODO: do something here with path & query unquoted control chars/spaces/latin-1/utf-8? or do it elsewhere?
 
     return link
 
 
 def special_seed_handling(url):
     '''
-    We don't expect seed-lists to be very clean.
+    We don't expect seed-lists to be very clean: no scheme, etc.
     '''
-    url = clean_webpage_links(url)
-
     # use urlparse to accurately test if a scheme is present
     parts = urllib.parse.urlparse(url)
     if parts.scheme == '':
