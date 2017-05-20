@@ -23,7 +23,7 @@ from . import surt
 LOGGER = logging.getLogger(__name__)
 
 
-def clean_webpage_links(link):
+def clean_webpage_links(link, urljoin=None):
     '''
     Webpage links have lots of random crap in them, which browsers tolerate,
     that we'd like to clean up before calling urljoin() on them.
@@ -36,10 +36,16 @@ def clean_webpage_links(link):
     e.g. embedded spaces in urls
     '''
 
-    for sep in ('>', '"', "'"):  # these characters are illegal in urls
+    for sep in ('<', '>', '"', "'"):  # these characters are illegal in all parts of an url (XXX true?)
         link, _, _ = link.partition(sep)
-    if len(link) > 100:
+    if len(link) > 100:  # only if needed
         link, _, _ = link.partition(' ')
+        link, _, _ = link.partition('\r')
+        link, _, _ = link.partition('\n')
+    if len(link) > 500:  # well, crap
+        # TODO: collect these in a per-host logfile?
+        LOGGER.info('webpage urljoin=%s has an invalid-looking link %s', str(urljoin), link)
+        return ''  # will urljoin to the urljoin
 
     '''
     Some of these come from
@@ -197,6 +203,7 @@ def get_hostname(url, parts=None, remove_www=False):
             hostname = hostname[4:]
     return hostname
 
+
 # stolen from urllib/parse.py
 ParseResult = namedtuple('ParseResult', 'scheme netloc path params query fragment')
 
@@ -210,7 +217,7 @@ class URL(object):
     def __init__(self, url, urljoin=None, seed=False):
         if seed:
             url = special_seed_handling(url)
-        url = clean_webpage_links(url)
+        url = clean_webpage_links(url, urljoin=urljoin)
 
         if urljoin:
             if isinstance(urljoin, str):
@@ -263,6 +270,9 @@ class URL(object):
 
     @property
     def url(self):
+        return self._url
+
+    def __str__(self):
         return self._url
 
     @property

@@ -25,6 +25,7 @@ def test_urllib_parse():
     assert urllib.parse.urljoin('http://example.com', '?q=123') == 'http://example.com?q=123'
     assert urllib.parse.urljoin('http://example.com/', '?q=123') == 'http://example.com/?q=123'
 
+
 def test_clean_webpage_links():
     assert urls.clean_webpage_links(' foo ') == 'foo'
     assert urls.clean_webpage_links(' foo\t ') == 'foo'
@@ -37,8 +38,9 @@ def test_clean_webpage_links():
     assert urls.clean_webpage_links('"') == ''
     assert urls.clean_webpage_links('http://foo.com">') == 'http://foo.com'
     assert urls.clean_webpage_links('x'*100 + ' ' + 'x') == 'x' * 100  # only for long strings
-    assert urls.clean_webpage_links('') == ''
-    assert urls.clean_webpage_links('') == ''
+    assert urls.clean_webpage_links('x'*100 + '\r' + 'x') == 'x' * 100
+    assert urls.clean_webpage_links('x'*100 + '\n' + 'x') == 'x' * 100
+    assert urls.clean_webpage_links('x'*501) == ''  # throw-up-hands error case
 
 
 def test_special_seed_handling():
@@ -99,6 +101,7 @@ def test_special_redirect():
     url6 = URL('https://example.com/foo/')
     assert urls.special_redirect(url5, url6) == 'addslash'
     assert urls.special_redirect(url6, url5) == 'removeslash'
+
 
 def test_get_domain():
     assert urls.get_domain('http://www.bbc.co.uk') == 'bbc.co.uk'
