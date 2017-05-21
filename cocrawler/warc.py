@@ -181,7 +181,7 @@ class CCWARCWriter:
                                                 warc_content_type='text/dns', length=len(payload))
 
         self.writer.write_record(record)
-        LOGGER.debug('wrote warc dns response record'+p(self.prefix), 'for host', host)
+        LOGGER.debug('wrote warc dns response record%s for host %s', p(self.prefix), host)
         stats.stats_sum('warc dns'+p(self.prefix), 1)
 
     def write_request_response_pair(self, url, req_headers, resp_headers, payload, digest=None):
@@ -207,7 +207,7 @@ class CCWARCWriter:
 
         self.writer.write_request_response_pair(request, response)
         self.maybe_close()
-        LOGGER.debug('wrote warc request-response pair'+p(self.prefix), 'for url', url)
+        LOGGER.debug('wrote warc request-response pair%s for url %s', p(self.prefix), url)
         stats.stats_sum('warc r/r'+p(self.prefix), 1)
 
 
