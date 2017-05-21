@@ -57,6 +57,12 @@ def test_discard_www_from_hostname():
     assert surt.discard_www_from_hostname('www999.example.com') == 'www999.example.com'
 
 
+def test_netloc_to_punycanon():
+    assert surt.netloc_to_punycanon('http', 'Example.Com') == 'example.com'
+    assert surt.netloc_to_punycanon('http', 'u:p@bücher.com:80') == 'u:p@xn--bcher-kva.com'
+    assert surt.netloc_to_punycanon('http', 'u:p@bücher.com:8080') == 'u:p@xn--bcher-kva.com:8080'
+
+
 def test_hostname_to_punycanon():
     assert surt.hostname_to_punycanon('bücher.com') == 'xn--bcher-kva.com'
     assert surt.hostname_to_punycanon('b\u00fccher.com') == 'xn--bcher-kva.com'  # same as ü
@@ -136,6 +142,7 @@ def test_surt():
     #assert surt.surt("http://example.com/city-of-M%FCnchen.html") == 'com,example)/city-of-m%c3%bcnchen.html'
 
     # and unique to CoCrawler (so far)
-    assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo'  # why isn't this test in the above list? yow
+    assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo'
+    assert surt.surt("http://bücher.Com/Goo/") == 'com,xn--bcher-kva)/goo'
     assert surt.surt("http://example.com/goo/;FOO=bar") == 'com,example)/goo;FOO=bar'
     assert surt.surt("http://example.com/goo/;FOO=bar?a=1&A=1&a=2") == 'com,example)/goo;FOO=bar?A=1&a=1&a=2'

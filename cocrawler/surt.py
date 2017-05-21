@@ -85,6 +85,9 @@ def discard_www_from_hostname(hostname):
 
     Traditionally, this transformation has been blindly applied and thus breaks hosts like www1.com.
     We use the public suffix list to avoid doing that.
+
+    TODO: survey the internets and see how many domains really need www\d+
+    hp splitting into hp/hpe has probably made most of the hp.com links moot anyway.
     '''
 
     if not hostname.lower().startswith('www'):
@@ -201,10 +204,10 @@ def surt(url, parts=None):
     if scheme in no_action_schemes:
         return url
 
-    # urlparse lacks a parser to split 'user:password@host.name:port'
+    netloc = netloc_to_punycanon(scheme, netloc)
     (user, password, hostname, port) = parse_netloc(netloc)
-    if standard_ports.get(scheme) == port:
-        port = ''
+    # TODO: user, password, port in the surt
+    # http://builds.archive.org/javadoc/heritrix-3.1.1/org/archive/util/SURT.html
 
     hostname = discard_www_from_hostname(hostname)
     hostname = hostname_to_punycanon(hostname)

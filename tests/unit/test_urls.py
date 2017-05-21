@@ -52,7 +52,7 @@ def test_special_seed_handling():
 
 def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?') == ('http://example.com/', '')
-    assert urls.safe_url_canonicalization('http://example.com?') == ('http://example.com/', '')
+    assert urls.safe_url_canonicalization('http://Example.Com?') == ('http://example.com/', '')
     assert urls.safe_url_canonicalization('http://example.com/?foo=bar') == \
         ('http://example.com/?foo=bar', '')
     assert urls.safe_url_canonicalization('http://example.com?foo=bar') == \
@@ -69,6 +69,7 @@ def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == \
         ('http://example.com/?foo=bar', '#frag')
     assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
+    assert urls.safe_url_canonicalization('http://bücher.com/?') == ('http://xn--bcher-kva.com/', '')
 
 
 def test_special_redirect():
@@ -146,7 +147,7 @@ def test_URL():
     assert url.registered_domain == 'example.com'
     assert url.original_frag is None
     url = URL('http://www.example.com/#foo#foo')
-    assert url.original_frag == 'foo#foo'
+    assert url.original_frag == '#foo#foo'
     url = URL('http://www.example.com/#')
     assert url.original_frag is None
 

@@ -92,6 +92,8 @@ def safe_url_canonicalization(url):
     '''
     Do everything to the url which shouldn't possibly hurt its semantics
     Good discussion: https://en.wikipedia.org/wiki/URL_normalization
+
+    TODO: '.' and '..' in path
     '''
 
     # capitalize quoted characters (XXX or should these be lowercased?)
@@ -102,16 +104,15 @@ def safe_url_canonicalization(url):
             p = p[:2].upper() + p[2:]
         url += '%' + p
 
-    (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
+    try:
+        (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
+    except ValueError:
+        LOGGER.info('invalid url %s', url)
+        raise
+
     scheme = scheme.lower()
 
-    netloc = netloc.lower()  # XXX this is wrong because it changes the username/password
-    # XXX TODO use surt.hostname_to_punycanon()
-
-    if scheme == 'http' and netloc[-3:] == ':80':
-        netloc = netloc[:-3]
-    if scheme == 'https' and netloc[-4:] == ':443':
-        netloc = netloc[:-4]
+    netloc = surt.netloc_to_punycanon(scheme, netloc)
 
     if path == '':
         path = '/'
@@ -231,13 +232,10 @@ class URL(object):
             else:
                 url = urllib.parse.urljoin(urljoin.url, url)  # expensive
 
-        # XXX incorporate safe_url_canonicalization() with the below frag and / handling
+        # TODO safe_url_canon has the parsed url, have it pass back the parts
+        url, frag = safe_url_canonicalization(url)
 
-        if '#' in url:
-            # we have a frag. split on the leftmost #
-            url, frag = url.split('#', 1)
-            if frag == '':
-                frag = None
+        if len(frag) > 0:
             self._original_frag = frag
         else:
             self._original_frag = None
@@ -249,24 +247,20 @@ class URL(object):
             # TODO: my code assumes URL() returns something valid, so...
             raise
 
-        if self._urlparse.path == '':
-            # we want this to be '/' ... pretty much a design error in urllib, but I digress.
-            urlp = list(self._urlparse)
-            urlp[2] = '/'
-            self._urlparse = ParseResult(*urlp)
+        (scheme, netloc, path, parms, query, _) = self._urlparse
 
-        # url is currently decoded, and may or may not have parts of the hostname in punycode
-        # XXX make sure it's valid encoding, canonicalize hostname to punycode ('xn--...') hint: (codec='punycode')
+        if path == '':
+            path = '/'
 
+        # TODO: there's a fair bit of duplicate computing in here
+        netloc = surt.netloc_to_punycanon(scheme, netloc)
+        self._netloc = netloc
+        self._hostname = surt.hostname_to_punycanon(netloc)
+        self._hostname_without_www = surt.discard_www_from_hostname(self._hostname)
+        self._surt = surt.surt(url)
+
+        self._urlparse = ParseResult(scheme, netloc, path, parms, query, '')
         self._url = urllib.parse.urlunparse(self._urlparse)  # final canonicalization
-
-        self._netloc = self.urlparse.netloc
-        self._hostname = get_hostname(None, parts=self._urlparse)
-
-        # XXX todo use registered_domain to avoid harming domains like www.com
-        self._hostname_without_www = get_hostname(None, parts=self._urlparse, remove_www=True)
-
-        # tldextract basically has its own urlparse built-in :-/
         self._registered_domain = tldextract.extract(self._url).registered_domain
 
     @property
@@ -291,6 +285,10 @@ class URL(object):
     @property
     def hostname_without_www(self):
         return self._hostname_without_www
+
+    @property
+    def surt(self):
+        return self._surt
 
     @property
     def registered_domain(self):
