@@ -18,6 +18,7 @@ import time
 import traceback
 from collections import namedtuple
 import ssl
+import urllib
 
 import asyncio
 import logging
@@ -45,7 +46,9 @@ def apply_url_policies(url, ua, config):
     test_host = config['Testing'].get('TestHostmapAll')
     if test_host:
         headers['Host'] = url.urlparse.netloc
-        mock_url = url.urlparse._replace(netloc=test_host).geturl()
+        (scheme, netloc, path, params, query, fragment) = url.urlparse
+        netloc = test_host
+        mock_url = urllib.parse.urlunparse((scheme, netloc, path, params, query, fragment))
         mock_robots = url.urlparse.scheme + '://' + test_host + '/robots.txt'
 
     # XXX set header Upgrade-Insecure-Requests: 1 ??
