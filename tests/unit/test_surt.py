@@ -3,31 +3,46 @@ import pytest
 import cocrawler.surt as surt
 
 
+def netloc1(netloc, parse):
+    test_parse = surt.parse_netloc(netloc)
+    assert test_parse == parse
+
+
+def netloc2(netloc, parse):
+    '''
+    Bi-directional test
+    '''
+    test_parse = surt.parse_netloc(netloc)
+    assert test_parse == parse
+    test_unparse = surt.unparse_netloc(*test_parse)
+    assert test_unparse == netloc
+
+
 def test_parse_netloc():
-    assert surt.parse_netloc('') == ('', '', '', '')
-    assert surt.parse_netloc('cocrawl.com') == ('', '', 'cocrawl.com', '')
-    assert surt.parse_netloc('cocrawl.com:443') == ('', '', 'cocrawl.com', '443')
-    assert surt.parse_netloc('cocrawl.com:') == ('', '', 'cocrawl.com', '')
-    assert surt.parse_netloc('@cocrawl.com') == ('', '', 'cocrawl.com', '')
-    assert surt.parse_netloc(':@cocrawl.com:') == ('', '', 'cocrawl.com', '')
-    assert surt.parse_netloc('foo@cocrawl.com') == ('foo', '', 'cocrawl.com', '')
-    assert surt.parse_netloc('foo:@cocrawl.com') == ('foo', '', 'cocrawl.com', '')
-    assert surt.parse_netloc(':bar@cocrawl.com') == ('', 'bar', 'cocrawl.com', '')
-    assert surt.parse_netloc('foo:bar@cocrawl.com') == ('foo', 'bar', 'cocrawl.com', '')
-    assert surt.parse_netloc('foo:bar@cocrawl.com:8080') == ('foo', 'bar', 'cocrawl.com', '8080')
-    assert surt.parse_netloc('[foo:80') == ('', '', '[foo:80', '')  # intentional
-    assert surt.parse_netloc('[foo]') == ('', '', '[foo]', '')
-    assert surt.parse_netloc('[foo]:80') == ('', '', '[foo]', '80')
-    assert surt.parse_netloc('[foo:foo]:80') == ('', '', '[foo:foo]', '80')
-    assert surt.parse_netloc('@[foo:foo]:80') == ('', '', '[foo:foo]', '80')
-    assert surt.parse_netloc(':@[foo:foo]:80') == ('', '', '[foo:foo]', '80')
-    assert surt.parse_netloc('u:@[foo:foo]:80') == ('u', '', '[foo:foo]', '80')
-    assert surt.parse_netloc(':p@[foo:foo]:80') == ('', 'p', '[foo:foo]', '80')
-    assert surt.parse_netloc('u:p@[foo:foo]:80') == ('u', 'p', '[foo:foo]', '80')
-    assert surt.parse_netloc(':@[foo:foo]') == ('', '', '[foo:foo]', '')
-    assert surt.parse_netloc('u:@[foo:foo]') == ('u', '', '[foo:foo]', '')
-    assert surt.parse_netloc(':p@[foo:foo]') == ('', 'p', '[foo:foo]', '')
-    assert surt.parse_netloc('u:p@[foo:foo]') == ('u', 'p', '[foo:foo]', '')
+    netloc2('', ('', '', '', ''))
+    netloc2('cocrawl.com', ('', '', 'cocrawl.com', ''))
+    netloc2('cocrawl.com:443', ('', '', 'cocrawl.com', '443'))
+    netloc1('cocrawl.com:', ('', '', 'cocrawl.com', ''))
+    netloc1('@cocrawl.com', ('', '', 'cocrawl.com', ''))
+    netloc1(':@cocrawl.com:', ('', '', 'cocrawl.com', ''))
+    netloc1('foo@cocrawl.com', ('foo', '', 'cocrawl.com', ''))
+    netloc2('foo:@cocrawl.com', ('foo', '', 'cocrawl.com', ''))
+    netloc2(':bar@cocrawl.com', ('', 'bar', 'cocrawl.com', ''))
+    netloc2('foo:bar@cocrawl.com', ('foo', 'bar', 'cocrawl.com', ''))
+    netloc2('foo:bar@cocrawl.com:8080', ('foo', 'bar', 'cocrawl.com', '8080'))
+    netloc2('[foo:80', ('', '', '[foo:80', ''))  # intentional
+    netloc2('[foo]', ('', '', '[foo]', ''))
+    netloc2('[foo]:80', ('', '', '[foo]', '80'))
+    netloc2('[foo:foo]:80', ('', '', '[foo:foo]', '80'))
+    netloc1('@[foo:foo]:80', ('', '', '[foo:foo]', '80'))
+    netloc1(':@[foo:foo]:80', ('', '', '[foo:foo]', '80'))
+    netloc2('u:@[foo:foo]:80', ('u', '', '[foo:foo]', '80'))
+    netloc2(':p@[foo:foo]:80', ('', 'p', '[foo:foo]', '80'))
+    netloc2('u:p@[foo:foo]:80', ('u', 'p', '[foo:foo]', '80'))
+    netloc1(':@[foo:foo]', ('', '', '[foo:foo]', ''))
+    netloc2('u:@[foo:foo]', ('u', '', '[foo:foo]', ''))
+    netloc2(':p@[foo:foo]', ('', 'p', '[foo:foo]', ''))
+    netloc2('u:p@[foo:foo]', ('u', 'p', '[foo:foo]', ''))
 
 
 def test_discard_www_from_hostname():

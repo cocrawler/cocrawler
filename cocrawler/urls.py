@@ -104,16 +104,17 @@ def safe_url_canonicalization(url):
 
     (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
     scheme = scheme.lower()
-    netloc = netloc.lower()  # XXX this is wrong because it changes the username/password
-    if path == '':
-        path = '/'
 
-    # XXX TODO use surt hostname canonicalization
+    netloc = netloc.lower()  # XXX this is wrong because it changes the username/password
+    # XXX TODO use surt.hostname_to_punycanon()
 
     if scheme == 'http' and netloc[-3:] == ':80':
         netloc = netloc[:-3]
     if scheme == 'https' and netloc[-4:] == ':443':
         netloc = netloc[:-4]
+
+    if path == '':
+        path = '/'
 
     # TODO:
     #  decode unnecessary quoted bytes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E

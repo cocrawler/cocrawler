@@ -61,6 +61,20 @@ def parse_netloc(netloc):
     return user, password, hostname, port
 
 
+def unparse_netloc(user, password, hostname, port):
+    '''
+    We expect the arguments to be strings, empty if not present.
+    '''
+    netloc = ''
+    up = user + ':' + password + '@'
+    if len(up) > 2:
+        netloc = up
+    netloc += hostname
+    if len(port) > 0:
+        netloc += ':' + port
+    return netloc
+
+
 def discard_www_from_hostname(hostname):
     '''
     Useful for treating www.example.com the same as example.com
@@ -82,12 +96,22 @@ def discard_www_from_hostname(hostname):
     return re.sub(r'^www\d{0,2}\.', '', hostname, count=1, flags=re.I)
 
 
+standard_ports = {'http': '80', 'https': '443'}
+
+
+def netloc_to_punycanon(scheme, netloc):
+    (user, password, hostname, port) = parse_netloc(netloc)
+    if standard_ports.get(scheme) == port:
+        port = ''
+    hostname = hostname_to_punycanon(hostname)
+    return unparse_netloc(user, password, hostname, port)
+
+
 def hostname_to_punycanon(hostname):
     '''
     Hostnames are complicated. They may be ascii, latin-1, or utf8. The
     incoming hostname might still have % escapes.
     '''
-
     hostname = hostname.rstrip('.')
 
     try:
@@ -140,7 +164,6 @@ def reverse_hostname_parts(hostname):
     return [p for p in parts]
 
 
-standard_ports = {'http': '80', 'https': '443'}
 no_action_schemes = set(('filedesc', 'warcinfo', 'dns'))
 
 
@@ -164,13 +187,13 @@ def surt(url, parts=None):
     # fragment is dropped
 
     # things IA does that we don't:
-    # PHPSESSIONID etc in the path is an obsolete thing; google was already not crawling such
-    # urls correctly in 2007:
-    # https://yoast.com/dev-blog/phpsessid-url-redirect/
-    # and this from 2008:
-    # https://moz.com/ugc/removing-phpsessid-from-an-url
+    # PHPSESSIONID etc in the path;params is an obsolete thing; google was already not crawling such
+    #  urls correctly in 2007:
+    #  https://yoast.com/dev-blog/phpsessid-url-redirect/
+    #  and this from 2008:
+    #  https://moz.com/ugc/removing-phpsessid-from-an-url
     # ditto for these in the path: jsessionid=, aspsessionid=, sid=, dtstamp=, dt=, r=, CFID=, requestID=
-    # (everyone started putting these in cookies long, long ago)
+    # (everyone started putting these in query or cookies long, long ago)
 
     (scheme, netloc, path, params, query, fragment) = parts
 
