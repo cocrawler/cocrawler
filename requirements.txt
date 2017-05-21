@@ -4,12 +4,12 @@
 aiohttp==2.0.7
 aiodns==1.1.1
 pyyaml==3.12
-cchardet==2.0.1
+cchardet==2.1.0
 surt==0.3.0
 robotexclusionrulesparser==1.7.1
 cachetools==2.0.0
 filemagic==1.6
-tldextract==2.0.2
+tldextract==2.0.3
 sortedcontainers==1.5.7
 sortedcollections==0.5.3
 psutil==5.2.2
@@ -28,7 +28,7 @@ bottle==0.12.13
 gevent==1.2.1
 
 # used by Makefile
-coverage==4.4
+coverage==4.4.1
 pylint==1.7.1
 flake8==3.3.0
 pytest==3.0.7
