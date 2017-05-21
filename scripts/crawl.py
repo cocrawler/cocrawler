@@ -5,6 +5,7 @@ CoCrawler web crawler, main program
 '''
 import sys
 import resource
+import os
 
 import argparse
 import asyncio
@@ -40,13 +41,17 @@ def main():
     '''
 
     args = ARGS.parse_args()
+    try:
+        loglevel = int(os.getenv('COCRAWLER_LOGLEVEL'))
+    except (ValueError, TypeError):
+        loglevel = args.loglevel
 
     if args.printdefault:
         conf.print_default()
         sys.exit(1)
 
     levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
-    logging.basicConfig(level=levels[min(args.loglevel, len(levels)-1)])
+    logging.basicConfig(level=levels[min(loglevel, len(levels)-1)])
 
     config = conf.config(args.configfile, args.config, confighome=not args.no_confighome)
     limit_resources(config)
@@ -84,6 +89,7 @@ def main():
         loop.stop()
         loop.run_forever()
         loop.close()
+
 
 if __name__ == '__main__':
     main()
