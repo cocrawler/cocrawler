@@ -4,10 +4,16 @@
 
 language: python
 python:
-  - "3.5"
-  - "3.6"
-#  - "3.7-dev"  ### https://github.com/aio-libs/aiohttp/issues/1839, fixed but not in shipping version
-#  - "nightly"
+  - 3.5
+  - 3.6
+  - 3.7-dev  ### https://github.com/aio-libs/aiohttp/issues/1839, fixed but not in shipping version
+  - nightly
+
+matrix:
+  fast_finish: true
+  allow_failures:
+  - python 3.7-dev
+  - python nightly
 
 install: "pip install -r requirements.txt"
 
