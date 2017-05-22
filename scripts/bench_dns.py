@@ -55,13 +55,18 @@ def create_queue():
     head, tail = os.path.split(__file__)
     alexa = os.path.join(head, os.pardir, 'examples', 'top-1k.txt')
     alexa_count = 0
-    with open(alexa, 'r') as f:
-        for line in f:
-            queue.put_nowait(line.strip())
-            alexa_count += 1
-            if alexa_count > args.count:
-                break
 
+    try:
+        with open(alexa, 'r') as f:
+            for line in f:
+                queue.put_nowait(line.strip())
+                alexa_count += 1
+                if alexa_count > args.count:
+                    break
+    except FileNotFoundError:
+        # the alexa file wasn't available (it is not in the repo) so just do a few
+        for _ in range(args.count):
+            queue.put_nowait('www.google.com')
     return queue
 
 async def work():
