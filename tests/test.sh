@@ -77,6 +77,7 @@ echo
 echo aiohttp-fetch
 echo
 $COVERAGE ../scripts/aiohttp-fetch.py http://127.0.0.1:8080/hello > /dev/null
+$COVERAGE ../scripts/aiohttp-fetch.py http://this-dns-lookup-will-fail-and-raise.com:8080/hello > /dev/null
 
 echo
 echo tearing down mock webserver

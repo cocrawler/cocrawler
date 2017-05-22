@@ -8,6 +8,7 @@ Plugins:
 
 Multiprocess:
   ParseInBurnerSize: 1 # make sure the burner thread gets used
+  Affinity: yes
 
 Seeds:
   Hosts:
