@@ -11,10 +11,6 @@ test: pytest
 	(cd tests; PYTHONPATH=.. ./test.sh)
 	(cd tests/warc; PYTHONPATH=../.. ./test.sh)
 
-test_logging: pytest
-	(cd tests; PYTHONPATH=.. COCRAWLER_LOGLEVEL=3 ./test.sh)
-	(cd tests/warc; PYTHONPATH=../.. COCRAWLER_LOGLEVEL=3 ./test.sh)
-
 pylint:
 	PYTHONPATH=. pylint *.py
 

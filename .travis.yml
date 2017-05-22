@@ -14,11 +14,13 @@ matrix:
   allow_failures:
   - python: 3.7-dev
   - python: nightly
+  include:
+  - python: 3.5
+    env: COCRAWLER_LOGLEVEL=3
 
 install: "pip install -r requirements.txt"
 
 script:
   - make test_coverage
-  - make test_logging
 after_success:
   coveralls
