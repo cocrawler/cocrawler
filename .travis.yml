@@ -15,7 +15,7 @@ matrix:
   - python: 3.7-dev
   - python: nightly
   include:
-  - python: 3.5
+  - python: 3.5.0
     env: COCRAWLER_LOGLEVEL=3
 
 install: "pip install -r requirements.txt"
