@@ -108,3 +108,27 @@ async def query(host, qtype):
         return await res.query(host, qtype)
     except aiodns.error.DNSError:
         pass
+
+
+def ip_to_geoip(ip):
+    # given an ip, compute the geoip, ASN, ISP, and proxy (like Tor)
+    # also do Google cse, Amazon AWS
+    # real google ips are available from SPF, gce isn't in that list
+    # amazon ec2 occasionally publishes a webpage with addrs, corporate not in that list
+    # can I classify CloudFlare by ASN?
+    # current MaxMind has an "anonymous ip" db: vpn, hosting provider, public proxy, tor exit node
+
+    # MaxMind database pricing: Country $24/mo, City $100/mo, isp+asn $24/mo
+    #   anonymous $call, looks like it's mostly useful for client IPs not webserver IPs
+    # Free data: GeoLite2 Country and City, ASN (less accurate geos)
+
+    # cleanup of country_name:
+    #  s/,( United)? Republic of$//
+    #  s/Russian Federation/Russia/
+    #  s/\bOf\b/of/
+    # city sometimes equals country_name, should drop city then
+    # strings sometimes have control characters in them
+    # strings sometimes have latin 1 in them, sometimes utf-8
+    # asn comes back as ASd+ \s+ isp
+
+    pass
