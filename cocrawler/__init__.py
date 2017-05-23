@@ -34,18 +34,13 @@ from . import burner
 from . import url_allowed
 from . import cookies
 from .warc import CCWARCWriter
+from . import redir
 
 LOGGER = logging.getLogger(__name__)
-
 __title__ = 'cocrawler'
 __author__ = 'Greg Lindahl and others'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2016-2017 Greg Lindahl and others'
-
-
-# aiohttp.ClientReponse lacks this method, so...
-def is_redirect(response):
-    return response.status in (300, 301, 302, 303, 307)
 
 
 class Crawler:
@@ -283,63 +278,8 @@ class Crawler:
 
         json_log['status'] = f.response.status
 
-        if is_redirect(f.response):
-            resp_headers = f.response.headers
-            location = resp_headers.get('location')
-            if location is None:
-                LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
-                # XXX this raise causes "ERROR:asyncio:Task exception was never retrieved"
-                raise ValueError(url.url + ' sent a redirect with no Location: header')
-            next_url = urls.URL(location, urljoin=url)
-
-            kind = urls.special_redirect(url, next_url)
-            if kind is not None:
-                if 'seed' in ridealong:
-                    prefix = 'redirect seed'
-                else:
-                    prefix = 'redirect'
-                stats.stats_sum(prefix+' '+kind, 1)
-
-            # XXX need to handle 'samesurt' case
-            if kind is None:
-                pass
-            elif kind == 'same':
-                LOGGER.info('attempted redirect to myself: %s to %s', url.url, next_url.url)
-                if 'Set-Cookie' not in resp_headers:
-                    LOGGER.info('redirect to myself had no cookies.')
-                    # XXX try swapping www/not-www? or use a non-crawler UA.
-                    # looks like some hosts have extra defenses on their redir servers!
-                else:
-                    # XXX we should use a cookie jar with this domain?
-                    pass
-                # fall through; will fail seen-url test in addurl
-            else:
-                #LOGGER.info('special redirect of type %s for url %s', kind, url.url)
-                # XXX push this info onto a last-k for the host
-                # to be used pre-fetch to mutate urls we think will redir
-                pass
-
-            priority += 1
-            json_log['redirect'] = next_url.url
-
-            kwargs = {}
-            if 'seed' in ridealong:
-                if 'seedredirs' in ridealong:
-                    ridealong['seedredirs'] += 1
-                else:
-                    ridealong['seedredirs'] = 1
-                if ridealong['seedredirs'] > self.config['Seeds'].get('SeedRedirsCount', 0):
-                    del ridealong['seed']
-                    del ridealong['seedredirs']
-                else:
-                    kwargs['seed'] = ridealong['seed']
-                    kwargs['seedredirs'] = ridealong['seedredirs']
-                    if self.config['Seeds'].get('SeedRedirsFree'):
-                        priority -= 1
-                    json_log['seedredirs'] = ridealong['seedredirs']
-
-            if self.add_url(priority+1, next_url, **kwargs):  # XXX add more policy regarding priorities
-                json_log['found_new_links'] = 1
+        if redir.is_redirect(f.response):
+            redir.handle_redirect(f.response, url, ridealong, priority, json_log, self.config, self)
             # fall through to json logging
 
         # if 200, parse urls out of body
