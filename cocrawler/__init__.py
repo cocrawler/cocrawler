@@ -14,6 +14,7 @@ import random
 import socket
 from pkg_resources import get_distribution, DistributionNotFound
 from setuptools_scm import get_version
+import traceback
 
 import asyncio
 import logging
@@ -367,7 +368,13 @@ class Crawler:
                     with stats.coroutine_state('awaiting work'):
                         work = await self.q.get()
                     self.awaiting_work -= 1
-                await self.fetch_and_process(work)
+                try:
+                    await self.fetch_and_process(work)
+                except Exception as e:
+                    # this catches any buggy code that executs in the main process
+                    LOGGER.error('Something bad happened somewhere, it\'s a mystery: %s', e)
+                    traceback.print_exc()
+
                 self.q.task_done()
 
                 if self.stopping:
