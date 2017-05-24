@@ -4,8 +4,6 @@ The actual web crawler
 
 import time
 import os
-import pickle
-from collections import defaultdict
 from operator import itemgetter
 import random
 import socket
@@ -21,6 +19,7 @@ import aiohttp.resolver
 import aiohttp.connector
 import psutil
 
+from . import scheduler
 from . import stats
 from . import seeds
 from . import datalayer
@@ -86,8 +85,6 @@ class Crawler:
             cookie_jar = None  # which means a normal cookie jar
         self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar)
 
-        self.q = asyncio.PriorityQueue(loop=self.loop)
-        self.ridealong = {}
         self.ridealongmaxid = 1  # XXX switch this to using url_canon as the id
 
         self.datalayer = datalayer.Datalayer()
@@ -127,19 +124,18 @@ class Crawler:
 
         if load is not None:
             self.load_all(load)
-            LOGGER.info('after loading saved state, work queue is %r urls', self.q.qsize())
+            LOGGER.info('after loading saved state, work queue is %r urls', scheduler.qsize())
         else:
             self._seeds = seeds.expand_seeds(config.read('Seeds'))
             for s in self._seeds:
                 self.add_url(1, s, seed=True)
-            LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
-            stats.stats_max('initial seeds', self.q.qsize())
+            LOGGER.info('after adding seeds, work queue is %r urls', scheduler.qsize())
+            stats.stats_max('initial seeds', scheduler.qsize())
 
         url_allowed.setup(self._seeds)
 
         self.max_workers = int(config.read('Crawl', 'MaxWorkers'))
         self.remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
-        self.awaiting_work = 0
 
         self.workers = []
 
@@ -152,7 +148,7 @@ class Crawler:
 
     @property
     def qsize(self):
-        return self.q.qsize()
+        return scheduler.qsize()
 
     def log_rejected_add_url(self, url):
         if self.rejectedaddurlfd:
@@ -192,7 +188,6 @@ class Crawler:
         work = {'url': url, 'priority': priority}
         if seed:
             work['seed'] = True
-        self.ridealong[str(self.ridealongmaxid)] = work
 
         # to randomize fetches, and sub-prioritize embeds
         if work.get('embed'):
@@ -200,10 +195,13 @@ class Crawler:
         else:
             rand = random.uniform(0, 0.99999)
 
-        self.q.put_nowait((priority, rand, str(self.ridealongmaxid)))
         self.ridealongmaxid += 1
+        ridealongid = str(self.ridealongmaxid)
+        scheduler.set_ridealong(ridealongid, work)
 
-        self.datalayer.add_seen_url(url)
+        scheduler.queue_work((priority, rand, ridealongid))
+
+        self.datalayer.add_seen_url(url)  # XXX surt
         return 1
 
     def cancel_workers(self):
@@ -218,8 +216,8 @@ class Crawler:
         self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
-        if self.q.qsize():
-            LOGGER.error('non-zero exit qsize=%d', self.q.qsize())
+        if scheduler.qsize():
+            LOGGER.error('non-zero exit qsize=%d', scheduler.qsize())
             stats.exitstatus = 1
 
     async def fetch_and_process(self, work):
@@ -228,7 +226,7 @@ class Crawler:
         '''
         priority, rand, ra = work
         stats.stats_set('priority', priority+rand)
-        ridealong = self.ridealong[ra]
+        ridealong = scheduler.get_ridealong(ra)
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
         maxtries = config.read('Crawl', 'MaxTries')
@@ -245,7 +243,7 @@ class Crawler:
                         'status': 'robots', 'time': time.time()}
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
-            del self.ridealong[ra]
+            scheduler.del_ridealong(ra)
             return
 
         f = await fetcher.fetch(url, self.session,
@@ -262,18 +260,18 @@ class Crawler:
                 # XXX jsonlog hard fail
                 # XXX remember that this host had a hard fail
                 stats.stats_sum('tries completely exhausted', 1)
-                del self.ridealong[ra]
+                scheduler.del_ridealong(ra)
                 return
             # XXX jsonlog this soft fail?
             ridealong['tries'] = tries
             ridealong['priority'] = priority
-            self.ridealong[ra] = ridealong
+            scheduler.set_ridealong(ra, ridealong)
             # increment random so that we don't immediately retry
             extra = random.uniform(0, 0.5)
-            self.q.put_nowait((priority, rand+extra, ra))
+            scheduler.requeue_work((priority, rand+extra, ra))
             return
 
-        del self.ridealong[ra]
+        scheduler.del_ridealong(ra)
 
         json_log['status'] = f.response.status
 
@@ -283,9 +281,9 @@ class Crawler:
         if f.response.status == 200:
             await post_fetch.post_200(f, url, priority, json_log, self)
 
-        LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
-        stats.stats_set('queue size', self.q.qsize())
-        stats.stats_max('max queue size', self.q.qsize())
+        LOGGER.debug('size of work queue now stands at %r urls', scheduler.qsize())
+        stats.stats_set('queue size', scheduler.qsize())
+        stats.stats_max('max queue size', scheduler.qsize())
 
         if self.crawllogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
@@ -296,16 +294,7 @@ class Crawler:
         '''
         try:
             while True:
-                try:
-                    work = self.q.get_nowait()
-                except asyncio.queues.QueueEmpty:
-                    # this self.q.get() is racy with the test for all workers awaiting.
-                    # putting it here (except clause) makes sure the race is only run when
-                    # the queue is actually empty.
-                    self.awaiting_work += 1
-                    with stats.coroutine_state('awaiting work'):
-                        work = await self.q.get()
-                    self.awaiting_work -= 1
+                work = await scheduler.get_work()
 
                 try:
                     await self.fetch_and_process(work)
@@ -315,7 +304,7 @@ class Crawler:
                     traceback.print_exc()
                     # falling through causes this work item to get marked done, and we continue
 
-                self.q.task_done()
+                scheduler.work_done()
 
                 if self.stopping:
                     raise asyncio.CancelledError
@@ -334,28 +323,12 @@ class Crawler:
             pass
 
     def save(self, f):
-        # XXX make this more self-describing
-        pickle.dump('Put the XXX header here', f)  # XXX date, conf file name, conf file checksum
-        pickle.dump(self.ridealongmaxid, f)
-        pickle.dump(self.ridealong, f)
-        pickle.dump(self._seeds, f)
-        count = self.q.qsize()
-        pickle.dump(count, f)
-        for _ in range(0, count):
-            entry = self.q.get_nowait()
-            pickle.dump(entry, f)
+        # XXX cleanup
+        scheduler.save(self, f, )
 
     def load(self, f):
-        header = pickle.load(f)  # XXX check that this is a good header... log it
-        self.ridealongmaxid = pickle.load(f)
-        self.ridealong = pickle.load(f)
-        self._seeds = pickle.load(f)
-        # XXX load seeds
-        self.q = asyncio.PriorityQueue(loop=self.loop)
-        count = pickle.load(f)
-        for _ in range(0, count):
-            entry = pickle.load(f)
-            self.q.put_nowait(entry)
+        # XXX cleanup
+        scheduler.load(self, f)
 
     def get_savefilename(self):
         savefile = config.read('Save', 'Name') or 'cocrawler-save-$$'
@@ -397,17 +370,10 @@ class Crawler:
         '''
         Print a human-readable summary of what's in the queues
         '''
-        print('{} items in the crawl queue'.format(self.q.qsize()))
-        print('{} items in the ridealong dict'.format(len(self.ridealong)))
-        urls_with_tries = 0
-        priority_count = defaultdict(int)
-        netlocs = defaultdict(int)
-        for k, v in self.ridealong.items():
-            if 'tries' in v:
-                urls_with_tries += 1
-            priority_count[v['priority']] += 1
-            url = v['url']
-            netlocs[url.urlparse.netloc] += 1
+        print('{} items in the crawl queue'.format(scheduler.qsize()))
+        print('{} items in the ridealong dict'.format(scheduler.len_ridealong))
+
+        urls_with_tries, netlocs, priority_count = scheduler.summarize()
         print('{} items in crawl queue are retries'.format(urls_with_tries))
         print('{} different hosts in the queue'.format(len(netlocs)))
         print('Queue counts by priority:')
@@ -452,11 +418,11 @@ class Crawler:
                 LOGGER.warning('all workers exited, finishing up.')
                 break
 
-            if self.awaiting_work == len(self.workers) and self.q.qsize() == 0:
+            if scheduler.done(len(self.workers)):
                 # this is a little racy with how awaiting work is set and the queue is read
                 # while we're in this join we aren't looking for STOPCRAWLER etc
                 LOGGER.warning('all workers appear idle, queue appears empty, executing join')
-                await self.q.join()
+                await scheduler.close()
                 break
 
             self.update_cpu_stats()
