@@ -2,11 +2,8 @@
 The actual web crawler
 '''
 
-import cgi
-import json
 import time
 import os
-from functools import partial
 import pickle
 from collections import defaultdict
 from operator import itemgetter
@@ -14,6 +11,7 @@ import random
 import socket
 from pkg_resources import get_distribution, DistributionNotFound
 from setuptools_scm import get_version
+import json
 import traceback
 
 import asyncio
@@ -30,12 +28,11 @@ from . import robots
 from . import parse
 from . import fetcher
 from . import useragent
-from . import urls
 from . import burner
 from . import url_allowed
 from . import cookies
 from .warc import CCWARCWriter
-from . import redir
+from . import post_fetch
 
 LOGGER = logging.getLogger(__name__)
 __title__ = 'cocrawler'
@@ -279,76 +276,13 @@ class Crawler:
 
         json_log['status'] = f.response.status
 
-        if redir.is_redirect(f.response):
-            redir.handle_redirect(f.response, url, ridealong, priority, json_log, self.config, self)
+        if post_fetch.is_redirect(f.response):
+            post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self.config, self)
             # fall through to json logging
 
         # if 200, parse urls out of body
         if f.response.status == 200:
-            resp_headers = f.response.headers
-            content_type = resp_headers.get('content-type', 'None')
-            # sometimes content_type comes back multiline. whack it with a wrench.
-            content_type = content_type.replace('\r', '\n').partition('\n')[0]
-            if content_type:
-                content_type, _ = cgi.parse_header(content_type)
-            else:
-                content_type = 'Unknown'
-            LOGGER.debug('url %r came back with content type %r', url.url, content_type)
-            json_log['content_type'] = content_type
-            stats.stats_sum('content-type=' + content_type, 1)
-            if self.warcwriter is not None:
-                self.warcwriter.write_request_response_pair(url.url, f.req_headers, f.response.raw_headers, f.body_bytes)  # XXX digest??
-
-            if content_type == 'text/html':
-                try:
-                    with stats.record_burn('response.text() decode', url=url):
-                        body = await f.response.text()  # do not use encoding found in the headers -- policy
-                        # XXX consider using 'ascii' for speed, if all we want to do is regex in it
-                except (UnicodeDecodeError, LookupError):
-                    # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
-                    # XXX if encoding was in header, maybe I should use it here?
-                    # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
-                    body = f.body_bytes.decode(encoding='utf-8', errors='replace')
-
-                # headers is a funky object that's allergic to getting pickled.
-                # let's make something more boring
-                # XXX get rid of this for the one in warc?
-                resp_headers_list = []
-                for k, v in resp_headers.items():
-                    resp_headers_list.append((k.lower(), v))
-
-                if len(body) > self.burner_parseinburnersize:
-                    links, embeds, sha1, facets = await self.burner.burn(
-                        partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
-                        url=url)
-                else:
-                    with stats.coroutine_state('await main thread parser'):
-                        links, embeds, sha1, facets = parse.do_burner_work_html(
-                            body, f.body_bytes, resp_headers_list, url=url)
-                json_log['checksum'] = sha1
-
-                if self.facetlogfd:
-                    print(json.dumps({'url': url.url, 'facets': facets}, sort_keys=True), file=self.facetlogfd)
-
-                LOGGER.debug('parsing content of url %r returned %d links, %d embeds, %d facets',
-                             url.url, len(links), len(embeds), len(facets))
-                json_log['found_links'] = len(links) + len(embeds)
-                stats.stats_max('max urls found on a page', len(links) + len(embeds))
-
-                new_links = 0
-                for u in links:
-                    if self.add_url(priority + 1, u):
-                        new_links += 1
-                for u in embeds:
-                    if self.add_url(priority - 1, u):
-                        new_links += 1
-
-                if new_links:
-                    json_log['found_new_links'] = new_links
-                # XXX plugin for links and new links - post to Kafka, etc
-                LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
-                stats.stats_fixed('queue size', self.q.qsize())
-                stats.stats_max('max queue size', self.q.qsize())
+            await post_fetch.post_200(f, url, priority, json_log, self)
 
         if self.crawllogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
