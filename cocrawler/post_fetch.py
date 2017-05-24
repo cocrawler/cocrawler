@@ -158,7 +158,5 @@ async def post_200(f, url, priority, json_log, crawler):
 
         if new_links:
             json_log['found_new_links'] = new_links
+
         # XXX plugin for links and new links - post to Kafka, etc
-        LOGGER.debug('size of work queue now stands at %r urls', crawler.q.qsize())
-        stats.stats_fixed('queue size', crawler.q.qsize())
-        stats.stats_max('max queue size', crawler.q.qsize())

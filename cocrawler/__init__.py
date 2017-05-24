@@ -278,11 +278,13 @@ class Crawler:
 
         if post_fetch.is_redirect(f.response):
             post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self.config, self)
-            # fall through to json logging
 
-        # if 200, parse urls out of body
         if f.response.status == 200:
             await post_fetch.post_200(f, url, priority, json_log, self)
+
+        LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
+        stats.stats_fixed('queue size', self.q.qsize())
+        stats.stats_max('max queue size', self.q.qsize())
 
         if self.crawllogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
