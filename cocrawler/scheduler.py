@@ -11,6 +11,7 @@ hand out work in order, increment deadlines
 import asyncio
 import pickle
 from collections import defaultdict
+from operator import itemgetter
 
 from . import stats
 
@@ -73,10 +74,6 @@ def del_ridealong(ridealongid):
     del ridealong[ridealongid]
 
 
-def len_ridealong():
-    return len(ridealong)
-
-
 def done(worker_count):
     return awaiting_work == worker_count and q.qsize() == 0
 
@@ -114,6 +111,12 @@ def load(crawler, f):
 
 
 def summarize():
+    '''
+    Print a human-readable summary of what's in the queues
+    '''
+    print('{} items in the crawl queue'.format(q.qsize()))
+    print('{} items in the ridealong dict'.format(len(ridealong)))
+
     urls_with_tries = 0
     priority_count = defaultdict(int)
     netlocs = defaultdict(int)
@@ -124,4 +127,13 @@ def summarize():
         url = v['url']
         netlocs[url.urlparse.netloc] += 1
 
-    return urls_with_tries, netlocs, priority_count
+    print('{} items in crawl queue are retries'.format(urls_with_tries))
+    print('{} different hosts in the queue'.format(len(netlocs)))
+    print('Queue counts by priority:')
+    for p in sorted(list(priority_count.keys())):
+        if priority_count[p] > 0:
+            print('  {}: {}'.format(p, priority_count[p]))
+    print('Queue counts for top 10 netlocs')
+    netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)[0:10]
+    for k, v in netloc_order:
+        print('  {}: {}'.format(k, v))

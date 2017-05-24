@@ -4,7 +4,6 @@ The actual web crawler
 
 import time
 import os
-from operator import itemgetter
 import random
 import socket
 from pkg_resources import get_distribution, DistributionNotFound
@@ -322,8 +321,10 @@ class Crawler:
         except asyncio.CancelledError:
             pass
 
+    def summarize(self):
+        scheduler.summarize()
+
     def save(self, f):
-        # XXX cleanup
         scheduler.save(self, f, )
 
     def load(self, f):
@@ -365,25 +366,6 @@ class Crawler:
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start
         stats.stats_set('main thread cpu time', elapsedc)
-
-    def summarize(self):
-        '''
-        Print a human-readable summary of what's in the queues
-        '''
-        print('{} items in the crawl queue'.format(scheduler.qsize()))
-        print('{} items in the ridealong dict'.format(scheduler.len_ridealong))
-
-        urls_with_tries, netlocs, priority_count = scheduler.summarize()
-        print('{} items in crawl queue are retries'.format(urls_with_tries))
-        print('{} different hosts in the queue'.format(len(netlocs)))
-        print('Queue counts by priority:')
-        for p in sorted(list(priority_count.keys())):
-            if priority_count[p] > 0:
-                print('  {}: {}'.format(p, priority_count[p]))
-        print('Queue counts for top 10 netlocs')
-        netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)[0:10]
-        for k, v in netloc_order:
-            print('  {}: {}'.format(k, v))
 
     async def crawl(self):
         '''
