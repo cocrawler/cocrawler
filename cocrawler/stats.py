@@ -19,7 +19,7 @@ start_time = time.time()
 start_cpu = time.clock()
 maxes = {}
 sums = {}
-fixed = {}
+sets = {}
 burners = {}
 latencies = {}
 coroutine_states = {}
@@ -34,8 +34,8 @@ def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
 
 
-def stats_fixed(name, value):
-    fixed[name] = value
+def stats_set(name, value):
+    sets[name] = value
 
 
 def record_a_burn(name, start, url=None):
@@ -134,8 +134,8 @@ def report():
         LOGGER.info('  %s: %d', s, sums[s])
     for s in sorted(maxes):
         LOGGER.info('  %s: %d', s, maxes[s])
-    for s in sorted(fixed):
-        LOGGER.info('  %s: %d', s, fixed[s])
+    for s in sorted(sets):
+        LOGGER.info('  %s: %d', s, sets[s])
 
     LOGGER.info('CPU burn report:')
     for key, burn in sorted(burners.items(), key=lambda x: x[1]['time'], reverse=True):
@@ -153,10 +153,10 @@ def report():
         t90 = latency['hist'].get_value_at_percentile(90.0) / 1000.
         t95 = latency['hist'].get_value_at_percentile(95.0) / 1000.
         t99 = latency['hist'].get_value_at_percentile(99.0) / 1000.
-        stats_fixed('fetch 50', t50)
-        stats_fixed('fetch 90', t90)
-        stats_fixed('fetch 95', t95)
-        stats_fixed('fetch 99', t99)
+        stats_set('fetch 50', t50)
+        stats_set('fetch 90', t90)
+        stats_set('fetch 95', t95)
+        stats_set('fetch 99', t99)
         LOGGER.info('  %s 50/90/95/99%%tiles are: %.2f/%.2f/%.2f/%.2f seconds', key, t50, t90, t95, t99)
 
         if latency.get('list'):
@@ -188,8 +188,8 @@ def stat_value(name):
         return maxes[name]
     if name in sums:
         return sums[name]
-    if name in fixed:
-        return fixed[name]
+    if name in sets:
+        return sets[name]
     if name in burners:
         return burners[name].get('time', 0)
     # note, not including latency
@@ -257,7 +257,7 @@ def update(l):
         stats_sum(k, s[k])
     for k in b:
         update_cpu_burn(k, b[k]['count'], b[k]['time'], b[k].get('list'))
-    stats_fixed('parser cpu time', burners.get('burner thread parser total cpu time', {}).get('time', 0))
+    stats_set('parser cpu time', burners.get('burner thread parser total cpu time', {}).get('time', 0))
 
 
 def clear():

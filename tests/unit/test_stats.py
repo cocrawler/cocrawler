@@ -19,6 +19,14 @@ def test_sum():
     assert stats.stat_value('bar2') == 2
 
 
+def test_set():
+    stats.stats_set('foo3', 5)
+    stats.stats_set('bar3', 2)
+    stats.stats_set('foo3', 3)
+    assert stats.stat_value('foo3') == 3
+    assert stats.stat_value('bar2') == 2
+
+
 def test_burn():
     with stats.record_burn('foo', url='http://example.com/'):
         t0 = time.clock()

@@ -227,7 +227,7 @@ class Crawler:
         Fetch and process a single url.
         '''
         priority, rand, ra = work
-        stats.stats_fixed('priority', priority+rand)
+        stats.stats_set('priority', priority+rand)
         ridealong = self.ridealong[ra]
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
@@ -284,7 +284,7 @@ class Crawler:
             await post_fetch.post_200(f, url, priority, json_log, self)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.q.qsize())
-        stats.stats_fixed('queue size', self.q.qsize())
+        stats.stats_set('queue size', self.q.qsize())
         stats.stats_max('max queue size', self.q.qsize())
 
         if self.crawllogfd:
@@ -391,7 +391,7 @@ class Crawler:
 
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start
-        stats.stats_fixed('main thread cpu time', elapsedc)
+        stats.stats_set('main thread cpu time', elapsedc)
 
     def summarize(self):
         '''
