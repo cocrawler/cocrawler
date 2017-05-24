@@ -23,6 +23,7 @@ async def main(urls):
             try:
                 response = await session.get(url, allow_redirects=True)
             except Exception as e:
+                print('Saw an exception thrown by session.get:')
                 print_exc()
                 print('')
                 continue
