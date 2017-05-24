@@ -368,12 +368,14 @@ class Crawler:
                     with stats.coroutine_state('awaiting work'):
                         work = await self.q.get()
                     self.awaiting_work -= 1
+
                 try:
                     await self.fetch_and_process(work)
                 except Exception as e:
-                    # this catches any buggy code that executs in the main process
+                    # this catches any buggy code that executes in the main thread
                     LOGGER.error('Something bad happened somewhere, it\'s a mystery: %s', e)
                     traceback.print_exc()
+                    # falling through causes this work to get marked done
 
                 self.q.task_done()
 
