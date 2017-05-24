@@ -194,11 +194,9 @@ class Crawler:
         else:
             rand = random.uniform(0, 0.99999)
 
-        self.ridealongmaxid += 1
-        ridealongid = str(self.ridealongmaxid)
-        scheduler.set_ridealong(ridealongid, work)
+        scheduler.set_ridealong(url.surt, work)
 
-        scheduler.queue_work((priority, rand, ridealongid))
+        scheduler.queue_work((priority, rand, url.surt))
 
         self.datalayer.add_seen_url(url)  # XXX surt
         return 1
@@ -223,9 +221,9 @@ class Crawler:
         '''
         Fetch and process a single url.
         '''
-        priority, rand, ra = work
+        priority, rand, surt = work
         stats.stats_set('priority', priority+rand)
-        ridealong = scheduler.get_ridealong(ra)
+        ridealong = scheduler.get_ridealong(surt)
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
         maxtries = config.read('Crawl', 'MaxTries')
@@ -242,7 +240,7 @@ class Crawler:
                         'status': 'robots', 'time': time.time()}
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
-            scheduler.del_ridealong(ra)
+            scheduler.del_ridealong(surt)
             return
 
         f = await fetcher.fetch(url, self.session,
@@ -259,18 +257,18 @@ class Crawler:
                 # XXX jsonlog hard fail
                 # XXX remember that this host had a hard fail
                 stats.stats_sum('tries completely exhausted', 1)
-                scheduler.del_ridealong(ra)
+                scheduler.del_ridealong(surt)
                 return
             # XXX jsonlog this soft fail?
             ridealong['tries'] = tries
             ridealong['priority'] = priority
-            scheduler.set_ridealong(ra, ridealong)
+            scheduler.set_ridealong(surt, ridealong)
             # increment random so that we don't immediately retry
             extra = random.uniform(0, 0.5)
-            scheduler.requeue_work((priority, rand+extra, ra))
+            scheduler.requeue_work((priority, rand+extra, surt))
             return
 
-        scheduler.del_ridealong(ra)
+        scheduler.del_ridealong(surt)
 
         json_log['status'] = f.response.status
 
