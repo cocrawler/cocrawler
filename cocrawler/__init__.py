@@ -311,7 +311,7 @@ class Crawler:
                     # this catches any buggy code that executes in the main thread
                     LOGGER.error('Something bad happened somewhere, it\'s a mystery: %s', e)
                     traceback.print_exc()
-                    # falling through causes this work to get marked done
+                    # falling through causes this work item to get marked done, and we continue
 
                 self.q.task_done()
 
