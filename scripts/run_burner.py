@@ -8,10 +8,12 @@ import asyncio
 import cocrawler.burner as burner
 import cocrawler.parse as parse
 import cocrawler.stats as stats
+import cocrawler.config as config
 
-config = {'Multiprocess': {'BurnerThreads': 2}}
+c = {'Multiprocess': {'BurnerThreads': 2}}
+config.set_config(c)
 loop = asyncio.get_event_loop()
-b = burner.Burner(config, loop, 'parser')
+b = burner.Burner(loop, 'parser')
 queue = asyncio.Queue()
 
 
@@ -41,7 +43,7 @@ async def work():
 
 
 async def crawl():
-    workers = [asyncio.Task(work(), loop=loop) for _ in range(int(config['Multiprocess']['BurnerThreads']))]
+    workers = [asyncio.Task(work(), loop=loop) for _ in range(int(config.read('Multiprocess', 'BurnerThreads')))]
     print('q count is {}'.format(queue.qsize()))
     await queue.join()
     print('join is done')

@@ -16,6 +16,7 @@ import json
 from . import urls
 from . import parse
 from . import stats
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, ridealong, priority, json_log, config, crawler):
+def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     resp_headers = f.response.headers
     location = resp_headers.get('location')
     if location is None:
@@ -82,13 +83,13 @@ def handle_redirect(f, url, ridealong, priority, json_log, config, crawler):
             ridealong['seedredirs'] += 1
         else:
             ridealong['seedredirs'] = 1
-        if ridealong['seedredirs'] > config['Seeds'].get('SeedRedirsCount', 0):
+        if ridealong['seedredirs'] > (config.read('Seeds', 'SeedRedirCount') or 0):
             del ridealong['seed']
             del ridealong['seedredirs']
         else:
             kwargs['seed'] = ridealong['seed']
             kwargs['seedredirs'] = ridealong['seedredirs']
-            if config['Seeds'].get('SeedRedirsFree'):
+            if config.read('Seeds', 'SeedRedirsFree'):
                 priority -= 1
             json_log['seedredirs'] = ridealong['seedredirs']
 

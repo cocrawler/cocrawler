@@ -4,6 +4,8 @@ Generic implementation of url_allowed.
 
 import logging
 
+from . import config
+
 LOGGER = logging.getLogger(__name__)
 
 POLICY = None
@@ -63,9 +65,9 @@ def url_allowed(url):
 valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
 
 
-def setup(seeds, config):
+def setup(seeds):
     global POLICY
-    POLICY = config.get('Plugins', {})['url_allowed']
+    POLICY = config.read('Plugins', 'url_allowed')
 
     if POLICY not in valid_policies:
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))

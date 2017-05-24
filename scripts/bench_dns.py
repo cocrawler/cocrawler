@@ -9,14 +9,11 @@ import sys
 import time
 import argparse
 import asyncio
-import socket
 import random
 import os
 
-import aiohttp
-
-import cocrawler.conf as conf
 import cocrawler.dns as dns
+import cocrawler.config as config
 
 ARGS = argparse.ArgumentParser(description='CoCrawler dns benchmark')
 ARGS.add_argument('--config', action='append')
@@ -26,10 +23,10 @@ ARGS.add_argument('--count', type=int, default=1000)
 
 args = ARGS.parse_args()
 
-config = conf.config(args.configfile, args.config, confighome=not args.no_confighome)
-max_workers = config['Crawl']['MaxWorkers']
+config.config(args.configfile, args.config, confighome=not args.no_confighome)
+max_workers = config.read('Crawl', 'MaxWorkers')
 
-ns = config['Fetcher'].get('Nameservers')
+ns = config.read('Fetcher', 'Nameservers')
 if not isinstance(ns, list):
     ns = [ns]
 

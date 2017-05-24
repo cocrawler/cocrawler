@@ -1,7 +1,7 @@
 import pytest
 
 import cocrawler.robots as robots
-
+import cocrawler.config as config
 
 def test_preprocess_robots():
     robots_txt = '''
@@ -22,8 +22,8 @@ def test_robots():
     There's already end-to-end testing for the normal functionality.
     Exercise only the weird stuff here.
     '''
-    config = {'Robots': {'MaxTries': 4}, 'Logging': {}}
-    r = robots.Robots('foo', None, None, config)
+    config.set_config({'Robots': {'MaxTries': 4}, 'Logging': {}})
+    r = robots.Robots('foo', None, None)
 
     robots_txt = b'<'
     assert not r.is_plausible_robots('example.com', robots_txt, 1.0)

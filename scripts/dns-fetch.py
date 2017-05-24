@@ -7,13 +7,12 @@ https://www.enterprisecarshare.com/robots.txt -- 302 redir lacking Location: rai
 
 '''
 
-import sys
 import argparse
 
 import asyncio
 
-import cocrawler.conf as conf
 import cocrawler.dns as dns
+import cocrawler.config as config
 
 ARGS = argparse.ArgumentParser(description='CoCrawler dns fetcher')
 ARGS.add_argument('--config', action='append')
@@ -24,9 +23,9 @@ ARGS.add_argument('hosts', nargs='+', help='list of hostnames to query')
 
 args = ARGS.parse_args()
 
-config = conf.config(args.configfile, args.config, confighome=not args.no_confighome)
+config.config(args.configfile, args.config, confighome=not args.no_confighome)
 
-ns = config['Fetcher'].get('Nameservers')
+ns = config.read('Fetcher', 'Nameservers')
 if not isinstance(ns, list):
     ns = [ns]
 

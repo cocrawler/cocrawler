@@ -26,17 +26,18 @@ import logging
 # import sortedcontainers - I wish!
 import cachetools.ttl
 
+from . import config
+
 LOGGER = logging.getLogger(__name__)
 __NAME__ = 'datalayer seen_urls memory'
 
 
 class Datalayer:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
         self.seen_urls = set()
 
-        robots_size = config.get('Robots', {}).get('RobotsCacheSize')
-        robots_ttl = config.get('Robots', {}).get('RobotsCacheTimeout')
+        robots_size = config.read('Robots', 'RobotsCacheSize')
+        robots_ttl = config.read('Robots', 'RobotsCacheTimeout')
         self.robots = cachetools.ttl.TTLCache(robots_size, robots_ttl)
 
     # This is the minimum url database:

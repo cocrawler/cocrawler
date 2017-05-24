@@ -1,15 +1,17 @@
 import logging
 from aiohttp import web
 
+from . import config
+
 LOGGER = logging.getLogger(__name__)
 
 
-def make_app(loop, config):
+def make_app(loop):
     # TODO switch this to socket.getaddrinfo() -- see https://docs.python.org/3/library/socket.html
-    serverip = config['REST'].get('ServerIP')
-    serverport = int(config['REST'].get('ServerPort', '8081'))
+    serverip = config.read('REST', 'ServerIP')
     if serverip is None:
         return None
+    serverport = int(config.read('REST', 'ServerPort'))
 
     app = web.Application()
     app.router.add_get('/', frontpage)

@@ -1,8 +1,11 @@
 import os
+import collections.abc
 import logging
 import yaml
 
 LOGGER = logging.getLogger(__name__)
+
+__gobal_config = None
 
 '''
 default_yaml exists to both set defaults and to document all
@@ -34,6 +37,7 @@ Crawl:
   PageTimeout: 30
   RetryTimeout: 5
   MaxWorkers: 10
+  MaxHostQPS: 10
 #  MaxCrawledUrls: 11
 #  CookieJar: Defective
 
@@ -166,4 +170,44 @@ def config(configfile, configlist, confighome=True):
                 LOGGER.error('invalid config of %s', c)
                 continue
 
-    return combined
+    global __global_config
+    __global_config = combined
+
+
+def read(*l):
+    if not isinstance(l, collections.abc.Sequence):
+        l = (l,)
+    c = __global_config
+    for name in l:
+        if c is None:
+            LOGGER.error('invalid config key %r', l)
+            raise ValueError('invalid config key')
+        c = c.get(name)
+    return c
+
+
+def write(value, *l):
+    if not isinstance(l, collections.abc.Sequence):
+        l = (l,)
+    l = list(l)  # so I can pop it
+    last = l.pop()
+    c = __global_config
+    for name in l:
+        if c is None:
+            LOGGER.error('invalid config key %r', l)
+            raise ValueError('invalid config key')
+        c = c.get(name)
+
+    if not isinstance(c, collections.abc.MutableMapping):
+        LOGGER.error('invalid config key %r', l)
+        raise ValueError('invalid config key')
+
+    c[last] = value
+
+
+def set_config(c):
+    '''
+    Used in unit tests
+    '''
+    global __global_config
+    __global_config = c

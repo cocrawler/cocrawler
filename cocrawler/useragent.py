@@ -24,8 +24,9 @@ the user agent for (2) will contain test-cocrawler/VERSION
 and the URL.
 
 Choices for Style: laptopplus, tabletplus, phoneplus, crawler
-
 '''
+
+from . import config
 
 # these are used for laptop, tablet, and phone, respectively
 laptop = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:48.0) Gecko/20100101 Firefox/48.0'
@@ -34,14 +35,14 @@ phone = ('Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_5 like Mac OS X) '
          'AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13G36 Safari/601.1')
 
 
-def useragent(config, version):
-    uac = config['UserAgent']
+def useragent(version):
+    uac = config.read('UserAgent')
 
     basic = '{}-cocrawler/{} (+{})'.format(uac['MyPrefix'], version, uac['URL'])
 
     style = uac['Style']
 
-    # check a few things I'd like to discourage
+    # check a few things I'd like to encourage / discourage
     if 'cocrawler.com' in basic:
         raise ValueError('Hey! Please point this thing at your own domain!')
     if '+http://' not in basic and '+https://' not in basic:

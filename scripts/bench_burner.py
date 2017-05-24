@@ -6,6 +6,7 @@ import sys
 import asyncio
 
 import cocrawler.burner as burner
+import cocrawler.config as config
 
 
 def burn(dt, data):
@@ -40,10 +41,11 @@ ARGS.add_argument('--duration', type=float, default=0.010)
 ARGS.add_argument('--count', type=int, default=10000)
 args = ARGS.parse_args()
 
-config = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
+c = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
+config.set_config(c)
 
 loop = asyncio.get_event_loop()
-b = burner.Burner(config, loop, 'parser')
+b = burner.Burner(loop, 'parser')
 queue = asyncio.Queue()
 for _ in range(args.count):
     queue.put_nowait((args.duration, 'x' * args.datasize))

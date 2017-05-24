@@ -4,17 +4,21 @@ import pytest
 
 from cocrawler.urls import URL
 import cocrawler.datalayer as datalayer
-
+import cocrawler.config as config
 
 def test_seen():
-    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
+    c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
+    config.set_config(c)
+    dl = datalayer.Datalayer()
     assert not dl.seen_url(URL('http://example.com'))
     dl.add_seen_url(URL('http://example.com'))
     assert dl.seen_url(URL('http://example.com'))
 
 
 def test_robotscache():
-    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
+    c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
+    config.set_config(c)
+    dl = datalayer.Datalayer()
     with pytest.raises(KeyError):
         dl.read_robots_cache('http://example.com')
     dl.cache_robots('http://example.com', b'THIS IS A TEST')
@@ -25,7 +29,9 @@ def test_saveload():
     tf = tempfile.NamedTemporaryFile(delete=False)
     name = tf.name
 
-    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
+    c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
+    config.set_config(c)
+    dl = datalayer.Datalayer()
     dl.add_seen_url(URL('http://example.com'))
     assert dl.seen_url(URL('http://example.com'))
 
@@ -42,7 +48,9 @@ def test_saveload():
 
 
 def test_summarize(capsys):
-    dl = datalayer.Datalayer({'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}})
+    c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
+    config.set_config(c)
+    dl = datalayer.Datalayer()
     dl.add_seen_url(URL('http://example.com'))
     dl.add_seen_url(URL('http://example2.com'))
     dl.summarize()

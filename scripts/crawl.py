@@ -12,7 +12,7 @@ import asyncio
 import logging
 
 import cocrawler
-import cocrawler.conf as conf
+import cocrawler.config as config
 import cocrawler.stats as stats
 import cocrawler.timer as timer
 import cocrawler.webserver as webserver
@@ -27,9 +27,9 @@ ARGS.add_argument('--loglevel', action='store', type=int, default=2)
 ARGS.add_argument('--load', action='store')
 
 
-def limit_resources(config):
+def limit_resources():
     _, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
+    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))  # XXX compare to max threads etc.
 
     _, hard = resource.getrlimit(resource.RLIMIT_AS)  # RLIMIT_VMEM does not exist?!
     resource.setrlimit(resource.RLIMIT_AS, (16 * 1024 * 1024 * 1024, hard))  # XXX config
@@ -47,14 +47,14 @@ def main():
         loglevel = args.loglevel
 
     if args.printdefault:
-        conf.print_default()
+        config.print_default()
         sys.exit(1)
 
     levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
     logging.basicConfig(level=levels[min(loglevel, len(levels)-1)])
 
-    config = conf.config(args.configfile, args.config, confighome=not args.no_confighome)
-    limit_resources(config)
+    config.config(args.configfile, args.config, confighome=not args.no_confighome)
+    limit_resources()
 
     kwargs = {}
     if args.load:
@@ -63,13 +63,13 @@ def main():
         kwargs['no_test'] = True
 
     loop = asyncio.get_event_loop()
-    crawler = cocrawler.Crawler(loop, config, **kwargs)
+    crawler = cocrawler.Crawler(loop, **kwargs)
 
-    if config.get('CarbonStats'):
-        timer.start_carbon(loop, config)
+    if config.read('CarbonStats'):
+        timer.start_carbon(loop)
 
-    if config['REST']:
-        app = webserver.make_app(loop, config)
+    if config.read('REST'):
+        app = webserver.make_app(loop)
     else:
         app = None
 
@@ -83,7 +83,7 @@ def main():
         crawler.close()
         if app:
             webserver.close(app)
-        if config.get('CarbonStats'):
+        if config.read('CarbonStats'):
             timer.close()
         # apparently this is needed for full aiohttp cleanup
         loop.stop()

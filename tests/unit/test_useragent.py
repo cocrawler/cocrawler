@@ -2,53 +2,56 @@ import copy
 import pytest
 
 import cocrawler.useragent as useragent
+import cocrawler.config as config
 
 
 def test_useragent():
 
-    config = {'UserAgent': {'Style': 'crawler',
-                            'MyPrefix': 'something',
-                            'URL': 'http://example.com/cocrawler.html'}}
-
+    c = {'UserAgent': {'Style': 'crawler',
+                       'MyPrefix': 'something',
+                       'URL': 'http://example.com/cocrawler.html'}}
+    config.set_config(c)
     version = '1.0'
 
-    robotname, ua = useragent.useragent(config, version)
+    robotname, ua = useragent.useragent(version)
 
     assert version in ua
     assert 'http://example.com/cocrawler.html' in ua
     assert robotname == 'something-cocrawler'
 
-    config['UserAgent']['Style'] = 'laptopplus'
-    robotname, ua = useragent.useragent(config, version)
-    assert 'Mozilla/5.0' in ua
-    config['UserAgent']['Style'] = 'tabletplus'
-    robotname, ua = useragent.useragent(config, version)
-    assert 'Mozilla/5.0' in ua
-    config['UserAgent']['Style'] = 'phoneplus'
-    robotname, ua = useragent.useragent(config, version)
+    config.write('laptopplus', 'UserAgent', 'Style')
+    robotname, ua = useragent.useragent(version)
     assert 'Mozilla/5.0' in ua
 
-    bad_config = copy.deepcopy(config)
-    bad_config['UserAgent']['Style'] = 'error'
-    with pytest.raises(ValueError):
-        robotname, ua = useragent.useragent(bad_config, version)
+    config.write('tabletplus', 'UserAgent', 'Style')
+    robotname, ua = useragent.useragent(version)
+    assert 'Mozilla/5.0' in ua
 
-    bad_config = copy.deepcopy(config)
-    bad_config['UserAgent']['URL'] = 'ha ha I left this off'
-    with pytest.raises(ValueError):
-        robotname, ua = useragent.useragent(bad_config, version)
+    config.write('phoneplus', 'UserAgent', 'Style')
+    robotname, ua = useragent.useragent(version)
+    assert 'Mozilla/5.0' in ua
 
-    bad_config = copy.deepcopy(config)
-    bad_config['UserAgent']['URL'] = 'http://cocrawler.com/cocrawler.html'
+    config.set_config(c)
+    config.write('error', 'UserAgent', 'Style')
     with pytest.raises(ValueError):
-        robotname, ua = useragent.useragent(bad_config, version)
+        robotname, ua = useragent.useragent(version)
 
-    bad_config = copy.deepcopy(config)
-    bad_config['UserAgent']['MyPrefix'] = 'test'
+    config.set_config(c)
+    config.write('ha ha I left this off', 'UserAgent', 'URL')
     with pytest.raises(ValueError):
-        robotname, ua = useragent.useragent(bad_config, version)
+        robotname, ua = useragent.useragent(version)
 
-    bad_config = copy.deepcopy(config)
-    bad_config['UserAgent']['MyPrefix'] = ''
+    config.set_config(c)
+    config.write('http://cocrawler.com/cocrawler.html', 'UserAgent', 'URL')
     with pytest.raises(ValueError):
-        robotname, ua = useragent.useragent(bad_config, version)
+        robotname, ua = useragent.useragent(version)
+
+    config.set_config(c)
+    config.write('test', 'UserAgent', 'MyPrefix')
+    with pytest.raises(ValueError):
+        robotname, ua = useragent.useragent(version)
+
+    config.set_config(c)
+    config.write('', 'UserAgent', 'MyPrefix')
+    with pytest.raises(ValueError):
+        robotname, ua = useragent.useragent(version)

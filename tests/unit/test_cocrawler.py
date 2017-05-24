@@ -7,19 +7,19 @@ import tempfile
 import os
 
 import cocrawler
-import cocrawler.conf as conf
+import cocrawler.config as config
 from cocrawler.urls import URL
 
 
 def test_cocrawler(capsys):
-    config = conf.config(None, None, confighome=False)
+    config.config(None, None, confighome=False)
 
     # ok, we have to get around the useragent checks
-    config['UserAgent']['MyPrefix'] = 'pytest'
-    config['UserAgent']['URL'] = 'http://example.com/pytest-test-cocrawler.py'
+    config.write('pytest', 'UserAgent', 'MyPrefix')
+    config.write('http://example.com/pytest-test-cocrawler.py', 'UserAgent', 'URL')
 
     loop = asyncio.get_event_loop()
-    crawler = cocrawler.Crawler(loop, config)
+    crawler = cocrawler.Crawler(loop)
 
     crawler.add_url(0, URL('http://example1.com/'), seed=True)
     crawler.add_url(0, URL('http://example2.com/'), seed=True)

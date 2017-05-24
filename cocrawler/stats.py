@@ -11,6 +11,7 @@ from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
 
 from .urls import URL
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -204,12 +205,12 @@ def burn_values(name):
         return None, None
 
 
-def check(config, no_test=False):
+def check(no_test=False):
     if no_test:
         return
 
-    seq = config.get('Testing', {}).get('StatsEQ', {})
-    sge = config.get('Testing', {}).get('StatsGE', {})
+    seq = config.read('Testing', 'StatsEQ')
+    sge = config.read('Testing', 'StatsGE')
     global exitstatus
     if seq:
         for s in seq:

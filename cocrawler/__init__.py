@@ -31,8 +31,9 @@ from . import useragent
 from . import burner
 from . import url_allowed
 from . import cookies
-from .warc import CCWARCWriter
 from . import post_fetch
+from . import config
+from .warc import CCWARCWriter
 
 LOGGER = logging.getLogger(__name__)
 __title__ = 'cocrawler'
@@ -42,11 +43,10 @@ __copyright__ = 'Copyright 2016-2017 Greg Lindahl and others'
 
 
 class Crawler:
-    def __init__(self, loop, config, load=None, no_test=False):
-        self.config = config
+    def __init__(self, loop, load=None, no_test=False):
         self.loop = loop
-        self.burner = burner.Burner(config, loop, 'parser')
-        self.burner_parseinburnersize = int(self.config['Multiprocess']['ParseInBurnerSize'])
+        self.burner = burner.Burner(loop, 'parser')
+        self.burner_parseinburnersize = int(config.read('Multiprocess', 'ParseInBurnerSize'))
         self.stopping = 0
         self.paused = 0
         self.no_test = no_test
@@ -59,19 +59,19 @@ class Crawler:
             # this works for an uninstalled git repo, like in the CI infrastructure
             self.version = get_version(root='..', relative_to=__file__)
 
-        self.robotname, self.ua = useragent.useragent(config, self.version)
+        self.robotname, self.ua = useragent.useragent(self.version)
 
-        ns = config['Fetcher'].get('Nameservers')
+        ns = config.read('Fetcher', 'Nameservers')
         if ns:
             resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)
         else:
             resolver = None
 
-        proxy = config['Fetcher'].get('ProxyAll')
+        proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:
             raise ValueError('proxies not yet supported')
 
-        local_addr = config['Fetcher'].get('LocalAddr')
+        local_addr = config.read('Fetcher', 'LocalAddr')
         # TODO: if local_addr is a list, make up an array of TCPConnecter objects, and rotate
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
         self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver, 'limit': None}
@@ -80,7 +80,7 @@ class Crawler:
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
-        if config['Crawl'].get('CookieJar', '') == 'Defective':
+        if (config.read('Crawl', 'CookieJar') or '') == 'Defective':
             cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
@@ -90,34 +90,35 @@ class Crawler:
         self.ridealong = {}
         self.ridealongmaxid = 1  # XXX switch this to using url_canon as the id
 
-        self.datalayer = datalayer.Datalayer(config)
-        self.robots = robots.Robots(self.robotname, self.session, self.datalayer, config)
+        self.datalayer = datalayer.Datalayer()
+        self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
 
-        self.crawllog = config['Logging'].get('Crawllog')
+        self.crawllog = config.read('Logging', 'Crawllog')
         if self.crawllog:
             self.crawllogfd = open(self.crawllog, 'a')
         else:
             self.crawllogfd = None
 
-        self.rejectedaddurl = config['Logging'].get('RejectedAddUrllog')
+        self.rejectedaddurl = config.read('Logging', 'RejectedAddUrllog')
         if self.rejectedaddurl:
             self.rejectedaddurlfd = open(self.rejectedaddurl, 'a')
         else:
             self.rejectedaddurlfd = None
 
-        self.facetlog = config['Logging'].get('Facetlog')
+        self.facetlog = config.read('Logging', 'Facetlog')
         if self.facetlog:
             self.facetlogfd = open(self.facetlog, 'a')
         else:
             self.facetlogfd = None
 
-        if self.config['WARC'].get('WARCAll', False):
-            max_size = self.config['WARC']['WARCMaxSize']
-            prefix = self.config['WARC']['WARCPrefix']
-            subprefix = self.config['WARC'].get('WARCSubPrefix')
-            description = self.config['WARC'].get('WARCDescription')
-            creator = self.config['WARC'].get('WARCCreator')
-            operator = self.config['WARC'].get('WARCOperator')
+        warcall = config.read('WARC', 'WARCAll')
+        if warcall is not None and warcall:
+            max_size = config.read('WARC', 'WARCMaxSize')
+            prefix = config.read('WARC', 'WARCPrefix')
+            subprefix = config.read('WARC', 'WARCSubPrefix')
+            description = config.read('WARC', 'WARCDescription')
+            creator = config.read('WARC', 'WARCCreator')
+            operator = config.read('WARC', 'WARCOperator')
             self.warcwriter = CCWARCWriter(prefix, max_size, subprefix=subprefix)  # XXX get_serial lacks a default
             self.warcwriter.create_default_info(self.version, local_addr,
                                                 description=description, creator=creator, operator=operator)
@@ -128,16 +129,16 @@ class Crawler:
             self.load_all(load)
             LOGGER.info('after loading saved state, work queue is %r urls', self.q.qsize())
         else:
-            self._seeds = seeds.expand_seeds(self.config.get('Seeds', {}))
+            self._seeds = seeds.expand_seeds(config.read('Seeds'))
             for s in self._seeds:
                 self.add_url(1, s, seed=True)
             LOGGER.info('after adding seeds, work queue is %r urls', self.q.qsize())
             stats.stats_max('initial seeds', self.q.qsize())
 
-        url_allowed.setup(self._seeds, config)
+        url_allowed.setup(self._seeds)
 
-        self.max_workers = int(self.config['Crawl']['MaxWorkers'])
-        self.remaining_url_budget = int(self.config['Crawl'].get('MaxCrawledUrls', 0)) or None  # 0 => None
+        self.max_workers = int(config.read('Crawl', 'MaxWorkers'))
+        self.remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
         self.awaiting_work = 0
 
         self.workers = []
@@ -167,7 +168,7 @@ class Crawler:
         # and ...
 
         # XXX allow/deny plugin modules go here
-        if priority > int(self.config['Crawl']['MaxDepth']):
+        if priority > int(config.read('Crawl', 'MaxDepth')):
             stats.stats_sum('rejected by MaxDepth', 1)
             self.log_rejected_add_url(url)
             return
@@ -213,7 +214,7 @@ class Crawler:
     def close(self):
         stats.report()
         parse.report()
-        stats.check(self.config, no_test=self.no_test)
+        stats.check(no_test=self.no_test)
         self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
@@ -230,9 +231,9 @@ class Crawler:
         ridealong = self.ridealong[ra]
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
-        maxtries = self.config['Crawl']['MaxTries']
+        maxtries = config.read('Crawl', 'MaxTries')
 
-        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.ua, self.config)
+        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.ua)
 
         with stats.coroutine_state('fetching/checking robots'):
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
@@ -247,7 +248,7 @@ class Crawler:
             del self.ridealong[ra]
             return
 
-        f = await fetcher.fetch(url, self.session, self.config,
+        f = await fetcher.fetch(url, self.session,
                                 headers=req_headers, proxy=proxy, mock_url=mock_url)
 
         json_log = {'type': 'get', 'url': url.url, 'priority': priority,
@@ -277,7 +278,7 @@ class Crawler:
         json_log['status'] = f.response.status
 
         if post_fetch.is_redirect(f.response):
-            post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self.config, self)
+            post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self)
 
         if f.response.status == 200:
             await post_fetch.post_200(f, url, priority, json_log, self)
@@ -299,7 +300,8 @@ class Crawler:
                     work = self.q.get_nowait()
                 except asyncio.queues.QueueEmpty:
                     # this self.q.get() is racy with the test for all workers awaiting.
-                    # putting it here (except clause) makes sure the race is rarely run.
+                    # putting it here (except clause) makes sure the race is only run when
+                    # the queue is actually empty.
                     self.awaiting_work += 1
                     with stats.coroutine_state('awaiting work'):
                         work = await self.q.get()
@@ -356,10 +358,10 @@ class Crawler:
             self.q.put_nowait(entry)
 
     def get_savefilename(self):
-        savefile = self.config['Save'].get('Name', 'cocrawler-save-$$')
+        savefile = config.read('Save', 'Name') or 'cocrawler-save-$$'
         savefile = savefile.replace('$$', str(os.getpid()))
         savefile = os.path.expanduser(os.path.expandvars(savefile))
-        if os.path.exists(savefile) and not self.config['Save'].get('Overwrite'):
+        if os.path.exists(savefile) and not config.read('Save', 'Overwrite'):
             count = 1
             while os.path.exists(savefile + '.' + str(count)):
                 count += 1
@@ -425,7 +427,7 @@ class Crawler:
 
         # this is now the 'main' coroutine
 
-        if self.config['Multiprocess'].get('Affinity'):
+        if config.read('Multiprocess', 'Affinity'):
             # set the main thread to run on core 0
             p = psutil.Process()
             p.cpu_affinity([0])
@@ -465,7 +467,7 @@ class Crawler:
 
         self.cancel_workers()
 
-        if self.stopping or self.config['Save'].get('SaveAtExit'):
+        if self.stopping or config.read('Save', 'SaveAtExit'):
             self.summarize()
             self.datalayer.summarize()
             LOGGER.warning('saving datalayer and queues')

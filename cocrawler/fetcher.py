@@ -27,6 +27,7 @@ import aiodns
 
 from . import stats
 from . import dns
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ LOGGER = logging.getLogger(__name__)
 # XXX cookie handling -- no way to have a cookie jar other than at session level
 #    need to directly manipulate domain-level cookie jars to get cookies
 #    CookieJar.add_cookie_header(request) is tied to urlllib.request, how does aiohttp use it?!
-def apply_url_policies(url, ua, config):
+def apply_url_policies(url, ua):
     headers = {}
     proxy = None
     mock_url = None
@@ -43,7 +44,7 @@ def apply_url_policies(url, ua, config):
 
     headers['User-Agent'] = ua
 
-    test_host = config['Testing'].get('TestHostmapAll')
+    test_host = config.read('Testing', 'TestHostmapAll')
     if test_host:
         headers['Host'] = url.urlparse.netloc
         (scheme, netloc, path, params, query, fragment) = url.urlparse
@@ -60,11 +61,11 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
                                                  't_first_byte', 't_last_byte', 'last_exception'])
 
 
-async def fetch(url, session, config,
+async def fetch(url, session,
                 headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
-    maxsubtries = int(config['Crawl']['MaxSubTries'])
-    pagetimeout = float(config['Crawl']['PageTimeout'])
-    retrytimeout = float(config['Crawl']['RetryTimeout'])
+    maxsubtries = int(config.read('Crawl', 'MaxSubTries'))
+    pagetimeout = float(config.read('Crawl', 'PageTimeout'))
+    retrytimeout = float(config.read('Crawl', 'RetryTimeout'))
 
     if proxy:  # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)

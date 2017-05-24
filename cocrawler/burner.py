@@ -7,6 +7,7 @@ import functools
 import psutil
 
 from . import stats
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,14 +45,14 @@ class Burner:
     On my test machine, it takes about 0.5 milliseconds in the main async
     thread for a single call to the burner thread.
     '''
-    def __init__(self, config, loop, name):
-        thread_count = int(config['Multiprocess']['BurnerThreads'])
+    def __init__(self, loop, name):
+        thread_count = int(config.read('Multiprocess', 'BurnerThreads'))
         self.executor = ProcessPoolExecutor(thread_count)
         self.loop = loop
         self.name = name
         self.f = []
 
-        if config['Multiprocess'].get('Affinity'):
+        if config.read('Multiprocess', 'Affinity'):
             p = psutil.Process()
             all_cpus = p.cpu_affinity()
             for _ in range(thread_count):

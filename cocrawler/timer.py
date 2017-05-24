@@ -26,6 +26,7 @@ import asyncio
 
 from . import stats
 from . import timebin
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -77,9 +78,9 @@ ft = None
 st = None
 
 
-def start_carbon(loop, config):
-    server = config['CarbonStats'].get('Server', 'localhost')
-    port = int(config['CarbonStats'].get('Port', '2004'))
+def start_carbon(loop):
+    server = config.read('CarbonStats', 'Server') or 'localhost'
+    port = int(config.read('CarbonStats', 'Port') or '2004')
 
     global ft
     fast = CarbonTimer(1, fast_prefix, fast_stats, server, port, loop)

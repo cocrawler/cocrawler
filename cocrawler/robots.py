@@ -17,6 +17,7 @@ import magic
 from .urls import URL
 from . import stats
 from . import fetcher
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,15 +43,14 @@ def preprocess_robots(text):
 
 
 class Robots:
-    def __init__(self, robotname, session, datalayer, config):
+    def __init__(self, robotname, session, datalayer):
         self.robotname = robotname
         self.session = session
         self.datalayer = datalayer
-        self.config = config
-        self.max_tries = self.config.get('Robots', {}).get('MaxTries')
+        self.max_tries = config.read('Robots', 'MaxTries')
         self.in_progress = set()
         self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
-        self.robotslog = self.config.get('Logging', {}).get('Robotslog')
+        self.robotslog = config.read('Logging', 'Robotslog')
         if self.robotslog:
             self.robotslogfd = open(self.robotslog, 'a')
         else:
@@ -131,7 +131,7 @@ class Robots:
 
         self.in_progress.add(schemenetloc)
 
-        f = await fetcher.fetch(url, self.session, self.config,
+        f = await fetcher.fetch(url, self.session,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, stats_me=False)
         if f.last_exception:
