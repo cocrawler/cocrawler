@@ -37,3 +37,4 @@ Testing:
     robots denied: 1
     warc r/r (prefix Testing): 1000
     parse in burner thread: 1000
+    parse in main thread: 0

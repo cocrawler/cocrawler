@@ -170,6 +170,7 @@ def report():
     elapsedc = time.clock() - start_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
+    stats_set('elapsed', elapsed)  # so it can be used for testing
     if elapsed > 0:
         LOGGER.info('  Main thread cpu %.1f%%', elapsedc/elapsed*100)
     bt = burners.get('burner thread parser total cpu time', {}).get('time', 0.)

@@ -47,7 +47,7 @@ class Crawler:
         self.stopping = 0
         self.paused = 0
         self.no_test = no_test
-        self.next_minute = 0
+        self.next_minute = time.time() + 60
 
         try:
             # this works for the installed package
@@ -135,7 +135,6 @@ class Crawler:
         url_allowed.setup(self._seeds)
 
         self.max_workers = int(config.read('Crawl', 'MaxWorkers'))
-        self.remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
 
         self.workers = []
 
@@ -215,8 +214,7 @@ class Crawler:
         if self.crawllogfd:
             self.crawllogfd.close()
         if scheduler.qsize():
-            LOGGER.error('non-zero exit qsize=%d', scheduler.qsize())
-            stats.exitstatus = 1
+            LOGGER.warning('at exit, non-zero qsize=%d', scheduler.qsize())
 
     async def fetch_and_process(self, work):
         '''
@@ -312,11 +310,6 @@ class Crawler:
                         while self.paused:
                             await asyncio.sleep(1)
 
-                if self.remaining_url_budget is not None:
-                    self.remaining_url_budget -= 1
-                    if self.remaining_url_budget <= 0:
-                        raise asyncio.CancelledError
-
         except asyncio.CancelledError:
             pass
 
@@ -358,7 +351,7 @@ class Crawler:
         print interesting stuf, once a minute
         '''
         if time.time() > self.next_minute:
-            self.next_minute = time.time() + 30
+            self.next_minute = time.time() + 60
             stats.report()
 
     def update_cpu_stats(self):
