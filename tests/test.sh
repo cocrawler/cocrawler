@@ -42,7 +42,14 @@ if [ `warcio index Testing-000000-*.warc.gz | wc -l` != `warcio index testing.wa
     echo "warc index size changed on recompress"
     exit 1
 fi
+echo OK
 rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz testing.warc.gz
+
+echo
+echo test-scheduler
+echo
+$COVERAGE ../scripts/crawl.py --configfile test-scheduler.yml $NOCH
+rm -f robotslog.jsonl crawllog.jsonl
 
 echo
 echo test-wide

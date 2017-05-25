@@ -27,6 +27,7 @@ ridealong = {}
 awaiting_work = 0
 global_qps = None
 global_delta_t = None
+remaining_url_budget = None
 next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
 
 
@@ -35,10 +36,16 @@ def configure():
     global_qps = float(config.read('Crawl', 'MaxHostQPS'))
     global global_delta_t
     global_delta_t = 1./global_qps
+    global remaining_url_budget
+    remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
 
 
 async def get_work():
     while True:
+        global remaining_url_budget
+        if remaining_url_budget is not None and remaining_url_budget <= 0:
+            raise asyncio.CancelledError
+
         try:
             work = q.get_nowait()
         except asyncio.queues.QueueEmpty:
@@ -76,6 +83,9 @@ async def get_work():
             stats.stats_sum('scheduler short sleep', dt)
             with stats.coroutine_state('scheduler short sleep'):
                 await asyncio.sleep(dt)
+
+        if remaining_url_budget is not None:
+            remaining_url_budget -= 1
         return work
 
 

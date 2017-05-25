@@ -1,21 +1,20 @@
 Crawl:
-  MaxHostQPS: 10000  # essentially disables rate limiting
+  MaxHostQPS: 0.5
   MaxWorkers: 100
   MaxDepth: 100000
-  MaxCrawledUrls: 5000 # prevent a runaway
+  MaxCrawledUrls: 3
   UserAgent: cocrawler-test/0.01
 
 Plugins:
   url_allowed: SeedsHostname
 
 Multiprocess:
-  ParseInBurnerSize: 1 # make sure the burner thread gets used 100%
+  ParseInBurnerSize: 100000000 # make sure the burner thread gets used 0%
   Affinity: yes
 
 Seeds:
   Hosts:
   - http://test.website/ordinary/0
-  - http://test.website/ordinary/1 # makes the robots fetch interlock fire
 
 Logging:
 #  LoggingLevel: 3
@@ -24,17 +23,22 @@ Logging:
 
 UserAgent:
   Style: crawler
-  MyPrefix: test-deep
+  MyPrefix: test-scheduler
   URL: http://example.com/cocrawler.html
 
 Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
-    fetch URLs: 1000
-    fetch http code=200: 1000
+    fetch URLs: 4
+    fetch http code=200: 4
     max urls found on a page: 3
     robots denied: 1
-    warc r/r (prefix Testing): 1000
-    parse in burner thread: 1000
-    parse in main thread: 0
+    parse in burner thread: 0
+    parse in main thread: 4
+    warc r/r (prefix Testing): 0
+  StatsGE:
+    scheduler HOL sleep: 750
+    scheduler short sleep: 2
+    # currently the elapsed time is ~ 10 because it includes 3 second HOL sleeps
+    elapsed: 4
