@@ -44,7 +44,6 @@ class Crawler:
     def __init__(self, loop, load=None, no_test=False):
         self.loop = loop
         self.burner = burner.Burner(loop, 'parser')
-        self.burner_parseinburnersize = int(config.read('Multiprocess', 'ParseInBurnerSize'))
         self.stopping = 0
         self.paused = 0
         self.no_test = no_test

@@ -1,6 +1,6 @@
 Crawl:
-  MaxHostQPS: 50
-  MaxWorkers: 1000 # needs to be much bigger than MaxHostQPS to test the scheduler short and HOL sleep
+  MaxHostQPS: 10000  # essentially disables rate limiting
+  MaxWorkers: 100
   MaxDepth: 100000
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
@@ -9,7 +9,7 @@ Plugins:
   url_allowed: SeedsHostname
 
 Multiprocess:
-  ParseInBurnerSize: 1 # make sure the burner thread gets used
+  ParseInBurnerSize: 1 # make sure the burner thread gets used 100%
   Affinity: yes
 
 Seeds:
@@ -36,3 +36,4 @@ Testing:
     max urls found on a page: 3
     robots denied: 1
     warc r/r (prefix Testing): 1000
+    parse in burner thread: 1000

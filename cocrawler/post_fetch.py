@@ -131,11 +131,13 @@ async def post_200(f, url, priority, json_log, crawler):
         for k, v in resp_headers.items():
             resp_headers_list.append((k.lower(), v))
 
-        if len(body) > crawler.burner_parseinburnersize:
+        if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
+            stats.stats_sum('parse in burner thread', 1)
             links, embeds, sha1, facets = await crawler.burner.burn(
                 partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
                 url=url)
         else:
+            stats.stats_sum('parse in main thread', 1)
             with stats.coroutine_state('await main thread parser'):
                 links, embeds, sha1, facets = parse.do_burner_work_html(
                     body, f.body_bytes, resp_headers_list, url=url)
