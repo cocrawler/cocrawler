@@ -23,7 +23,7 @@
 
 import pickle
 import logging
-# import sortedcontainers - I wish!
+# import sortedcontainers - I wish! not sure if cachetools.ttl is as efficient
 import cachetools.ttl
 
 from . import config

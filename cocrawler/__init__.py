@@ -326,7 +326,6 @@ class Crawler:
         scheduler.save(self, f, )
 
     def load(self, f):
-        # XXX cleanup
         scheduler.load(self, f)
 
     def get_savefilename(self):
