@@ -8,38 +8,75 @@ remember last deadline for every host
 hand out work in order, increment deadlines
 
 '''
+import time
 import asyncio
 import pickle
 from collections import defaultdict
 from operator import itemgetter
+import logging
 
+import cachetools.ttl
+
+from . import config
 from . import stats
+
+LOGGER = logging.getLogger(__name__)
 
 q = asyncio.PriorityQueue()
 ridealong = {}
 awaiting_work = 0
+global_qps = None
+global_delta_t = None
+next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
 
-# XXX Crawler.ridealongmaxid is still in cocrawler/__init__
 
-# I don't think this is necessary
-# def init_queue(loop):
-#    global q
-#    q = asyncio.PriorityQueue(loop=loop)
+def configure():
+    global global_qps
+    global_qps = float(config.read('Crawl', 'MaxHostQPS'))
+    global global_delta_t
+    global_delta_t = 1./global_qps
 
 
 async def get_work():
-    try:
-        work = q.get_nowait()
-    except asyncio.queues.QueueEmpty:
-        # using awaiting_work to see if we're idle can race with sleeping q.get()
-        # putting it in an except clause makes sure the race is only run when
-        # the queue is actually empty.
-        global awaiting_work
-        awaiting_work += 1
-        with stats.coroutine_state('awaiting work'):
-            work = await q.get()
-        awaiting_work -= 1
-    return work
+    while True:
+        try:
+            work = q.get_nowait()
+        except asyncio.queues.QueueEmpty:
+            # using awaiting_work to see if all workers are idle can race with sleeping q.get()
+            # putting it in an except clause makes sure the race is only run when
+            # the queue is actually empty.
+            global awaiting_work
+            awaiting_work += 1
+            with stats.coroutine_state('awaiting work'):
+                work = await q.get()
+            awaiting_work -= 1
+
+        # when can this work be done?
+        surt = work[2]
+        surt_host, _, _ = surt.partition(')')
+        now = time.time()
+        if surt_host in next_fetch:
+            dt = max(next_fetch[surt_host] - now, 0.)
+        else:
+            dt = 0
+
+        # If it's more than 3 seconds in the future, we are HOL blocked
+        # requeue, sleep, repeat
+        if dt > 3.0:
+            q.put_nowait(work)
+            q.task_done()
+            stats.stats_sum('scheduler HOL sleep', dt)
+            with stats.coroutine_state('scheduler HOL sleep'):
+                await asyncio.sleep(3.0)
+                continue
+
+        # sleep and then do the work
+        next_fetch[surt_host] = now + dt + global_delta_t
+        if dt > 0:
+            stats.stats_sum('scheduler short sleep', dt)
+            with stats.coroutine_state('scheduler short sleep'):
+                await asyncio.sleep(dt)
+        return work
 
 
 def work_done():

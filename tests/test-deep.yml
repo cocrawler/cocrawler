@@ -1,4 +1,6 @@
 Crawl:
+  MaxHostQPS: 50
+  MaxWorkers: 1000 # needs to be much bigger than MaxHostQPS to test the scheduler short and HOL sleep
   MaxDepth: 100000
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01

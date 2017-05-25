@@ -121,6 +121,8 @@ class Crawler:
         else:
             self.warcwriter = None
 
+        scheduler.configure()
+
         if load is not None:
             self.load_all(load)
             LOGGER.info('after loading saved state, work queue is %r urls', scheduler.qsize())

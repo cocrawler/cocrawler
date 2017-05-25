@@ -183,6 +183,12 @@ def report():
         LOGGER.info('  Crawl rate is %.2f gigabits/s', sums['fetch bytes']/elapsed*8/1000000000.)
 
 
+def coroutine_report():
+    LOGGER.info('Coroutine state:')
+    for k, v in sorted(coroutine_states.items()):
+        LOGGER.info('  %s: %d', k, v)
+
+
 def stat_value(name):
     if name in maxes:
         return maxes[name]
