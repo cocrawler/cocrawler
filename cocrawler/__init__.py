@@ -221,7 +221,8 @@ class Crawler:
         Fetch and process a single url.
         '''
         priority, rand, surt = work
-        stats.stats_set('priority', priority+rand)
+        # when we're in the dregs of retried urls with high rand, don't exceed priority+1
+        stats.stats_set('priority', priority+min(rand, 0.99))
         ridealong = scheduler.get_ridealong(surt)
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
