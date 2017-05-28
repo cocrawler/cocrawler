@@ -184,3 +184,17 @@ def summarize():
     netloc_order = sorted(netlocs.items(), key=itemgetter(1), reverse=True)[0:10]
     for k, v in netloc_order:
         print('  {}: {}'.format(k, v))
+
+
+def update_priority(priority, rand):
+    '''
+    When a fail occurs, we get requeued with a bigger 'rand'.
+    This means that as we crawl in a given priority, we accumulate
+    more and more repeatedly failing pages as we get close to the
+    end of the queue. This function increments the priority if
+    rand is too large, kicking the can down the road.
+    '''
+    while rand > 1.2:
+        priority += 1
+        rand -= 1.0
+    return priority, rand

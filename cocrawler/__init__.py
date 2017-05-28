@@ -264,8 +264,9 @@ class Crawler:
             ridealong['priority'] = priority
             scheduler.set_ridealong(surt, ridealong)
             # increment random so that we don't immediately retry
-            extra = random.uniform(0, 0.5)
-            scheduler.requeue_work((priority, rand+extra, surt))
+            extra = random.uniform(0, 0.2)
+            priority, rand = scheduler.update_priority(priority, rand+extra)
+            scheduler.requeue_work((priority, rand, surt))
             return
 
         scheduler.del_ridealong(surt)
