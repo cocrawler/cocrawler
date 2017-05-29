@@ -3,15 +3,12 @@
 A bottle+gevent based webservice suitable for testing CoCrawler
 '''
 
-from gevent import monkey; monkey.patch_all()
-from bottle import route, run, request, abort, redirect
 import os
 import random
-import sys
-import signal
+from bottle import route, run, request, abort, redirect
+from gevent import monkey
+monkey.patch_all()
 
-#sys.path.insert(-1, os.path.normpath(os.path.join(__file__, "../../cocrawler/")))
-#import pdeathsig
 
 def generate_robots(host):
     if host.startswith('robotsdenyall'):
@@ -28,9 +25,11 @@ def generate_robots(host):
         return '%PDF-1.3\n'
     return 'User-Agent: *\nDisallow: /denied/\n'
 
+
 def generate_robots_302(host):
     host = 'do-not-redirect-me'
     return generate_robots(host)
+
 
 siteheader = '''<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -38,11 +37,13 @@ siteheader = '''<?xml version="1.0" encoding="UTF-8"?>
 sitelink = '<url><loc>/ordinary/{}</loc></url>\n'
 sitefooter = '</urlset>\n'
 
+
 def generate_sitemap(host):
     mylinks = ''
     for i in range(10):
         mylinks += sitelink.format(i)
     return siteheader + mylinks + sitefooter
+
 
 header = '''
 <html><head><title>Title</title></head><body>
@@ -59,6 +60,7 @@ trailer = '''
 </body></html>
 '''
 
+
 def generate_ordinary(name, host):
     # send 302.foo/ordinary/0 to 302.foo/ordinary/1, which will not be a redirect
     if host.startswith('302') and name <= 0:
@@ -66,16 +68,19 @@ def generate_ordinary(name, host):
     if host.startswith('503'):
         abort(503, 'Slow down, you move too fast. You got to make the morning last.\n')
 
-    mylinks = links.format((name+1)%1000, (2*name)%1000)
+    mylinks = links.format((name+1) % 1000, (2*name) % 1000)
     return header + mylinks + trailer
 
+
 def generate_ordinary_503s(name, host):
-    if random.randint(1, 9) < 2: # 10% chance
+    if random.randint(1, 9) < 2:  # 10% chance
         abort(503, 'Slow down, you move too fast. You got to make the morning last.\n')
     return generate_ordinary(name, host)
 
+
 def generate_code(code, host):
     abort(code, 'Here is your code {}; host is {}\n'.format(code, host))
+
 
 def generate_trap(name, host):
     mylinks = links.format(name+1, 2*name)
@@ -83,48 +88,53 @@ def generate_trap(name, host):
 
 # bottle stuff ------------------------------------------------------------
 
+
 @route('/hello')
 def hello():
     return 'Hello World! Host is {}\n'.format(request.get_header('Host'))
+
 
 @route('/robots.txt')
 def robots():
     host = request.get_header('Host')
     return generate_robots(host)
 
+
 @route('/robots.txt.302')
-def robots():
+def robots302():
     host = request.get_header('Host')
     return generate_robots_302(host)
+
 
 @route('/sitemap.xml')
 def sitemap():
     host = request.get_header('Host')
     return generate_sitemap(host)
 
+
 @route('/ordinary/<name:int>')
 def ordinary(name):
     host = request.get_header('Host')
     return generate_ordinary(name, host)
 
+
 @route('/ordinary-with-503s/<name:int>')
-def ordinary(name):
+def ordinary503(name):
     host = request.get_header('Host')
     return generate_ordinary_503s(name, host, ua)
+
 
 @route('/code/<code:int>')
 def code(code):
     host = request.get_header('Host')
     return generate_code(code, host)
 
+
 @route('/trap/<name:int>/')
 def trap(name):
     host = request.get_header('Host')
     return generate_trap(name, host)
 
-# not useful, because of the & in test.sh
-#pdeathsig.set_pdeathsig(signal.SIGTERM)
 
 port = os.getenv('PORT') or 8080
 run(host='localhost', port=port)
-
