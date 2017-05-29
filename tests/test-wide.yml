@@ -19,6 +19,7 @@ Logging:
   Crawllog: crawllog.jsonl
   Robotslog: robotslog.jsonl
   Facetlog: facetlog.jsonl
+  RejectedAddUrllog: rejectedaddurl.log
 
 UserAgent:
   Style: crawler
@@ -35,4 +36,3 @@ Testing:
     robots denied: 1
   StatsGE:
     fetch http code=503: 1
-

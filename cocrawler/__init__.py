@@ -125,6 +125,8 @@ class Crawler:
         if load is not None:
             self.load_all(load)
             LOGGER.info('after loading saved state, work queue is %r urls', scheduler.qsize())
+            LOGGER.info('at time of loading, stats are')
+            stats.report()
         else:
             self._seeds = seeds.expand_seeds(config.read('Seeds'))
             for s in self._seeds:
@@ -221,8 +223,10 @@ class Crawler:
         Fetch and process a single url.
         '''
         priority, rand, surt = work
+
         # when we're in the dregs of retried urls with high rand, don't exceed priority+1
         stats.stats_set('priority', priority+min(rand, 0.99))
+
         ridealong = scheduler.get_ridealong(surt)
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
@@ -390,6 +394,8 @@ class Crawler:
             self.workers = [w for w in self.workers if not w.done()]
             LOGGER.debug('%d workers remain', len(self.workers))
             if len(self.workers) == 0:
+                # this triggers if we've exhausted our url budget and all workers cancel themselves
+                # queue will likely not be empty in this case
                 LOGGER.warning('all workers exited, finishing up.')
                 break
 

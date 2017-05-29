@@ -2,7 +2,7 @@ Crawl:
   MaxHostQPS: 0.5
   MaxWorkers: 100
   MaxDepth: 100000
-  MaxCrawledUrls: 3
+  MaxCrawledUrls: 10
   UserAgent: cocrawler-test/0.01
 
 Plugins:
@@ -30,15 +30,14 @@ Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
-    fetch URLs: 4
-    fetch http code=200: 4
+    fetch URLs: 10
+    fetch http code=200: 10
     max urls found on a page: 3
     robots denied: 1
     parse in burner thread: 0
-    parse in main thread: 4
+    parse in main thread: 10
     warc r/r (prefix Testing): 0
   StatsGE:
-    scheduler HOL sleep: 750
+    scheduler HOL sleep: 20
     scheduler short sleep: 2
-    # currently the elapsed time is ~ 10 because it includes 3 second HOL sleeps
-    elapsed: 4
+    elapsed: 19

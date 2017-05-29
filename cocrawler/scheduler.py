@@ -42,10 +42,6 @@ def configure():
 
 async def get_work():
     while True:
-        global remaining_url_budget
-        if remaining_url_budget is not None and remaining_url_budget <= 0:
-            raise asyncio.CancelledError
-
         try:
             work = q.get_nowait()
         except asyncio.queues.QueueEmpty:
@@ -58,6 +54,12 @@ async def get_work():
                 work = await q.get()
             awaiting_work -= 1
 
+        global remaining_url_budget
+        if remaining_url_budget is not None and remaining_url_budget <= 0:
+            q.put_nowait(work)
+            q.task_done()
+            raise asyncio.CancelledError
+
         # when can this work be done?
         surt = work[2]
         surt_host, _, _ = surt.partition(')')
@@ -68,16 +70,16 @@ async def get_work():
             dt = 0
 
         # If it's more than 3 seconds in the future, we are HOL blocked
-        # requeue, sleep, repeat
+        # sleep, requeue, in the hopes that other threads will find doable work
         if dt > 3.0:
-            q.put_nowait(work)
-            q.task_done()
             stats.stats_sum('scheduler HOL sleep', dt)
             with stats.coroutine_state('scheduler HOL sleep'):
                 await asyncio.sleep(3.0)
+                q.put_nowait(work)
+                q.task_done()
                 continue
 
-        # sleep and then do the work
+        # Normal case: sleep if needed, and then do the work
         next_fetch[surt_host] = now + dt + global_delta_t
         if dt > 0:
             stats.stats_sum('scheduler short sleep', dt)
@@ -126,6 +128,9 @@ def done(worker_count):
 
 
 async def close():
+    global remaining_url_budget
+    if remaining_url_budget is not None and remaining_url_budget <= 0:
+        return
     await q.join()
 
 
@@ -163,6 +168,28 @@ def summarize():
     '''
     print('{} items in the crawl queue'.format(q.qsize()))
     print('{} items in the ridealong dict'.format(len(ridealong)))
+
+    if q.qsize() != len(ridealong):
+        LOGGER.error('Different counts for queue size and ridealong size')
+        q_keys = set()
+        try:
+            while True:
+                priority, rand, surt = q.get_nowait()
+                q_keys.add(surt)
+        except asyncio.queues.QueueEmpty:
+            pass
+        ridealong_keys = set(ridealong.keys())
+        extra_q = q_keys.difference(ridealong_keys)
+        extra_r = ridealong_keys.difference(q_keys)
+        if extra_q:
+            print('Extra urls in queues and not ridealong')
+            print(extra_q)
+        if extra_r:
+            print('Extra urls in ridealong and not queues')
+            print(extra_r)
+            for r in extra_r:
+                print('  ', r, ridealong[r])
+        raise ValueError('cannot continue, I just destroyed the queue')
 
     urls_with_tries = 0
     priority_count = defaultdict(int)
