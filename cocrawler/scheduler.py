@@ -142,7 +142,6 @@ def save(crawler, f):
     # XXX make this more self-describing
     # XXX push down into scheduler.py
     pickle.dump('Put the XXX header here', f)  # XXX date, conf file name, conf file checksum
-    pickle.dump(crawler.ridealongmaxid, f)
     pickle.dump(s.ridealong, f)
     pickle.dump(crawler._seeds, f)
     count = s.q.qsize()
@@ -154,7 +153,6 @@ def save(crawler, f):
 
 def load(crawler, f):
     header = pickle.load(f)  # XXX check that this is a good header... log it
-    crawler.ridealongmaxid = pickle.load(f)
     s.ridealong = pickle.load(f)
     crawler._seeds = pickle.load(f)
     s.q = asyncio.PriorityQueue()

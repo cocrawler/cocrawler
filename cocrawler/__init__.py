@@ -83,8 +83,6 @@ class Crawler:
             cookie_jar = None  # which means a normal cookie jar
         self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar)
 
-        self.ridealongmaxid = 1  # XXX switch this to using url_canon as the id
-
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
 
