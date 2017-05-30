@@ -56,6 +56,10 @@ class Robots:
         else:
             self.robotslogfd = None
 
+    def __del__(self):
+        if self.magic is not None:
+            self.magic.close()
+
     async def check(self, url, headers=None, proxy=None, mock_robots=None):
         schemenetloc = url.urlparse.scheme + '://' + url.urlparse.netloc
 

@@ -141,6 +141,9 @@ class Crawler:
         LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
         LOGGER.info('Touch ~/PAUSECRAWLER.%d to pause the crawler.', os.getpid())
 
+    def __del__(self):
+        self.connector.close()
+
     @property
     def seeds(self):
         return self._seeds
