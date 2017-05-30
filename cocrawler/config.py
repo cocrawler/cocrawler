@@ -32,8 +32,7 @@ REST: {}
 
 Crawl:
   MaxDepth: 3
-  MaxTries: 4 # outer retry loop
-  MaxSubTries: 2 # inner retry loop
+  MaxTries: 4
   PageTimeout: 30
   RetryTimeout: 5
   MaxWorkers: 10

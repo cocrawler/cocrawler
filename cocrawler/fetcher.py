@@ -6,7 +6,7 @@ Assumes robots checks have already been done.
 Supports server mocking; proxies are not yet implemented.
 
 Success returns response object and response bytes (which were already
-read in order to shake out all potential exceptions.)
+read in order to shake out all potential network-related exceptions.)
 
 Failure returns enough details for the caller to do something smart:
 503, other 5xx, DNS fail, connect timeout, error between connect and
@@ -26,7 +26,6 @@ import aiohttp
 import aiodns
 
 from . import stats
-from . import dns
 from . import config
 
 LOGGER = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ LOGGER = logging.getLogger(__name__)
 # XXX should be a policy plugin
 # XXX cookie handling -- no way to have a cookie jar other than at session level
 #    need to directly manipulate domain-level cookie jars to get cookies
-#    CookieJar.add_cookie_header(request) is tied to urlllib.request, how does aiohttp use it?!
+#    CookieJar.add_cookie_header(request) is tied to urlllib.request, how does aiohttp use it?! probably duck
 def apply_url_policies(url, ua):
     headers = {}
     proxy = None
@@ -52,7 +51,7 @@ def apply_url_policies(url, ua):
         mock_url = urllib.parse.urlunparse((scheme, netloc, path, params, query, fragment))
         mock_robots = url.urlparse.scheme + '://' + test_host + '/robots.txt'
 
-    # XXX set header Upgrade-Insecure-Requests: 1 ??
+    # XXX set header Upgrade-Insecure-Requests: 1 ?? config option
 
     return headers, proxy, mock_url, mock_robots
 
@@ -63,9 +62,7 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
 
 async def fetch(url, session,
                 headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
-    maxsubtries = int(config.read('Crawl', 'MaxSubTries'))
     pagetimeout = float(config.read('Crawl', 'PageTimeout'))
-    retrytimeout = float(config.read('Crawl', 'RetryTimeout'))
 
     if proxy:  # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
@@ -74,82 +71,53 @@ async def fetch(url, session,
         # XXX use proxy history to decide not to use some
         raise ValueError('not yet implemented')
 
-    subtries = 0
     last_exception = None
     response = None
-    iplist = []
 
-    while subtries < maxsubtries:
-        subtries += 1
-        try:
-            t0 = time.time()
-            last_exception = None
+    try:
+        t0 = time.time()
+        last_exception = None
 
-            if len(iplist) == 0:
-                iplist = await dns.prefetch_dns(url, mock_url, session)
+        with stats.coroutine_state('fetcher fetching'):
+            with aiohttp.Timeout(pagetimeout):
+                response = None
+                response = await session.get(mock_url or url.url,
+                                             allow_redirects=allow_redirects,
+                                             headers=headers)
+                t_first_byte = '{:.3f}'.format(time.time() - t0)
+                if stats_me:
+                    stats.record_a_latency('fetcher fetching', t0, url=url)
 
-            with stats.coroutine_state('fetcher fetching'):
-                with aiohttp.Timeout(pagetimeout):
-                    response = None
-                    response = await session.get(mock_url or url.url,
-                                                 allow_redirects=allow_redirects,
-                                                 headers=headers)
-                    t_first_byte = '{:.3f}'.format(time.time() - t0)
-                    if stats_me:
-                        stats.record_a_latency('fetcher fetching', t0, url=url)
+                # reddit.com is an example of a CDN-related SSL fail
+                # XXX when we retry, if local_addr was a list, switch to a different source IP
+                #   (change out the TCPConnector)
 
-                    # XXX json_log tries?
-                    # reddit.com is an example of a CDN-related SSL fail
-                    # XXX when we retry, if local_addr was a list, switch to a different source IP
-                    #   (change out the TCPConnector)
+                # fully receive headers and body.
+                # XXX if we want to limit bytecount, do it here?
+                body_bytes = await response.read()
+                t_last_byte = '{:.3f}'.format(time.time() - t0)
+    except (aiohttp.ClientError, aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
+        last_exception = repr(e)
+    except (ssl.CertificateError, ValueError, AttributeError) as e:
+        # Value Error Location: https:/// 'Host could not be detected'
+        # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
+        last_exception = repr(e)
+    except asyncio.CancelledError:
+        raise
+    except Exception as e:
+        last_exception = repr(e)
+        LOGGER.info('Saw surprising exception in fetcher')
+        traceback.print_exc()
 
-                    # fully receive headers and body.
-                    # XXX if we want to limit bytecount, do it here?
-                    body_bytes = await response.read()
-                    t_last_byte = '{:.3f}'.format(time.time() - t0)
+    if last_exception:
+        LOGGER.debug('we failed, the last exception is %s', last_exception)
+        return FetcherResponse(None, None, None, None, None, last_exception)
 
-            if len(iplist) == 0:
-                LOGGER.info('surprised that no-ip-address fetch of %s succeeded', url.urlparse.netloc)
+    fr = FetcherResponse(response, body_bytes, response.request_info.headers,
+                         t_first_byte, t_last_byte, None)
 
-            # break only if we succeeded. 5xx = retry, exception = retry
-            if response.status < 500:
-                break
-
-            LOGGER.info('will retry a %d for %s', response.status, url.url)
-
-        except (aiohttp.ClientError, aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
-            last_exception = repr(e)
-            LOGGER.debug('we sub-failed once, url is %s, exception is %s', url.url, last_exception)
-        except (ssl.CertificateError, ValueError, AttributeError) as e:
-            # ValueError = 'Can redirect only to http or https'
-            #  (XXX BUG in aiohttp: not case blind comparison - no bug opened yet)
-            # Value Error Location: https:/// 'Host could not be detected'
-            # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
-            # XXX ssl.CertificateErrors are not yet propagating -- missing a Raise
-            # https://github.com/python/asyncio/issues/404
-            last_exception = repr(e)
-            LOGGER.debug('we choose to fail, url is %s, exception is %s', url.url, last_exception)
-            subtries += maxsubtries
-            continue  # fall out of the loop as if we exhausted subtries
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:
-            last_exception = repr(e)
-            traceback.print_exc()
-            LOGGER.info('we sub-failed once: url is %s, exception is %s',
-                        url.url, last_exception)
-
-        # treat all 5xx somewhat similar to a 503: slow down and retry
-        # also doing this slow down for any exception
-        # XXX record 5xx so that everyone else slows down, too (politeness)
-        with stats.coroutine_state('fetcher retry sleep'):
-            await asyncio.sleep(retrytimeout)
-
-    else:
-        if last_exception:
-            LOGGER.debug('we failed, the last exception is %s', last_exception)
-            return FetcherResponse(None, None, None, None, None, last_exception)
-        # fall through for the case of response.status >= 500
+    if response.status >= 500:
+        LOGGER.debug('server returned http status %d', response.status)
 
     stats.stats_sum('fetch bytes', len(body_bytes) + len(response.raw_headers))
 
@@ -158,13 +126,11 @@ async def fetch(url, session,
         stats.stats_sum('fetch http code=' + str(response.status), 1)
 
     # checks after fetch:
-    # hsts? if ssl, check strict-transport-security header,
-    #   remember max-age=foo part., other stuff like includeSubDomains
+    # hsts header?
+    # if ssl, check strict-transport-security header, remember max-age=foo part., other stuff like includeSubDomains
     # did we receive cookies? was the security bit set?
-    # generate warc here? both normal and robots fetches go through here.
 
-    return FetcherResponse(response, body_bytes, response.request_info.headers,
-                           t_first_byte, t_last_byte, None)
+    return fr
 
 
 def upgrade_scheme(url):

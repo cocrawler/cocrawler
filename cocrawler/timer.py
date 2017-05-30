@@ -41,7 +41,6 @@ fast_stats = [
     {'name': 'await burner thread parser'},
     {'name': 'await main thread parser'},
     {'name': 'fetcher fetching'},
-    {'name': 'fetcher retry sleep'},
     {'name': 'fetching/checking robots'},
     {'name': 'robots collision sleep'},
     {'name': 'fetcher DNS lookup'},

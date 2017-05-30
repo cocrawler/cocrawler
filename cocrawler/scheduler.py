@@ -35,6 +35,7 @@ class Scheduler:
         self.delta_t = None
         self.remaining_url_budget = None
         self.next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
+        self.frozen_until = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds is longer than our typical delay
 
 
 s = Scheduler()
