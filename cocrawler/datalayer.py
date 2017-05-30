@@ -45,14 +45,13 @@ class Datalayer:
     # we need to remember all queued urls.
 
     def add_seen_url(self, url):
-        self.seen_urls.add(url.url)  # should be a SURT
+        self.seen_urls.add(url.surt)
 
     def seen_url(self, url):
         # do this with a honking bloom filter?
-        # surt the url?
         # notice when an url without cgi args is popular, maybe probe to
         # see if we can guess tracking args vs real ones.
-        return url.url in self.seen_urls
+        return url.surt in self.seen_urls
 
     # collections.TTLCache is built on collections.OrderedDict and not sortedcontainers :-(
     # so it may need replacing if someone wants to do a survey crawl
