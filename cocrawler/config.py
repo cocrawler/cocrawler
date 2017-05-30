@@ -55,6 +55,8 @@ Fetcher:
   Nameservers:
   - 8.8.8.8
   - 8.8.4.4
+  CrawlLocalhost: False  # crawl ips that resolve to localhost
+  CrawlPrivate: False  # crawl ips that resolve to private networks (e.g. 10.*/8)
 
 #CarbonStats:
 #  Server: localhost

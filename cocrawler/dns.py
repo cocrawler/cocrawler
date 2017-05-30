@@ -10,6 +10,7 @@ import aiohttp
 import aiodns
 
 from . import stats
+from . import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,13 +19,15 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
     '''
     A dns wrapper that applies our policies
 
-    TODO: hook up config to policies
-    TODO: Warc the lookup
+    TODO: Warc
     TODO: Use a different call so we can get the real TTL for the warc
+    TODO: clear the cache so it's not unbounded in size
     TODO: use the real TTL?
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._crawllocalhost = config.read(('Fetcher', 'CrawlLocalhost')) or False
+        self._crawlprivate = config.read(('Fetcher', 'CrawlPrivate')) or False
 
     async def resolve(self, *args, **kwargs):
         addrs = await super().resolve(*args, **kwargs)
@@ -35,9 +38,9 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
                 ip = ipaddress.ip_address(a.host)
             except ValueError:
                 continue
-            if ip.is_localhost:
+            if not self._crawllocalhost and ip.is_localhost:
                 continue
-            if ip.is_private:
+            if not self._crawlprivate and ip.is_private:
                 continue
             ret.append(a)
 
