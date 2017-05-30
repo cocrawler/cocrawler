@@ -72,6 +72,7 @@ class Robots:
                                              headers=headers, proxy=proxy)
 
         if robots is None:
+            LOGGER.debug('no robots information found for %s', schemenetloc)
             self.jsonlog(schemenetloc, {'error': 'unable to find robots information', 'action': 'deny'})
             stats.stats_sum('robots denied - robots not found', 1)
             stats.stats_sum('robots denied', 1)
@@ -92,9 +93,11 @@ class Robots:
             check = robots.is_allowed(self.robotname, pathplus)
 
         if check:
+            LOGGER.debug('robots allowed for %s', pathplus)
             stats.stats_sum('robots allowed', 1)
             return True
 
+        LOGGER.debug('robots denied for %s', pathplus)
         self.jsonlog(schemenetloc, {'url': pathplus, 'action': 'deny'})
         stats.stats_sum('robots denied', 1)
         return False
