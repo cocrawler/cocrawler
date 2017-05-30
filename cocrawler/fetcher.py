@@ -96,16 +96,25 @@ async def fetch(url, session,
                 # XXX if we want to limit bytecount, do it here?
                 body_bytes = await response.read()
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
-    except (aiohttp.ClientError, aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
+    except asyncio.TimeoutError as e:
+        stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
-    except (ssl.CertificateError, ValueError, AttributeError) as e:
+    except (aiohttp.ClientError, aiodns.error.DNSError, RuntimeError) as e:
+        stats.stats_sum('fetch network error', 1)
+        last_exception = repr(e)
+    except ssl.CertificateError as e:
+        stats.stats_sum('fetch SSL error', 1)
+        last_exception = repr(e)
+    except (ValueError, AttributeError) as e:
         # Value Error Location: https:/// 'Host could not be detected'
         # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
+        stats.stats_sum('fetch other error', 1)
         last_exception = repr(e)
     except asyncio.CancelledError:
         raise
     except Exception as e:
         last_exception = repr(e)
+        stats.stats_sum('fetch surprising error', 1)
         LOGGER.info('Saw surprising exception in fetcher')
         traceback.print_exc()
 
