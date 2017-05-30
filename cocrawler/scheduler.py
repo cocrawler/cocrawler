@@ -132,15 +132,11 @@ def done(worker_count):
 
 
 async def close():
-    # XXX can this if be deleted?
-    if s.remaining_url_budget is not None and s.remaining_url_budget <= 0:
-        return
     await s.q.join()
 
 
 def save(crawler, f):
     # XXX make this more self-describing
-    # XXX push down into scheduler.py
     pickle.dump('Put the XXX header here', f)  # XXX date, conf file name, conf file checksum
     pickle.dump(s.ridealong, f)
     pickle.dump(crawler._seeds, f)
