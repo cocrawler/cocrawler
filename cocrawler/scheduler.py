@@ -22,50 +22,54 @@ from . import stats
 
 LOGGER = logging.getLogger(__name__)
 
-q = asyncio.PriorityQueue()
-ridealong = {}
-awaiting_work = 0
-global_qps = None
-global_delta_t = None
-remaining_url_budget = None
-next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
+
+class Scheduler:
+    '''
+    Singleton to hold our globals. (Cue argument about singletons.)
+    '''
+    def __init__(self):
+        self.q = asyncio.PriorityQueue()
+        self.ridealong = {}
+        self.awaiting_work = 0
+        self.maxhostqps = None
+        self.delta_t = None
+        self.remaining_url_budget = None
+        self.next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
+
+
+s = Scheduler()
 
 
 def configure():
-    global global_qps
-    global_qps = float(config.read('Crawl', 'MaxHostQPS'))
-    global global_delta_t
-    global_delta_t = 1./global_qps
-    global remaining_url_budget
-    remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
+    s.maxhostqps = float(config.read('Crawl', 'MaxHostQPS'))
+    s.delta_t = 1./s.maxhostqps
+    s.remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
 
 
 async def get_work():
     while True:
         try:
-            work = q.get_nowait()
+            work = s.q.get_nowait()
         except asyncio.queues.QueueEmpty:
-            # using awaiting_work to see if all workers are idle can race with sleeping q.get()
+            # using awaiting_work to see if all workers are idle can race with sleeping s.q.get()
             # putting it in an except clause makes sure the race is only run when
             # the queue is actually empty.
-            global awaiting_work
-            awaiting_work += 1
+            s.awaiting_work += 1
             with stats.coroutine_state('awaiting work'):
-                work = await q.get()
-            awaiting_work -= 1
+                work = await s.q.get()
+            s.awaiting_work -= 1
 
-        global remaining_url_budget
-        if remaining_url_budget is not None and remaining_url_budget <= 0:
-            q.put_nowait(work)
-            q.task_done()
+        if s.remaining_url_budget is not None and s.remaining_url_budget <= 0:
+            s.q.put_nowait(work)
+            s.q.task_done()
             raise asyncio.CancelledError
 
         # when can this work be done?
         surt = work[2]
         surt_host, _, _ = surt.partition(')')
         now = time.time()
-        if surt_host in next_fetch:
-            dt = max(next_fetch[surt_host] - now, 0.)
+        if surt_host in s.next_fetch:
+            dt = max(s.next_fetch[surt_host] - now, 0.)
         else:
             dt = 0
 
@@ -75,24 +79,24 @@ async def get_work():
             stats.stats_sum('scheduler HOL sleep', dt)
             with stats.coroutine_state('scheduler HOL sleep'):
                 await asyncio.sleep(3.0)
-                q.put_nowait(work)
-                q.task_done()
+                s.q.put_nowait(work)
+                s.q.task_done()
                 continue
 
         # Normal case: sleep if needed, and then do the work
-        next_fetch[surt_host] = now + dt + global_delta_t
+        s.next_fetch[surt_host] = now + dt + s.delta_t
         if dt > 0:
             stats.stats_sum('scheduler short sleep', dt)
             with stats.coroutine_state('scheduler short sleep'):
                 await asyncio.sleep(dt)
 
-        if remaining_url_budget is not None:
-            remaining_url_budget -= 1
+        if s.remaining_url_budget is not None:
+            s.remaining_url_budget -= 1
         return work
 
 
 def work_done():
-    q.task_done()
+    s.q.task_done()
 
 
 def requeue_work(work):
@@ -100,38 +104,38 @@ def requeue_work(work):
     When we requeue work after a failure, we add 0.5 to the rand;
     eventually do that in here
     '''
-    q.put_nowait(work)
+    s.q.put_nowait(work)
 
 
 def queue_work(work):
-    q.put_nowait(work)
+    s.q.put_nowait(work)
 
 
 def qsize():
-    return q.qsize()
+    return s.q.qsize()
 
 
 def set_ridealong(ridealongid, work):
-    ridealong[ridealongid] = work
+    s.ridealong[ridealongid] = work
 
 
 def get_ridealong(ridealongid):
-    return ridealong[ridealongid]
+    return s.ridealong[ridealongid]
 
 
 def del_ridealong(ridealongid):
-    del ridealong[ridealongid]
+    del s.ridealong[ridealongid]
 
 
 def done(worker_count):
-    return awaiting_work == worker_count and q.qsize() == 0
+    return s.awaiting_work == worker_count and s.q.qsize() == 0
 
 
 async def close():
-    global remaining_url_budget
-    if remaining_url_budget is not None and remaining_url_budget <= 0:
+    # XXX can this if be deleted?
+    if s.remaining_url_budget is not None and s.remaining_url_budget <= 0:
         return
-    await q.join()
+    await s.q.join()
 
 
 def save(crawler, f):
@@ -139,46 +143,44 @@ def save(crawler, f):
     # XXX push down into scheduler.py
     pickle.dump('Put the XXX header here', f)  # XXX date, conf file name, conf file checksum
     pickle.dump(crawler.ridealongmaxid, f)
-    pickle.dump(ridealong, f)
+    pickle.dump(s.ridealong, f)
     pickle.dump(crawler._seeds, f)
-    count = q.qsize()
+    count = s.q.qsize()
     pickle.dump(count, f)
     for _ in range(0, count):
-        work = q.get_nowait()
+        work = s.q.get_nowait()
         pickle.dump(work, f)
 
 
 def load(crawler, f):
     header = pickle.load(f)  # XXX check that this is a good header... log it
     crawler.ridealongmaxid = pickle.load(f)
-    global ridealong
-    ridealong = pickle.load(f)
+    s.ridealong = pickle.load(f)
     crawler._seeds = pickle.load(f)
-    global q
-    q = asyncio.PriorityQueue()
+    s.q = asyncio.PriorityQueue()
     count = pickle.load(f)
     for _ in range(0, count):
         work = pickle.load(f)
-        q.put_nowait(work)
+        s.q.put_nowait(work)
 
 
 def summarize():
     '''
     Print a human-readable summary of what's in the queues
     '''
-    print('{} items in the crawl queue'.format(q.qsize()))
-    print('{} items in the ridealong dict'.format(len(ridealong)))
+    print('{} items in the crawl queue'.format(s.q.qsize()))
+    print('{} items in the ridealong dict'.format(len(s.ridealong)))
 
-    if q.qsize() != len(ridealong):
+    if s.q.qsize() != len(s.ridealong):
         LOGGER.error('Different counts for queue size and ridealong size')
         q_keys = set()
         try:
             while True:
-                priority, rand, surt = q.get_nowait()
+                priority, rand, surt = s.q.get_nowait()
                 q_keys.add(surt)
         except asyncio.queues.QueueEmpty:
             pass
-        ridealong_keys = set(ridealong.keys())
+        ridealong_keys = set(s.ridealong.keys())
         extra_q = q_keys.difference(ridealong_keys)
         extra_r = ridealong_keys.difference(q_keys)
         if extra_q:
@@ -188,13 +190,13 @@ def summarize():
             print('Extra urls in ridealong and not queues')
             print(extra_r)
             for r in extra_r:
-                print('  ', r, ridealong[r])
+                print('  ', r, s.ridealong[r])
         raise ValueError('cannot continue, I just destroyed the queue')
 
     urls_with_tries = 0
     priority_count = defaultdict(int)
     netlocs = defaultdict(int)
-    for k, v in ridealong.items():
+    for k, v in s.ridealong.items():
         if 'tries' in v:
             urls_with_tries += 1
         priority_count[v['priority']] += 1
