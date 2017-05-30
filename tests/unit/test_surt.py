@@ -139,6 +139,7 @@ def test_surt():
     # end of tests drawn from github.com/internetarchive/surt
 
     # from Sebastian Nagel of Common Crawl, but with my preferred utf8 policy
+    # not yet implemented: normalization of latin-1,utf-8 in the path
     #assert surt.surt("http://example.com/city-of-M%FCnchen.html") == 'com,example)/city-of-m%c3%bcnchen.html'
 
     # and unique to CoCrawler (so far)
