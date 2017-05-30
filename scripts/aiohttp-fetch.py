@@ -28,19 +28,20 @@ async def main(urls):
                 print('')
                 continue
 
-            if hasattr(response, 'request'):  # my aiohttp extension
-                print('final request headers:')
-                for k, v in response.request.headers.items():
-                    print(k+':', v)
-                print('')
-            else:
-                print('greg\'s hack to aiohttp not present, request headers not available')
-
-            for h in response.history:
-                print(h)
+            print('final request headers:')
+            for k, v in response.request_info.headers.items():
+                print(k+':', v)
             print('')
-            for h in response.raw_headers:
-                line = h[0]+b': '+h[1]
+
+            if response.history:
+                print('response history:')
+                for h in response.history:
+                    print(h)
+                print('')
+
+            print('response headers:')
+            for k, v in response.raw_headers:
+                line = k+b': '+v
                 print(line.decode(errors='ignore'))
             print('')
 

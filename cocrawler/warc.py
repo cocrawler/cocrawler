@@ -1,15 +1,11 @@
 '''
 Wrappers for WARC stuff
 
-TODO
-
-best-practice:
-WARC-Warcinfo-ID for every record
-computation:
-stick pre-computed digest into WARC-Payload-Digest
-
-XXX BUG we are not getting the full request headers because the request object is immediately destroyed by aiohttp
-
+TODOs:
+ best-practice:
+  WARC-Warcinfo-ID for every record
+ computation:
+  stick pre-computed digest into WARC-Payload-Digest
 '''
 
 import os

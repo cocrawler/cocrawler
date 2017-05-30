@@ -163,7 +163,8 @@ async def fetch(url, session,
     # did we receive cookies? was the security bit set?
     # generate warc here? both normal and robots fetches go through here.
 
-    return FetcherResponse(response, body_bytes, headers, t_first_byte, t_last_byte, None)
+    return FetcherResponse(response, body_bytes, response.request_info.headers,
+                           t_first_byte, t_last_byte, None)
 
 
 def upgrade_scheme(url):
