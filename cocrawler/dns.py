@@ -6,11 +6,59 @@ import logging
 import urllib
 import ipaddress
 
+import aiohttp
 import aiodns
 
 from . import stats
 
 LOGGER = logging.getLogger(__name__)
+
+
+class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
+    '''
+    A dns wrapper that applies our policies
+
+    TODO: hook up config to policies
+    TODO: Warc the lookup
+    TODO: Use a different call so we can get the real TTL for the warc
+    TODO: use the real TTL?
+    '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    async def resolve(self, *args, **kwargs):
+        addrs = await super().resolve(*args, **kwargs)
+        ret = []
+
+        for a in addrs:
+            try:
+                ip = ipaddress.ip_address(a.host)
+            except ValueError:
+                continue
+            if ip.is_localhost:
+                continue
+            if ip.is_private:
+                continue
+            ret.append(a)
+
+        if len(addrs) != len(ret):
+            LOGGER.info('threw out some ip addresses for %r', args)
+
+        return ret
+
+
+resolver = None
+
+
+def get_resolver_wrapper(**kwargs):
+    global resolver
+    resolver = CoCrawler_AsyncResolver(**kwargs)
+    return resolver
+
+
+'''
+Code below is not actually used by crawling
+'''
 
 
 async def prefetch_dns(url, mock_url, session):
@@ -122,7 +170,7 @@ def ip_to_geoip(ip):
     #   anonymous $call, looks like it's mostly useful for client IPs not webserver IPs
     # Free data: GeoLite2 Country and City, ASN (less accurate geos)
 
-    # cleanup of country_name:
+    # suggested cleanup of country_name:
     #  s/,( United)? Republic of$//
     #  s/Russian Federation/Russia/
     #  s/\bOf\b/of/
