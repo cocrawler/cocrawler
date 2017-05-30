@@ -71,15 +71,7 @@ class Robots:
             robots = await self.fetch_robots(schemenetloc, mock_robots,
                                              headers=headers, proxy=proxy)
 
-        if robots is None:
-            LOGGER.debug('no robots information found for %s', schemenetloc)
-            self.jsonlog(schemenetloc, {'error': 'unable to find robots information', 'action': 'deny'})
-            stats.stats_sum('robots denied - robots not found', 1)
-            stats.stats_sum('robots denied', 1)
-            return False
-
-#        if robots.sitemaps:
-#           ...
+        # XXX I don't know why I'm building this up, shouldn't I use url.url?
         if url.urlparse.path:
             pathplus = url.urlparse.path
         else:
@@ -89,15 +81,25 @@ class Robots:
         if url.urlparse.query:
             pathplus += '?' + url.urlparse.query
 
+        if robots is None:
+            LOGGER.debug('no robots information found for %s, failing %s/%s', schemenetloc, schemenetloc, pathplus)
+            self.jsonlog(schemenetloc, {'error': 'unable to find robots information', 'action': 'deny'})
+            stats.stats_sum('robots denied - robots not found', 1)
+            stats.stats_sum('robots denied', 1)
+            return False
+
+#        if robots.sitemaps:
+#           ...
+
         with stats.record_burn('robots is_allowed', url=schemenetloc):
             check = robots.is_allowed(self.robotname, pathplus)
 
         if check:
-            LOGGER.debug('robots allowed for %s', pathplus)
+            LOGGER.debug('robots allowed for %s/%s', schemenetloc, pathplus)
             stats.stats_sum('robots allowed', 1)
             return True
 
-        LOGGER.debug('robots denied for %s', pathplus)
+        LOGGER.debug('robots denied for %s/%s', schemenetloc, pathplus)
         self.jsonlog(schemenetloc, {'url': pathplus, 'action': 'deny'})
         stats.stats_sum('robots denied', 1)
         return False
