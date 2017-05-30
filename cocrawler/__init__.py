@@ -32,6 +32,7 @@ from . import cookies
 from . import post_fetch
 from . import config
 from .warc import CCWARCWriter
+from . import dns
 
 LOGGER = logging.getLogger(__name__)
 __title__ = 'cocrawler'
@@ -59,10 +60,7 @@ class Crawler:
         self.robotname, self.ua = useragent.useragent(self.version)
 
         ns = config.read('Fetcher', 'Nameservers')
-        if ns:
-            resolver = aiohttp.resolver.AsyncResolver(nameservers=ns)
-        else:
-            resolver = None
+        resolver = dns.get_resolver_wrapper(loop=loop, nameservers=ns)
 
         proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:
@@ -71,7 +69,9 @@ class Crawler:
         local_addr = config.read('Fetcher', 'LocalAddr')
         # TODO: if local_addr is a list, make up an array of TCPConnecter objects, and rotate
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver, 'limit': None}
+        self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver,
+                            'ttl_dns_cache': 3600*8,  # this is a maximum TTL XXX need to call .clear occasionally
+                            'force_close': True, 'limit': None}
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option
@@ -175,13 +175,13 @@ class Crawler:
             self.log_rejected_add_url(url)
             return
         if not seed and not url_allowed.url_allowed(url):
-            LOGGER.debug('url %r was rejected by url_allow.', url)
+            LOGGER.debug('url %s was rejected by url_allow.', url.url)
             stats.stats_sum('rejected by url_allowed', 1)
             self.log_rejected_add_url(url)
             return
         # end allow/deny plugin
 
-        LOGGER.debug('actually adding url %r', url.url)
+        LOGGER.debug('actually adding url %s, surt %s', url.url, url.surt)
         if seed:
             stats.stats_sum('added seeds', 1)
         else:
