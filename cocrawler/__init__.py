@@ -201,7 +201,7 @@ class Crawler:
 
         scheduler.queue_work((priority, rand, url.surt))
 
-        self.datalayer.add_seen_url(url)  # XXX surt
+        self.datalayer.add_seen_url(url)
         return 1
 
     def cancel_workers(self):
