@@ -71,7 +71,7 @@ class Crawler:
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
         self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver,
                             'ttl_dns_cache': 3600*8,  # this is a maximum TTL XXX need to call .clear occasionally
-                            'force_close': True, 'limit': None}
+                            'force_close': True, 'limit': 0}
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option
