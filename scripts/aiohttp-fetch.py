@@ -12,44 +12,58 @@ from traceback import print_exc
 
 import asyncio
 import aiohttp
+import aiohttp.connector
 
 
 async def main(urls):
+    connector = aiohttp.connector.TCPConnector(use_dns_cache=True)
+    session = aiohttp.ClientSession(connector=connector)
+
     for url in urls:
         if not url.startswith('http'):
             url = 'http://' + url
-        async with aiohttp.ClientSession() as session:
-            print(url, '\n')
-            try:
-                response = await session.get(url, allow_redirects=True)
-            except Exception as e:
-                print('Saw an exception thrown by session.get:')
-                print_exc()
-                print('')
-                continue
 
-            print('final request headers:')
-            for k, v in response.request_info.headers.items():
-                print(k+':', v)
+        print(url, '\n')
+        try:
+            response = await session.get(url, allow_redirects=True)
+        except Exception as e:
+            print('Saw an exception thrown by session.get:')
+            print_exc()
+            print('')
+            continue
+
+        print('dns:')
+        for k, v in connector.cached_hosts.items():
+            print('  ', k)  # or k[0]?
+            for rec in v:
+                print('    ', rec.get('host'))
+
+        print('')
+
+        print('final request headers:')
+        for k, v in response.request_info.headers.items():
+            print(k+':', v)
+        print('')
+
+        if response.history:
+            print('response history:')
+            for h in response.history:
+                print('  ', h)
             print('')
 
-            if response.history:
-                print('response history:')
-                for h in response.history:
-                    print(h)
-                print('')
+        print('response headers:')
+        for k, v in response.raw_headers:
+            line = k+b': '+v
+            print('  ', line.decode(errors='ignore'))
+        print('')
 
-            print('response headers:')
-            for k, v in response.raw_headers:
-                line = k+b': '+v
-                print(line.decode(errors='ignore'))
-            print('')
+        try:
+            #print(await response.text(errors='ignore'))
+            pass
+        except Exception as e:
+            print_exc()
 
-            try:
-                #print(await response.text(errors='ignore'))
-                pass
-            except Exception as e:
-                print_exc()
+    session.close()
 
 loop = asyncio.get_event_loop()
 
