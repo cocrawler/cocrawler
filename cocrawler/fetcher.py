@@ -92,21 +92,25 @@ async def fetch(url, session,
                 # XXX when we retry, if local_addr was a list, switch to a different source IP
                 #   (change out the TCPConnector)
 
-                # fully receive headers and body.
+                # fully receive headers and body, to cause all network errors to happen
                 # XXX if we want to limit bytecount, do it here?
+                #   await response.content.read(1000000)
+                #   note that later we do response.text(), we should not do that
                 body_bytes = await response.read()
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
     except (aiohttp.ClientError, aiodns.error.DNSError, RuntimeError) as e:
+        # ClientError is a catchall for a bunch of things
         stats.stats_sum('fetch network error', 1)
         last_exception = repr(e)
     except ssl.CertificateError as e:
         stats.stats_sum('fetch SSL error', 1)
         last_exception = repr(e)
     except (ValueError, AttributeError) as e:
-        # Value Error Location: https:/// 'Host could not be detected'
+        # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
+        # ValueError Location: https:/// 'Host could not be detected'
         # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
         stats.stats_sum('fetch other error', 1)
         last_exception = repr(e)

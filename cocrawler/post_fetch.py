@@ -117,7 +117,8 @@ async def post_200(f, url, priority, json_log, crawler):
         try:
             with stats.record_burn('response.text() decode', url=url):
                 body = await f.response.text()  # do not use encoding found in the headers -- policy
-                # XXX consider using 'ascii' for speed, if all we want to do is regex in it
+                # XXX using response.text should be removed if we are to do byte-limited reads, use f.body_bytes
+                # XXX consider using 'ascii' for speed, if all we want to do is regex links out of it
         except (UnicodeDecodeError, LookupError):
             # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
             # XXX if encoding was in header, maybe I should use it here?
