@@ -31,7 +31,7 @@ gevent==1.2.1
 coverage==4.4.1
 pylint==1.7.1
 flake8==3.3.0
-pytest==3.1.0
+pytest==3.1.1
 pytest-cov==2.5.1
 pytest-asyncio==0.6.0
 pytest-sugar==0.8.0
@@ -41,6 +41,6 @@ coveralls==1.1
 wheel==0.29.0
 twine==1.9.1
 pypandoc==1.4
-setuptools==35.0.2
+setuptools==36.0.1
 setuptools_scm==1.15.5
 
