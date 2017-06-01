@@ -29,10 +29,12 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
         self._crawllocalhost = config.read(('Fetcher', 'CrawlLocalhost')) or False
         self._crawlprivate = config.read(('Fetcher', 'CrawlPrivate')) or False
 
-    async def resolve(self, *args, **kwargs):
-        addrs = await super().resolve(*args, **kwargs)
-        ret = []
+    async def resolve(self, host, port, **kwargs):
+        with stats.record_latency('fetcher DNS lookup', url=host):
+            with stats.coroutine_state('fetcher DNS lookup'):
+                addrs = await super().resolve(host, port, **kwargs)
 
+        ret = []
         for a in addrs:
             try:
                 ip = ipaddress.ip_address(a.host)
@@ -45,7 +47,7 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
             ret.append(a)
 
         if len(addrs) != len(ret):
-            LOGGER.info('threw out some ip addresses for %r', args)
+            LOGGER.info('threw out some ip addresses for %s', host)
 
         return ret
 

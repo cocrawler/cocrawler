@@ -35,3 +35,5 @@ Testing:
     fetch http code=200: 0
     max urls found on a page: 0
     robots denied: 2
+    robots denied - robots not found: 2
+    fetch surprising error: 0
