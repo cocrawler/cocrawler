@@ -197,18 +197,10 @@ class Robots:
 
         # go from bytes to a string, despite bogus utf8
         try:
-            body = await f.response.text()
+            body = f.body_bytes.decode(encoding='utf8')
         except UnicodeError:  # pragma: no cover
             # try again assuming utf8 and ignoring errors
-            body = str(f.body_bytes, 'utf-8', 'ignore')
-        except (aiohttp.ClientError, aiodns.error.DNSError, asyncio.TimeoutError, RuntimeError) as e:
-            # something unusual went wrong.
-            # policy: treat like a fetch error.
-            # (could be a broken tcp session etc.) XXX use list from cocrawler.py
-            self.jsonlog(schemenetloc, {'error': 'robots body decode threw an exception: ' + repr(e),
-                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
-            self.in_progress.discard(schemenetloc)
-            return None
+            body = f.body_bytes.decode(encoding='utf8', errors='replace')
         except asyncio.CancelledError:
             raise
         except Exception as e:

@@ -60,8 +60,8 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
                                                  't_first_byte', 't_last_byte', 'last_exception'])
 
 
-async def fetch(url, session,
-                headers=None, proxy=None, mock_url=None, allow_redirects=None, stats_me=True):
+async def fetch(url, session, headers=None, proxy=None, mock_url=None,
+                allow_redirects=None, stats_me=True, maxlength=-1):
     pagetimeout = float(config.read('Crawl', 'PageTimeout'))
 
     if proxy:  # pragma: no cover
@@ -72,7 +72,6 @@ async def fetch(url, session,
         raise ValueError('not yet implemented')
 
     last_exception = None
-    response = None
 
     try:
         t0 = time.time()
@@ -92,11 +91,9 @@ async def fetch(url, session,
                 # XXX when we retry, if local_addr was a list, switch to a different source IP
                 #   (change out the TCPConnector)
 
+                # use streaming interface to limit bytecount
                 # fully receive headers and body, to cause all network errors to happen
-                # XXX if we want to limit bytecount, do it here?
-                #   await response.content.read(1000000)
-                #   note that later we do response.text(), we should not do that
-                body_bytes = await response.read()
+                body_bytes = await response.content.read(maxlength)
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         stats.stats_sum('fetch timeout', 1)

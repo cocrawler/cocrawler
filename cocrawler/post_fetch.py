@@ -116,13 +116,13 @@ async def post_200(f, url, priority, json_log, crawler):
     if content_type == 'text/html':
         try:
             with stats.record_burn('response.text() decode', url=url):
-                body = await f.response.text()  # do not use encoding found in the headers -- policy
-                # XXX using response.text should be removed if we are to do byte-limited reads, use f.body_bytes
-                # XXX consider using 'ascii' for speed, if all we want to do is regex links out of it
+                # need to guess at a reasonable encoding here
+                # can't use the hidden algo from f.response.text() thanks to the use of streaming to limit bytes
+                # hidden algo is: 1) consult headers, 2) if json, assume utf8, 3) call cchardet 4) assume utf8
+                body = f.body_bytes.decode(encoding='utf8')
         except (UnicodeDecodeError, LookupError):
             # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
             # XXX if encoding was in header, maybe I should use it here?
-            # XXX can get additional exceptions here, broken tcp connect etc. see list in fetcher
             body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
         # headers is a funky object that's allergic to getting pickled.
