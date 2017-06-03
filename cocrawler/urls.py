@@ -7,8 +7,6 @@ We use some "less safe" transformations when we are checking if
 we've crawled (or may have crawled) an URL before. This helps
 us keep out of some kinds of crawler traps, and can save us
 a lot of effort overall.
-
-TODO: SURT
 '''
 
 from collections import namedtuple
@@ -21,6 +19,38 @@ import tldextract
 from . import surt
 
 LOGGER = logging.getLogger(__name__)
+
+
+'''
+Notes about which characters must be encoded in which parts of an url
+
+RFC 3986:
+
+general delims :/?#[]@  # note lack of <>
+sub delims !$&'()*+,;=  # still no <>
+
+General rule: always unquote A-Za-z0-9-._~  # these are never delims
+  called 'unreserved' in the rfc ... x41-x5a x61-x7a x30-x39 x2d x2e x5f x7e
+
+scheme
+netloc starts with //, ends with /?# and has internal delims of :@
+    hostname can be ip4 literal or [ip4 or ip6 literal] so also dots (ipv4) and : (ipv6)
+      (this is the only place where [] are allowed)
+path
+    a character in a path is unreserved %enc sub-delims :@
+      so, general-delims other than :@ must be quoted
+    . and .. are special (see section 5.2)
+    sub-delims can be present and don't have to be quoted
+query
+    same as path chars but adds /? to allowed
+    we are going to split query up using &= which are allowed characters
+fragment
+    same chars as query
+
+unsafe characters -- not in the rfc -- unsafe for html reasons -- "<>
+
+due to quoting, % must be quoted
+'''
 
 
 def clean_webpage_links(link, urljoin=None):
