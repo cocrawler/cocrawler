@@ -19,6 +19,7 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
     '''
     A dns wrapper that applies our policies
 
+    TODO: subtract off dns time from fetch first byte time?
     TODO: Warc
     TODO: Use a different call so we can get the real TTL for the warc
     TODO: clear the cache so it's not unbounded in size
