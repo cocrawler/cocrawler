@@ -84,6 +84,31 @@ def special_seed_handling(url):
     return url
 
 
+def remove_dot_segments(path):
+    '''
+    Algorithm from RFC 3986. urllib.parse has this algorithm, but it's hidden in urljoin()
+    This is a stand-alone version. Since this is working on a non-relative url, path MUST begin with '/'
+    '''
+    if path[0] != '/':
+        raise ValueError('Invalid path, must start with /: '+path)
+
+    segments = path.split('/')
+    segments[1:-1] = filter(None, segments[1:-1])  # drop empty segment pieces to avoid // in output
+    resolved_segments = []
+    for s in segments[1:]:
+        if s == '..':
+            try:
+                resolved_segments.pop()
+            except IndexError:
+                # discard the .. if it's at the beginning
+                pass
+        elif s == '.':
+            continue
+        else:
+            resolved_segments.append(s)
+    return '/' + '/'.join(resolved_segments)
+
+
 valid_hex = set('%02x' % i for i in range(256))
 valid_hex.update(set('%02X' % i for i in range(256)))
 

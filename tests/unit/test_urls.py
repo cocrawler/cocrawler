@@ -50,6 +50,26 @@ def test_special_seed_handling():
     assert urls.special_seed_handling('mailto:foo') == 'mailto:foo'
 
 
+def test_remove_dot_segments():
+    # examples from rfc 3986
+    assert urls.remove_dot_segments('/a/b/c/./../../g') == '/a/g'
+    assert urls.remove_dot_segments('/mid/content=5/../6') == '/mid/6'
+
+    # and ours
+    with pytest.raises(ValueError):
+        urls.remove_dot_segments('foo')
+    assert urls.remove_dot_segments('/') == '/'
+    assert urls.remove_dot_segments('/..') == '/'
+    assert urls.remove_dot_segments('/.') == '/'
+    assert urls.remove_dot_segments('/../foo') == '/foo'
+    assert urls.remove_dot_segments('/../foo/') == '/foo/'
+    assert urls.remove_dot_segments('/.././foo/./') == '/foo/'
+    assert urls.remove_dot_segments('/./.././../foo/') == '/foo/'
+    assert urls.remove_dot_segments('/./.././../foo/./') == '/foo/'
+    assert urls.remove_dot_segments('/./.././../foo/../bar/') == '/bar/'
+    assert urls.remove_dot_segments('/./.././../foo/../bar') == '/bar'
+
+
 def test_safe_url_canonicalization():
     assert urls.safe_url_canonicalization('http://example.com/?') == ('http://example.com/', '')
     assert urls.safe_url_canonicalization('http://Example.Com?') == ('http://example.com/', '')
