@@ -182,3 +182,29 @@ def test_URL():
     # read-only
     with pytest.raises(AttributeError):
         url.url = 'foo'
+
+    # urljoin examples from RFC 3986
+    urlj = URL('http://a/b/c/d;p?q')
+    assert URL('g:h', urljoin=urlj).url == 'g:h'
+    assert URL('g', urljoin=urlj).url == 'http://a/b/c/g'
+    assert URL('./g', urljoin=urlj).url == 'http://a/b/c/g'
+    assert URL('g/', urljoin=urlj).url == 'http://a/b/c/g/'
+    assert URL('/g', urljoin=urlj).url == 'http://a/g'
+    assert URL('//g', urljoin=urlj).url == 'http://g/'  # altered because I insist on the trailing /
+    assert URL('?y', urljoin=urlj).url == 'http://a/b/c/d;p?y'
+    assert URL('g?y', urljoin=urlj).url == 'http://a/b/c/g?y'
+    assert URL('#s', urljoin=urlj).url == 'http://a/b/c/d;p?q'  # I drop the frag
+    assert URL('g#s', urljoin=urlj).url == 'http://a/b/c/g'  # I drop the frag
+    assert URL('g?y#s', urljoin=urlj).url == 'http://a/b/c/g?y'  # I drop the frag
+    assert URL(';x', urljoin=urlj).url == 'http://a/b/c/;x'
+    assert URL('g;x', urljoin=urlj).url == 'http://a/b/c/g;x'
+    assert URL('g;x?y#s', urljoin=urlj).url == 'http://a/b/c/g;x?y'  # I drop the frag
+    assert URL('', urljoin=urlj).url == 'http://a/b/c/d;p?q'
+    assert URL('.', urljoin=urlj).url == 'http://a/b/c/'
+    assert URL('./', urljoin=urlj).url == 'http://a/b/c/'
+    assert URL('..', urljoin=urlj).url == 'http://a/b/'
+    assert URL('../', urljoin=urlj).url == 'http://a/b/'
+    assert URL('../g', urljoin=urlj).url == 'http://a/b/g'
+    assert URL('../..', urljoin=urlj).url == 'http://a/'
+    assert URL('../../', urljoin=urlj).url == 'http://a/'
+    assert URL('../../g', urljoin=urlj).url == 'http://a/g'
