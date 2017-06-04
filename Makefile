@@ -26,6 +26,7 @@ test_coverage: clean_coverage
 	tldextract -u -p  # update the database
 	PYTHONPATH=. py.test --cov-report= --cov-append --cov cocrawler tests
 	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/crawl.py --printdefault | wc -l | awk '{ if( $$1 > 10) {exit 0;} else {exit 1;} }'
+	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/parse-html.py data/html-parsing-test.html
 	(cd tests; PYTHONPATH=.. COVERAGE='coverage run -a --source=../cocrawler,../scripts' ./test.sh)
 	(cd tests/warc; PYTHONPATH=../.. COVERAGE='coverage run -a --source=../../cocrawler,.' ./test.sh)
 	coverage combine .coverage tests/.coverage tests/warc/.coverage
