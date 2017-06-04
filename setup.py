@@ -45,7 +45,8 @@ requires = [
     'hdrhistogram',
     'fakeredis',
     'beautifulsoup4',
-    'lxml']
+    'lxml',
+    'warcio']
 
 test_requirements = ['pytest>=3.0.0', 'coverage', 'pytest-cov']
 
