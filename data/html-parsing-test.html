@@ -1,41 +1,69 @@
-Mostly OK:
+Mostly OK: ** marks the ones I want to do something about:
 
 <ul>
 <li><a href="foo">double quotes</a>
 <li><a href='foo'>single quote</a>
-<li><a href=foo>no quote</a>
+<li>** <a href=foo>no quote</a> (url ends with first >)
 <li><a href="foo bar">double quote and unencoded space</a>
 <li><a href='foo bar'>single quote and unencoded space</a>
-<li><a href=foo bar>no quote and unencoded space</a> (just foo in Firefox and Chrome) (bs4 chokes)
+<li>** <a href=foo bar>no quote and unencoded space</a> (just foo in Firefox and Chrome) (bs4 barfs) (url ended with first space)
+<li>** <a href= foo bar>no quote and leading + middle unencoded space</a> (just foo in Firefox and Chrome) (bs4 barfs) (leading space eaten, url ended with first space)
+<li>** <a href="foo
+bar">double quote and actual cr</a> (cr disappears in Firefox and Chrome) (bs4 preserves cr) (drop cr in quoted url)
+<li>** <a href='foo
+bar'>single quote and actual cr</a> (cr disappears in Firefox and Chrome) (bs4 preserves cr) (drop cr in quoted url)
+<li>** <a href=foo
+bar>no quote and actual cr</a> (just foo in Firefox and Chrome) (bs4 barfs) (url ended at cr) (special treatment for unquoted url)
 <li><a href="foo>bar">double quote and unencoded &gt;</a>
 <li><a href='foo>bar'>single quote and unencoded &gt;</a>
-<li><a href=foo>bar>no quote and unencoded &gt;</a> (just foo in Firefox and Chrome) (bs4 chokes)
+<li><a href=foo>bar>no quote and unencoded &gt;</a> (just foo in Firefox and Chrome) (bs4 barfs)
 <li><a href="foo'bar">double quote and embedded single</a>
 <li><a href='foo"bar'>single quote and embedded double</a>
 <li><a href=foo'bar>no quote and embedded single</a>
 <li><a href=foo"bar>no quote and embedded double</a>
-<li><a href ="foo">one space before =</a>
-<li><a href  ="foo">two spaces before =</a>
+<li>** <a href ="foo">one space before =</a> (whitespace in href \s+ = is ok)
+<li>** <a href  ="foo">two spaces before =</a>
+<li><a href="example%2Ecom">%2E encoded in naked hostname</a> (FF and Chrome treat as relative url)
+<li>** <a href="http://example%2Ecom">%2E encoded in hostname with scheme</a> (FF and Chrome unquote) (decode %2E in hostname)
+<li><a href="http://example%2Ecom%3A80">%2E and %3A encoded in hostname with scheme</a> (FF unquotes, Chrome thinks invalid)
+<li>** <a href="http://examp
+le.com">actual cr in hostname</a> (FF and Chrome remove cr) (bs4 preserves cr) (eat cr in hostname)
+<li>** <a href="http://examp
+le.com">actual crlf in hostname</a> (FF and Chrome remove crlf) (bs4 preserves crlf) (eat crlf in hostname)
+<li>** <a href="http://example.com">actual lf in hostname</a> (FF and Chrome remove lf) (bs4 preserves lf) (eat lf in hostname) 
+<li>** <a href=http://example.com>actual lf in hostname with no quotes</a>  (FF and Chrome end url at lf) (bs4 garbles) (end url at control character)
+<li><a href="http://examp%0Dle.com">encoded cr in hostname</a> (FF keeps encoded and it's invalid, Chrome thinks invalid) (bs4 preserves encoded cr)
+<li><a href="http://examp%0D%0Ale.com">encoded crlf in hostname</a> (FF keeps encoded and it's invalid, Chrome thinks invalid) (bs4 preserves encoded crlf)
+<li><a href="http://example.com">actual bell in hostname</a> (FF ignores click, Chrome thinks invalid) (bs4 drops the bell, which makes it valid)
+<li><a href="http://examp%07e.com">encoded bell in hostname</a> (FF keeps encoded and it's invalid,  Chrome thinks invalid) (bs4 preserves encoded bell)
+<li><a href="http%3A%2F%2Fexample.com">encoded ://</a> (FF and Chrome think it's a relative url) (bs4 keeps encoding)
+<li><a href="http://examp le.com">actual space in hostname</a> (FF ignores click, Chrome quotes and it's invalid) (bs4 preserves)
+<li><a href="http://examp%20le.com">encoded space in hostname</a> (FF unencodes and it's invalid, Chrome keeps encoding and it's invalid) (bs4 preserves)
+<li><a href="http://exam%2Fple.com ">quoted / in hostname</a> (FF leaves quoted so invalid, Chrome thinks invalid) (bs4 preserves)
+<li>** <a href=" http://example.com">leading space</a> (FF and Chrome drops) (bs4 preserves) (drop leading/trailing spaces in quoted url)
+<li>** <a href="http://example.com ">trailing space</a> (FF and Chrome drops) (bs4 preserves)
+<li><a href="%20http://example.com">leading encoded space</a> (FF and Chrome relative url) (bs4 preserves)
+<li><a href="http://example.com%20">trailing encoded space</a> (FF and Chrome keep and makes invalid) (bs4 preserves)
+<li>** <a href="http:\\example.com\">backslashes</a> (FF and Chrome same as forward) (bs4 preserves) (turn back to forward slashes)
+<li>** <a href="http:\\example.com\foo\bar?baz=barf\barf#asdf\asdf">backslashes all over</a> (backslashes in query and frag stay backslashes)
+<li><a href="http://example.com%2Ffoo">encoded / between hostname and path</a> (invalid in FF and Chrome) (bs4 preserves)
+<li><a href="http://example.com/foo%2f">encoded / in path</a> (invalid in FF and Chrome) (bs4 preserves)
 </ul>
 
 Syntax errors in FF and Chrome and lxml:
 
 <ul>
-<li><a href="foo'>double ends with single</a>
-<li><a href="foo>double ends with none</a>
-<li><a href='foo">single ends with double</a>
-<li><a href='foo>single ends with none</a>
-<li><a href=foo">none ends with double</a>
-<li><a href=foo'>none ends with single</a>
+<li><a href="foo'>double quote ends with single quote</a>
+<li><a href="foo>double quote ends with none</a>
+<li><a href='foo">single quote ends with double quote</a>
+<li><a href='foo>single quote ends with none</a>
+<li><a href=foo">none ends with double quote</a>
+<li><a href=foo'>none ends with single quote</a>
 <li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
-<li><a href=></a>
+</ul>
+
+See also <a href="https://github.com/abarth/url-spec/blob/master/tests/gurl-results/by-browser.txt">these old test results</a>
+<p>
+Todo:
+<ul>
 </ul>
