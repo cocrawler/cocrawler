@@ -55,7 +55,7 @@ def test_remove_dot_segments():
     assert urls.remove_dot_segments('/a/b/c/./../../g') == '/a/g'
     assert urls.remove_dot_segments('/mid/content=5/../6') == '/mid/6'
 
-    # and ours
+    # and a few test cases of our own
     with pytest.raises(ValueError):
         urls.remove_dot_segments('foo')
     assert urls.remove_dot_segments('/') == '/'
@@ -68,6 +68,18 @@ def test_remove_dot_segments():
     assert urls.remove_dot_segments('/./.././../foo/./') == '/foo/'
     assert urls.remove_dot_segments('/./.././../foo/../bar/') == '/bar/'
     assert urls.remove_dot_segments('/./.././../foo/../bar') == '/bar'
+
+    # urljoin examples from RFC 3986 -- joined 'by hand' and then ./.. processed
+    # kept only the ones with ./..
+    assert urls.remove_dot_segments('/b/c/./g') == '/b/c/g'
+    assert urls.remove_dot_segments('/b/c/.') == '/b/c'
+    assert urls.remove_dot_segments('/b/c/./') == '/b/c/'
+    assert urls.remove_dot_segments('/b/c/..') == '/b'
+    assert urls.remove_dot_segments('/b/c/../') == '/b/'
+    assert urls.remove_dot_segments('/b/c/../g') == '/b/g'
+    assert urls.remove_dot_segments('/b/c/../..') == '/'
+    assert urls.remove_dot_segments('/b/c/../../') == '/'
+    assert urls.remove_dot_segments('/b/c/../../g') == '/g'
 
 
 def test_safe_url_canonicalization():
@@ -203,7 +215,7 @@ def test_URL():
     with pytest.raises(AttributeError):
         url.url = 'foo'
 
-    # urljoin examples from RFC 3986
+    # urljoin examples from RFC 3986 -- python takes care of . and ..
     urlj = URL('http://a/b/c/d;p?q')
     assert URL('g:h', urljoin=urlj).url == 'g:h'
     assert URL('g', urljoin=urlj).url == 'http://a/b/c/g'
