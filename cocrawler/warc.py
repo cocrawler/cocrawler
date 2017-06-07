@@ -38,6 +38,9 @@ filenames: prefix-timestamp-serial-crawlhost.warc.gz
   example: prefix=BNF-CRAWL-003
  serial should be unique wrt prefix
 
+Common Crawl has shifted to prefix-starttime-endtime-serial.warc.gz
+ we can't do that unless we postprocess 
+
 warcinfo at the start of every file: WARC-Filename in case of a rename, repeat crawl configuration info
 have a WARC-Warcinfo-ID field for every record
 logfiles in a warcinfo record (might have to segment if big)
@@ -183,6 +186,8 @@ class CCWARCWriter:
     def write_request_response_pair(self, url, req_headers, resp_headers, payload, digest=None):
         if self.writer is None:
             self.open()
+
+        # XXX WARC-Identified-Payload-Type set from Apache Tika? (done by Common Crawl) (how expensive?)
 
         req_http_headers = StatusAndHeaders('GET / HTTP/1.1', headers_to_str_headers(req_headers))
 
