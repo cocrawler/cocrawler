@@ -182,7 +182,7 @@ def surt(url, parts=None):
     # netloc: user pass hostname port
     #  user:pass ignored
     #  hostname might be ip addr, leave that alone
-    #   loses leading 'www.' or 'www\d+.' if present; lowercased; split and reversed
+    #   loses leading 'www.' or 'www\d+.' if present (mutilates www.com); lowercased; split and reversed
     #   punycode if necessary
     #  port is ignored
     # path and params are downcased
@@ -197,6 +197,8 @@ def surt(url, parts=None):
     #  https://moz.com/ugc/removing-phpsessid-from-an-url
     # ditto for these in the path: jsessionid=, aspsessionid=, sid=, dtstamp=, dt=, r=, CFID=, requestID=
     # (everyone started putting these in query or cookies long, long ago)
+    # trailing / in path not dropped (it's usually a redirect or 404, dropping it implies a crawl policy to avoid
+    #  seeing a redir from non-/ to / and not deduping the fetch of /
 
     (scheme, netloc, path, params, query, fragment) = parts
 
