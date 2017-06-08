@@ -5,17 +5,17 @@ Mostly OK: ** marks the ones I want to do something about:
   <ul>
   <li><a href="foo">double quotes</a>
   <li><a href='foo'>single quote</a>
-  <li>** <a href=foo>no quote</a> (url ends with first >)
+  <li>** <a href=foo>no quote</a> (when not delimited, url ends with first >)
   <li><a href="foo bar">double quote and unencoded space</a>
   <li><a href='foo bar'>single quote and unencoded space</a>
-  <li>** <a href=foo bar>no quote and unencoded space</a> (just foo in Firefox and Chrome) (bs4 barfs) (url ended with first space)
+  <li>** <a href=foo bar>no quote and unencoded space</a> (just foo in Firefox and Chrome) (bs4 barfs) (when not delimited, url ended with first space)
   <li>** <a href= foo bar>no quote and leading + middle unencoded space</a> (just foo in Firefox and Chrome) (bs4 barfs) (leading space eaten, url ended with first space)
   <li>** <a href="foo
-  bar">double quote and actual cr</a> (cr disappears in Firefox and Chrome) (bs4 preserves cr) (drop cr in quoted url)
+bar">double quote and actual cr</a> (cr disappears in Firefox and Chrome) (bs4 preserves cr) (drop cr in quoted url)
   <li>** <a href='foo
-  bar'>single quote and actual cr</a> (cr disappears in Firefox and Chrome) (bs4 preserves cr) (drop cr in quoted url)
+bar'>single quote and actual cr</a> (cr disappears in Firefox and Chrome) (bs4 preserves cr) (drop cr in quoted url)
   <li>** <a href=foo
-  bar>no quote and actual cr</a> (just foo in Firefox and Chrome) (bs4 barfs) (url ended at cr) (special treatment for unquoted url)
+bar>no quote and actual cr</a> (just foo in Firefox and Chrome) (bs4 barfs) (url ended at cr) (special treatment for unquoted url)
   <li><a href="foo>bar">double quote and unencoded &gt;</a>
   <li><a href='foo>bar'>single quote and unencoded &gt;</a>
   <li><a href=foo>bar>no quote and unencoded &gt;</a> (just foo in Firefox and Chrome) (bs4 barfs)
@@ -48,10 +48,24 @@ le.com">actual cr in hostname</a> (FF and Chrome remove cr) (bs4 preserves cr) (
   <li><a href="http://examp le.com">actual space in hostname</a> (FF ignores click, Chrome quotes and it's invalid) (bs4 preserves)
   <li><a href="http://examp%20le.com">encoded space in hostname</a> (FF unencodes and it's invalid, Chrome keeps encoding and it's invalid) (bs4 preserves)
   <li><a href="http://exam%2Fple.com ">quoted / in hostname</a> (FF leaves quoted so invalid, Chrome thinks invalid) (bs4 preserves)
+  </ul>
+<li>Whole-url level rules
+  <ul>
   <li>** <a href=" http://example.com">leading space</a> (FF and Chrome drops) (bs4 preserves) (drop leading/trailing spaces in quoted url)
   <li>** <a href="http://example.com ">trailing space</a> (FF and Chrome drops) (bs4 preserves)
+  <li>** <a href="http://example.com">leading control char</a> (FF and Chrome drops) (bs4 preserves) (drop leading/trailing control chars in url)
+  <li>** <a href="http://example.com">trailing control char</a> (FF and Chrome drops) (bs4 preserves)
+  <li><a href=http://example.com>leading control char in unquoted url</a> (FF and Chrome drops) (bs4 preserves)
+  <li><a href=http://example.com>trailing control char in unquoted url</a> (FF and Chrome drops) (bs4 preserves)
   <li><a href="%20http://example.com">leading encoded space</a> (FF and Chrome relative url) (bs4 preserves)
   <li><a href="http://example.com%20">trailing encoded space</a> (FF and Chrome keep and makes invalid) (bs4 preserves)
+  <li>** <a href="http://example.com/foo
+bar">cr in path</a> (eaten by FF and Chrome) (eat cr anywhere in the url, if quoted)
+  <li>** <a href="http://example.com/foo?bar
+baz">cr in query</a> (eaten by FF and Chrome) 
+  <li>** <a href="http://example.com/foo?bar#baz
+barf">cr in frag</a> (eaten by FF and Chrome) 
+  <li><a href="http://example.com/%gg">invalid quoting</a> (FF and Chrome preserve)
   </ul>
 <li>Backslashes
   <ul>
@@ -59,6 +73,7 @@ le.com">actual cr in hostname</a> (FF and Chrome remove cr) (bs4 preserves cr) (
   <li>** <a href="http:\\example.com\foo\bar?baz=barf\barf#asdf\asdf">backslashes all over</a> (backslashes in query and frag stay backslashes)
   <li><a href="http://example.com%2Ffoo">encoded / between hostname and path</a> (invalid in FF and Chrome) (bs4 preserves)
   <li><a href="http://example.com/foo%2f">encoded / in path</a> (invalid in FF and Chrome) (bs4 preserves)
+  <li><a href="\\example.com\">same-scheme backslashes</a> (FF and Chrome same as forward) (bs4 preserves) (turn back to forward slashes)
   </ul>
 <li>Delimiter matching in html parsing
   <ul>
@@ -72,6 +87,13 @@ le.com">actual cr in hostname</a> (FF and Chrome remove cr) (bs4 preserves cr) (
 '>close out that string</a>
   <li><a href=foo">none ends with double quote</a> ** naked url parsing ends at > even though " or ' seen
   <li><a href=foo'>none ends with single quote</a>
+  </ul>
+<li>General delims run amok, unquoted
+  <ul>
+  <li><a href="http://exam][ple.com/">general delims in hostname</a> (invalid in FF and Chrome)
+  <li><a href="http://example.com/][/">general delims in path</a> (preserved in Chrome, throws error in FF)
+  <li><a href="http://example.com/?][/">general delims in query</a> (preserved in FF and Chrome)
+  <li><a href="foo][bar">general delims in relative url</a> (preserved in FF and Chrome)
   </ul>
 </ul>
 
