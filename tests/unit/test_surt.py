@@ -116,10 +116,10 @@ def test_surt():
 
     assert surt.surt("http://www.archive.org/") == 'org,archive)/'
     assert surt.surt("http://archive.org/") == 'org,archive)/'
-    assert surt.surt("http://archive.org/goo/") == 'org,archive)/goo'
-    assert surt.surt("http://archive.org/goo/?") == 'org,archive)/goo'
-    assert surt.surt("http://archive.org/goo/?b&a") == 'org,archive)/goo?a&b'
-    assert surt.surt("http://archive.org/goo/?a=2&b&a=1") == 'org,archive)/goo?a=1&a=2&b'
+    assert surt.surt("http://archive.org/goo/") == 'org,archive)/goo/'
+    assert surt.surt("http://archive.org/goo/?") == 'org,archive)/goo/'
+    assert surt.surt("http://archive.org/goo/?b&a") == 'org,archive)/goo/?a&b'
+    assert surt.surt("http://archive.org/goo/?a=2&b&a=1") == 'org,archive)/goo/?a=1&a=2&b'
 
     # trailing comma mode
     #assert surt.surt("http://archive.org/goo/?a=2&b&a=1", trailing_comma=True) == 'org,archive,)/goo?a=1&a=2&b'
@@ -143,7 +143,7 @@ def test_surt():
     #assert surt.surt("http://example.com/city-of-M%FCnchen.html") == 'com,example)/city-of-m%c3%bcnchen.html'
 
     # and unique to CoCrawler (so far)
-    assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo'
-    assert surt.surt("http://bücher.Com/Goo/") == 'com,xn--bcher-kva)/goo'
+    assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo/'
+    assert surt.surt("http://bücher.Com/Goo/") == 'com,xn--bcher-kva)/goo/'
     assert surt.surt("http://example.com/goo/;FOO=bar") == 'com,example)/goo/;foo=bar'
     assert surt.surt("http://example.com/goo/;FOO=bar?a=1&A=1&a=2") == 'com,example)/goo/;foo=bar?A=1&a=1&a=2'

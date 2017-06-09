@@ -217,8 +217,6 @@ def surt(url, parts=None):
 
     if path == '' or path == '/':
         path = '/'
-    else:
-        path = path.rstrip('/')
     path = path.lower()
 
     if query is not '':
