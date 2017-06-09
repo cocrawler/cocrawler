@@ -48,6 +48,11 @@ le.com">actual cr in hostname</a> (FF and Chrome remove cr) (bs4 preserves cr) (
   <li><a href="http://examp le.com">actual space in hostname</a> (FF ignores click, Chrome quotes and it's invalid) (bs4 preserves)
   <li><a href="http://examp%20le.com">encoded space in hostname</a> (FF unencodes and it's invalid, Chrome keeps encoding and it's invalid) (bs4 preserves)
   <li><a href="http://exam%2Fple.com ">quoted / in hostname</a> (FF leaves quoted so invalid, Chrome thinks invalid) (bs4 preserves)
+  <li>** <a href="http:///example.com">http:/// shouldn't have a hostname</a> (but FF and Chrome both treat it like a hostname) (change to //)
+  <li>** <a href="http:///does/not/look/like/hostname">http:/// shouldn't have a hostname</a> (but FF and Chrome both treat it like a hostname) (ditto)
+  <li>** <a href="http:\\\example.com">http:\\\ shouldn't have a hostname</a> (but FF and Chrome both treat it like a hostname) (ditto)
+  <li>** <a href="///example.com">/// shouldn't have a hostname</a> (FF and Chrome go to example.com) (ditto)
+  <li>** <a href="\\\example.com">\\\ shouldn't have a hostname either</a> (FF and Chrome go to example.com!) (ditto)
   </ul>
 <li>Whole-url level rules
   <ul>
