@@ -3,16 +3,22 @@ URL class and transformations for the cocrawler.
 
 We apply "safe" transformations early and often.
 
-We use some "less safe" transformations when we are checking if
-we've crawled (or may have crawled) an URL before. This helps
-us keep out of some kinds of crawler traps, and can save us
-a lot of effort overall.
+We apply "unsafe" transformations right after parsing an url out of
+a webpage. (These represent things that browsers do but aren't
+in the RFC, like discarding /r/n in the middle of hostnames.)
+
+See cocrawler/data/html-parsin-test.html for an analysis of browser
+transformations.
+
+
+
+
 '''
 
 from collections import namedtuple
-
 import urllib.parse
 import logging
+import re
 
 import tldextract
 
@@ -22,35 +28,44 @@ LOGGER = logging.getLogger(__name__)
 
 
 '''
-Notes about which characters must be encoded in which parts of an url
-
-RFC 3986:
-
-general delims :/?#[]@  # note lack of <>
-sub delims !$&'()*+,;=  # still no <>
+Notes from reading RFC 3986:
 
 General rule: always unquote A-Za-z0-9-._~  # these are never delims
   called 'unreserved' in the rfc ... x41-x5a x61-x7a x30-x39 x2d x2e x5f x7e
 
-scheme
+reserved:
+ general delims :/?#[]@
+ sub delims !$&'()*+,;=
+
+scheme blah blah
 netloc starts with //, ends with /?# and has internal delims of :@
     hostname can be ip4 literal or [ip4 or ip6 literal] so also dots (ipv4) and : (ipv6)
-      (this is the only place where [] are allowed)
+      (this is the only place where [] are allowed unquoted)
 path
-    a character in a path is unreserved %enc sub-delims :@
-      so, general-delims other than :@ must be quoted
+    a character in a path is unreserved %enc sub-delims :@ and / is the actual delimiter
+      so, general-delims other than :/@ must be quoted & kept that way
+      that means ?#[] need quoting
     . and .. are special (see section 5.2)
     sub-delims can be present and don't have to be quoted
 query
-    same as path chars but adds /? to allowed
+    same as path chars but adds /? to chars allowed
+     so #[] still need quoting
     we are going to split query up using &= which are allowed characters
 fragment
     same chars as query
 
-unsafe characters -- not in the rfc -- unsafe for html reasons -- "<>
-
 due to quoting, % must be quoted
+
 '''
+
+
+def is_absolute_url(url):
+    if url[0:2] == '//':
+        return True
+    # TODO: allow more schemes
+    if url[0:7].lower() == 'http://' or url[0:8].lower() == 'https://':
+        return True
+    return False
 
 
 def clean_webpage_links(link, urljoin=None):
@@ -62,40 +77,57 @@ def clean_webpage_links(link, urljoin=None):
     we will get improperly-terminated urls that result in the parser returning
     the rest of the webpage as an url, etc etc.
 
-    TODO: headless browser testing to find out what browsers actually tolerate.
-    e.g. embedded spaces in urls
-    '''
-
-    for sep in ('<', '>', '"', "'"):  # these characters are illegal in all parts of an url (XXX true?)
-        link, _, _ = link.partition(sep)
-    if len(link) > 100:  # only if needed
-        link, _, _ = link.partition(' ')
-        link, _, _ = link.partition('\r')
-        link, _, _ = link.partition('\n')
-    if len(link) > 500:  # well, crap
-        # TODO: collect these in a per-host logfile?
-        LOGGER.info('webpage urljoin=%s has an invalid-looking link %s', str(urljoin), link)
-        return ''  # will urljoin to the urljoin
-
-    '''
     Some of these come from
     https://github.com/django/django/blob/master/django/utils/http.py#L287
     and https://bugs.chromium.org/p/chromium/issues/detail?id=476478
+
+    See manual tests in cocrawler/data/html-parsing-test.html
+
+    TODO: headless browser testing to automate this
     '''
 
-    # remove leading and trailing white space, and unescaped control chars.
-    # (this is safe even when we're looking at utf8 -- all utf8 bytes have high bit set)
-    # (don't touch escaped chars)
-    link = link.strip(' \x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
-                      '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f')
+    # remove leading and trailing white space and unescaped control chars.
+    link = link.strip('\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
+                      '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f ')
 
-    if link.startswith('///'):
-        # leaving extra slashes is pretty silly, so trim it down do a
-        # same-host-absolute-path url. unsafe, but the url as-is is likely invalid anyway.
-        link = '/' + link.lstrip('/')
-        # note that this doesn't touch /// links with schemes or hostnames
+    # FF and Chrome interpret both ///example.com and http:///example.com as a hostname
+    m = re.match(r'(?:https?:)?/{3,}', link, re.I)
+    if m:
+        start = m.group(0)
+        link = start.rstrip('/') + '//' + link.replace(start, '', 1)
+    # ditto for \\\ -- and go ahead and fix up http:\\ while we're here
+    m = re.match(r'(?:https?:)?\\{2,}', link, re.I)
+    if m:
+        start = m.group(0)
+        link = start.rstrip('\\') + '//' + link.replace(start, '', 1)
 
-    # TODO: do something here with path & query unquoted control chars/spaces/latin-1/utf-8? or do it elsewhere?
+    # and the \ that might be after the hostname?
+    if is_absolute_url(link):
+        start = link.find('://') + 3  # works whether we have a scheme or not
+        m = re.search(r'[\\/?#]', link[start:])
+        if m:
+            if m.group(0) == '\\':
+                link = link[0:start] + link[start:].replace('\\', '/', 1)
+
+    '''
+    Runaway urls
+
+    We allow pluggable parsers, and some of them might non-clever and send us the entire
+    rest of the document as an url... or it could be that the webpage lacks a closing
+    quote for one of its urls, which can confuse diligent parsers.
+    '''
+
+    if len(link) > 300:  # arbitrary choice
+        m = re.match(r'(.*?)[<>\"\'\r\n ]', link)  # rare  in urls and common in html markup
+        if m:
+            link = m.group(1)
+        if len(link) > 300:
+            LOGGER.info('webpage urljoin=%s has an invalid-looking link %s', str(urljoin), link)
+            return ''  # will urljoin to the urljoin
+
+    # remove unquoted \r and \n anywhere in the url
+    link = link.replace('\r', '')
+    link = link.replace('\n', '')
 
     return link
 
@@ -123,7 +155,8 @@ def remove_dot_segments(path):
         raise ValueError('Invalid path, must start with /: '+path)
 
     segments = path.split('/')
-    segments[1:-1] = filter(None, segments[1:-1])  # drop empty segment pieces to avoid // in output
+    # drop empty segment pieces to avoid // in output... but not the first segment
+    segments[1:-1] = filter(None, segments[1:-1])
     resolved_segments = []
     for s in segments[1:]:
         if s == '..':
@@ -142,22 +175,50 @@ def remove_dot_segments(path):
 valid_hex = set('%02x' % i for i in range(256))
 valid_hex.update(set('%02X' % i for i in range(256)))
 
+unreserved = set('%02X' % i for i in range(0x41, 0x5b))  # A-Z
+unreserved.update(set('%02X' % i for i in range(0x61, 0x7b)))  # a-z
+unreserved.update(set('%02X' % i for i in range(0x30, 0x3a)))  # 0-9
+unreserved.update(set(('2D', '2E', '5F', '7E')))  # -._~
+
+subdelims = set(('21', '24', '3B', '3D'))  # !$;=
+subdelims.update(set('%02X' % i for i in range(0x26, 0x2d)))  # &'()*+,
+
+unquote_in_path = subdelims.copy()
+unquote_in_path.update(set(('3A', '40')))  # ok: :@
+
+unquote_in_query = subdelims.copy()
+unquote_in_query.update(set(('3A', '2F', '3F', '40')))  # ok: :/?@
+unquote_in_query.remove('26')  # not ok: &=
+unquote_in_query.remove('3D')
+
+unquote_in_frag = unquote_in_query.copy()
+
+
+def unquote(text, safe):
+    pieces = text.split('%')
+    text = pieces.pop(0)
+    for p in pieces:
+        if text.endswith('%'):  # deal with %%
+            text += '%' + p
+            continue
+        quote = p[:2]
+        rest = p[2:]
+        if quote in valid_hex:
+            quote = quote.upper()
+        if quote in safe:
+            text += chr(int(quote, base=16)) + rest
+        else:
+            text += '%' + quote + rest
+    return text
+
 
 def safe_url_canonicalization(url):
     '''
-    Do everything to the url which shouldn't possibly hurt its semantics
+    Do everything to the url which should not change it
     Good discussion: https://en.wikipedia.org/wiki/URL_normalization
-
-    TODO: '.' and '..' in path
     '''
 
-    # capitalize quoted characters (XXX or should these be lowercased?)
-    pieces = url.split('%')
-    url = pieces.pop(0)
-    for p in pieces:
-        if len(p) > 1 and p[:2] in valid_hex:
-            p = p[:2].upper() + p[2:]
-        url += '%' + p
+    url = unquote(url, unreserved)
 
     try:
         (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
@@ -171,18 +232,17 @@ def safe_url_canonicalization(url):
 
     if path == '':
         path = '/'
+    path = remove_dot_segments(path)
+    path = path.replace('\\', '/')  # might not be 100% safe but is needed for Windows buffoons
+    path = unquote(path, unquote_in_path)
 
-    # TODO:
-    #  decode unnecessary quoted bytes %41-%5A  %61-%7A %30-%39 %2D %2E %5F %7E
-    #  encode necessary bytes -- need to take the str to bytes first -- different list for each part
-    #
-    #  decide what to do with urls containing invalid utf8, see
-    #   https://github.com/internetarchive/surt/issues/19
-    #   https://github.com/commoncrawl/ia-web-commons/issues/6
-    #   preserve them exactly?
+    query = unquote(query, unquote_in_query)
+
+    fragment = unquote(fragment, unquote_in_frag)
 
     if fragment is not '':
         fragment = '#' + fragment
+
     return urllib.parse.urlunparse((scheme, netloc, path, parms, query, None)), fragment
 
 
@@ -200,7 +260,8 @@ def special_redirect(url, next_url):
 
     XXX the case where SURT(url) == SURT(redirect) needs to be handled: 'samesurt'
     '''
-    if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'
+
+    if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'  # what about 'samesurt' ?
         return None
 
     if url.url == next_url.url:
@@ -249,8 +310,7 @@ def get_domain(hostname):
 
 def get_hostname(url, parts=None, remove_www=False):
     # TODO: also duplicated in url_allowed.py
-    # note www handling, different parts of the code
-    # XXX www.com is a valid domain name. I need to be careful to not damage it.
+    # XXX audit code for other places www is explicitly mentioned
     if not parts:
         parts = urllib.parse.urlparse(url)
     hostname = parts.netloc

@@ -72,6 +72,8 @@ def find_html_links_re(html):
     '''
     stats.stats_sum('html parser bytes', len(html))
 
+    # XXX have this and other regexes enforce that the quotes surrounding
+    # the url (if any) match -- will slow things down 2X
     links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
     return links, set()
 

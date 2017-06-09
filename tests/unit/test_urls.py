@@ -27,113 +27,143 @@ def test_urllib_parse():
 
 
 def test_clean_webpage_links():
-    assert urls.clean_webpage_links(' foo ') == 'foo'
-    assert urls.clean_webpage_links(' foo\t ') == 'foo'
+    cwl = urls.clean_webpage_links
+    assert cwl(' foo ') == 'foo'
+    assert cwl(' foo\t ') == 'foo'
 
-    assert urls.clean_webpage_links('\x01 foo ') == 'foo'
+    assert cwl('\x01 foo ') == 'foo'
 
-    assert urls.clean_webpage_links('///foo ') == '/foo'
-    assert urls.clean_webpage_links('////foo ') == '/foo'
+    assert cwl('///foo ') == '//foo'
+    assert cwl('////foo ') == '//foo'
+    assert cwl('http:///foo/bar') == 'http://foo/bar'
+    assert cwl('https:///foo\\bar') == 'https://foo/bar'
+    assert cwl('\\\\\\foo ') == '//foo'
+    assert cwl('\\\\\\\\foo ') == '//foo'
+    assert cwl('http:\\\\\\foo') == 'http://foo'
+    assert cwl('https:\\\\\\foo\\bar') == 'https://foo/bar'
 
-    assert urls.clean_webpage_links('"') == ''
-    assert urls.clean_webpage_links('http://foo.com">') == 'http://foo.com'
-    assert urls.clean_webpage_links('x'*100 + ' ' + 'x') == 'x' * 100  # only for long strings
-    assert urls.clean_webpage_links('x'*100 + '\r' + 'x') == 'x' * 100
-    assert urls.clean_webpage_links('x'*100 + '\n' + 'x') == 'x' * 100
-    assert urls.clean_webpage_links('x'*501) == ''  # throw-up-hands error case
+    assert cwl('h\nt\r\ntp://ex\r\nample.com') == 'http://example.com'
+
+    # short urls don't mess with this
+    assert cwl('"') == '"'
+    assert cwl('http://foo.com">') == 'http://foo.com">'  # although maybe this should flag
+    # long urls
+    assert cwl('x'*100 + ' ' + 'x'*400) == 'x' * 100
+    assert cwl('x'*100 + '\r >"' + 'x'*400) == 'x' * 100
+    assert cwl('x'*100 + '\n' + 'x'*400) == 'x' * 100
+    assert cwl('x'*301) == ''  # throw-up-hands error case
 
 
 def test_special_seed_handling():
-    assert urls.special_seed_handling('foo') == 'http://foo'
-    assert urls.special_seed_handling('//foo') == 'http://foo'
-    assert urls.special_seed_handling('https://foo') == 'https://foo'
-    assert urls.special_seed_handling('mailto:foo') == 'mailto:foo'
+    ssh = urls.special_seed_handling
+    assert ssh('foo') == 'http://foo'
+    assert ssh('//foo') == 'http://foo'
+    assert ssh('https://foo') == 'https://foo'
+    assert ssh('mailto:foo') == 'mailto:foo'
 
 
 def test_remove_dot_segments():
+    rds = urls.remove_dot_segments
     # examples from rfc 3986
-    assert urls.remove_dot_segments('/a/b/c/./../../g') == '/a/g'
-    assert urls.remove_dot_segments('/mid/content=5/../6') == '/mid/6'
+    assert rds('/a/b/c/./../../g') == '/a/g'
+    assert rds('/mid/content=5/../6') == '/mid/6'
 
     # and a few test cases of our own
     with pytest.raises(ValueError):
-        urls.remove_dot_segments('foo')
-    assert urls.remove_dot_segments('/') == '/'
-    assert urls.remove_dot_segments('/..') == '/'
-    assert urls.remove_dot_segments('/.') == '/'
-    assert urls.remove_dot_segments('/../foo') == '/foo'
-    assert urls.remove_dot_segments('/../foo/') == '/foo/'
-    assert urls.remove_dot_segments('/.././foo/./') == '/foo/'
-    assert urls.remove_dot_segments('/./.././../foo/') == '/foo/'
-    assert urls.remove_dot_segments('/./.././../foo/./') == '/foo/'
-    assert urls.remove_dot_segments('/./.././../foo/../bar/') == '/bar/'
-    assert urls.remove_dot_segments('/./.././../foo/../bar') == '/bar'
+        rds('foo')
+    assert rds('/') == '/'
+    assert rds('/..') == '/'
+    assert rds('/.') == '/'
+    assert rds('/../foo') == '/foo'
+    assert rds('/../foo/') == '/foo/'
+    assert rds('/.././foo/./') == '/foo/'
+    assert rds('/./.././../foo/') == '/foo/'
+    assert rds('/./.././../foo/./') == '/foo/'
+    assert rds('/./.././../foo/../bar/') == '/bar/'
+    assert rds('/./.././../foo/../bar') == '/bar'
 
     # urljoin examples from RFC 3986 -- joined 'by hand' and then ./.. processed
     # kept only the ones with ./..
-    assert urls.remove_dot_segments('/b/c/./g') == '/b/c/g'
-    assert urls.remove_dot_segments('/b/c/.') == '/b/c'
-    assert urls.remove_dot_segments('/b/c/./') == '/b/c/'
-    assert urls.remove_dot_segments('/b/c/..') == '/b'
-    assert urls.remove_dot_segments('/b/c/../') == '/b/'
-    assert urls.remove_dot_segments('/b/c/../g') == '/b/g'
-    assert urls.remove_dot_segments('/b/c/../..') == '/'
-    assert urls.remove_dot_segments('/b/c/../../') == '/'
-    assert urls.remove_dot_segments('/b/c/../../g') == '/g'
+    assert rds('/b/c/./g') == '/b/c/g'
+    assert rds('/b/c/.') == '/b/c'
+    assert rds('/b/c/./') == '/b/c/'
+    assert rds('/b/c/..') == '/b'
+    assert rds('/b/c/../') == '/b/'
+    assert rds('/b/c/../g') == '/b/g'
+    assert rds('/b/c/../..') == '/'
+    assert rds('/b/c/../../') == '/'
+    assert rds('/b/c/../../g') == '/g'
 
 
 def test_safe_url_canonicalization():
-    assert urls.safe_url_canonicalization('http://example.com/?') == ('http://example.com/', '')
-    assert urls.safe_url_canonicalization('http://Example.Com?') == ('http://example.com/', '')
-    assert urls.safe_url_canonicalization('http://example.com/?foo=bar') == \
-        ('http://example.com/?foo=bar', '')
-    assert urls.safe_url_canonicalization('http://example.com?foo=bar') == \
-        ('http://example.com/?foo=bar', '')
-    assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM/') == ('http://example.com/', '')
-    assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM:80/') == ('http://example.com/', '')
-    assert urls.safe_url_canonicalization('httpS://EXAMPLE.COM:443/') == ('https://example.com/', '')
-    assert urls.safe_url_canonicalization('HTTP://EXAMPLE.COM:81/') == ('http://example.com:81/', '')
-    assert urls.safe_url_canonicalization('%2a%3Doof%20%%2f') == ('%2A%3Doof%20%%2F', '')
-    assert urls.safe_url_canonicalization('foo%2a%3D%20%%2ffoo') == ('foo%2A%3D%20%%2Ffoo', '')
-    assert urls.safe_url_canonicalization('http://example.com#frag') == ('http://example.com/', '#frag')
-    assert urls.safe_url_canonicalization('http://example.com#!frag') == ('http://example.com/', '#!frag')
-    assert urls.safe_url_canonicalization('http://example.com/#frag') == ('http://example.com/', '#frag')
-    assert urls.safe_url_canonicalization('http://example.com/?foo=bar#frag') == \
-        ('http://example.com/?foo=bar', '#frag')
-    assert urls.safe_url_canonicalization('%2g') == ('%2g', '')
-    assert urls.safe_url_canonicalization('http://bücher.com/?') == ('http://xn--bcher-kva.com/', '')
+    suc = urls.safe_url_canonicalization
+    assert suc('http://example.com/?') == ('http://example.com/', '')
+    assert suc('http://Example%2ECom?') == ('http://example.com/', '')
+    assert suc('http://example.com/?foo=bar') == ('http://example.com/?foo=bar', '')
+    assert suc('http://example.com?foo=bar') == ('http://example.com/?foo=bar', '')
+    assert suc('HTTP://EXAMPLE.COM/') == ('http://example.com/', '')
+    assert suc('HTTP://EXAMPLE.COM:80/') == ('http://example.com/', '')
+    assert suc('httpS://EXAMPLE.COM:443/') == ('https://example.com/', '')
+    assert suc('HTTP://EXAMPLE.COM:81/') == ('http://example.com:81/', '')
+    assert suc('http://example.com#frag') == ('http://example.com/', '#frag')
+    assert suc('http://example.com#!frag') == ('http://example.com/', '#!frag')
+    assert suc('http://example.com/#frag') == ('http://example.com/', '#frag')
+    assert suc('http://example.com/?foo=bar#frag') == ('http://example.com/?foo=bar', '#frag')
+
+    assert suc('http://bücher.com/?') == ('http://xn--bcher-kva.com/', '')
+
+    assert suc('http://example.com/%2a%3Doof%20%%2f') == ('http://example.com/*=oof%20%%2f', '')
+    assert suc('http://example.com/foo%2a%3D%20%%2ffoo') == ('http://example.com/foo*=%20%%2ffoo', '')
+
+    # unreserved
+    assert suc('http://example.com/%41%5a%61%7a%30%39%2d%2e%5f%7e') == ('http://example.com/AZaz09-._~', '')
+    assert suc('http://example.com/%5b%7b%3C') == ('http://example.com/%5B%7B%3C', '')
+
+    # path
+    assert suc('http://example.com/%21%24%3b%3d%3a%40') == ('http://example.com/!$;=:@', '')
+    assert suc('http://example.com/?%21%24%3b%3d%3a%40') == ('http://example.com/?!$;%3D:@', '')
+    assert suc('http://example.com/#%21%24%3b%3d%3a%40') == ('http://example.com/', '#!$;%3D:@')
+
+    # query/fragment
+    assert suc('http://example.com/%3a%40%2f%3f%40') == ('http://example.com/:@%2F%3F@', '')
+    assert suc('http://example.com/?%3a%40%2f%3f%40') == ('http://example.com/?:@/?@', '')
+    assert suc('http://example.com/#%3a%40%2f%3f%40') == ('http://example.com/', '#:@/?@')
+
+    # Bug report from Stbastian Nagel of CC to IA:
+    assert suc('http://visit.webhosting.yahoo.com/visit.gif?&r=http%3A//web.archive.org/web/20090517140029/http%3A//anthonystewarthead.electric-chi.com/&b=Netscape%205.0%20%28Windows%3B%20en-US%29&s=1366x768&o=Win32&c=24&j=true&v=1.2') == \
+        ('http://visit.webhosting.yahoo.com/visit.gif?&r=http://web.archive.org/web/20090517140029/http://anthonystewarthead.electric-chi.com/&b=Netscape%205.0%20(Windows;%20en-US)&s=1366x768&o=Win32&c=24&j=true&v=1.2', '')
 
 
 def test_special_redirect():
-    assert urls.special_redirect(URL('foo'), URL('bar')) is None
-    assert urls.special_redirect(URL('http://example.com/'), URL('http://example.com/foo')) is None
-    assert urls.special_redirect(URL('http://example.com/'), URL('https://example.com/foo')) is None
-    assert urls.special_redirect(URL('http://example.com/'), URL('https://www.example.com/foo')) is None
-    assert urls.special_redirect(URL('http://example.com/'), URL('http://example.com/?foo=1')) is None
-    assert urls.special_redirect(URL('http://example.com/'), URL('http://example.com/bar?foo=1')) is None
+    sr = urls.special_redirect
+    assert sr(URL('http://example.com/'), URL('http://example.com/foo')) is None
+    assert sr(URL('http://example.com/'), URL('https://example.com/foo')) is None
+    assert sr(URL('http://example.com/'), URL('https://www.example.com/foo')) is None
+    assert sr(URL('http://example.com/'), URL('http://example.com/?foo=1')) is None
+    assert sr(URL('http://example.com/'), URL('http://example.com/bar?foo=1')) is None
     url1 = URL('http://example.com/')
-    assert urls.special_redirect(url1, url1) == 'same'
-    assert urls.special_redirect(url1, URL('https://example.com/')) == 'tohttps'
-    assert urls.special_redirect(url1, URL('http://www.example.com/')) == 'towww'
-    assert urls.special_redirect(url1, URL('https://www.example.com/')) == 'towww+tohttps'
+    assert sr(url1, url1) == 'same'
+    assert sr(url1, URL('https://example.com/')) == 'tohttps'
+    assert sr(url1, URL('http://www.example.com/')) == 'towww'
+    assert sr(url1, URL('https://www.example.com/')) == 'towww+tohttps'
 
     url2 = URL('http://www.example.com/')
-    assert urls.special_redirect(url2, URL('https://www.example.com/')) == 'tohttps'
-    assert urls.special_redirect(url2, URL('http://example.com/')) == 'tononwww'
-    assert urls.special_redirect(url2, URL('https://example.com/')) == 'tononwww+tohttps'
+    assert sr(url2, URL('https://www.example.com/')) == 'tohttps'
+    assert sr(url2, URL('http://example.com/')) == 'tononwww'
+    assert sr(url2, URL('https://example.com/')) == 'tononwww+tohttps'
 
     url3 = URL('https://www.example.com/')
-    assert urls.special_redirect(url3, URL('http://www.example.com/')) == 'tohttp'
-    assert urls.special_redirect(url3, URL('https://example.com/')) == 'tononwww'
-    assert urls.special_redirect(url3, URL('http://example.com/')) == 'tononwww+tohttp'
+    assert sr(url3, URL('http://www.example.com/')) == 'tohttp'
+    assert sr(url3, URL('https://example.com/')) == 'tononwww'
+    assert sr(url3, URL('http://example.com/')) == 'tononwww+tohttp'
 
     url4 = URL('https://example.com/')
-    assert urls.special_redirect(url4, URL('http://www.example.com/')) == 'towww+tohttp'
+    assert sr(url4, URL('http://www.example.com/')) == 'towww+tohttp'
 
     url5 = URL('https://example.com/foo')
     url6 = URL('https://example.com/foo/')
-    assert urls.special_redirect(url5, url6) == 'addslash'
-    assert urls.special_redirect(url6, url5) == 'removeslash'
+    assert sr(url5, url6) == 'addslash'
+    assert sr(url6, url5) == 'removeslash'
 
 
 def test_get_domain():
@@ -145,6 +175,7 @@ def test_get_domain():
     assert urls.get_domain('http://sub.blogspot.com') == 'sub.blogspot.com'  # we want this behavior
     # if the blogspot test doesn't work, try this from the shell: "tldextract -u -p"
     # unfortunately, all tldextract users use the same cache
+    # https://github.com/john-kurkowski/tldextract/issues/66
     assert urls.get_domain('http://www.com') == 'www.com'
 
 
@@ -217,7 +248,7 @@ def test_URL():
 
     # urljoin examples from RFC 3986 -- python takes care of . and ..
     urlj = URL('http://a/b/c/d;p?q')
-    assert URL('g:h', urljoin=urlj).url == 'g:h'
+    # assert URL('g:h', urljoin=urlj).url == 'g:h'  # absolute url missing hostname
     assert URL('g', urljoin=urlj).url == 'http://a/b/c/g'
     assert URL('./g', urljoin=urlj).url == 'http://a/b/c/g'
     assert URL('g/', urljoin=urlj).url == 'http://a/b/c/g/'
