@@ -15,7 +15,7 @@ allowed_schemes = set(('http', 'https'))
 
 
 def scheme_allowed(url):
-    if url.urlparse.scheme not in allowed_schemes:
+    if url.urlsplit.scheme not in allowed_schemes:
         return False
     return True
 
@@ -28,10 +28,10 @@ not_text_extension = set(('jpg', 'jpeg', 'png', 'gif',
 
 def extension_allowed(url):
     # part of a html-only policy XXX
-    if url.urlparse.path:
-        if url.urlparse.path.endswith('/'):
+    if url.urlsplit.path:
+        if url.urlsplit.path.endswith('/'):
             return True
-        _, last_part = url.urlparse.path.rsplit('/', maxsplit=1)
+        _, last_part = url.urlsplit.path.rsplit('/', maxsplit=1)
         if last_part and '.' in last_part:
             _, extension = last_part.rsplit('.', maxsplit=1)
             # people use dots in random ways, so let's use a blacklist

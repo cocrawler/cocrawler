@@ -136,8 +136,8 @@ def special_seed_handling(url):
     '''
     We don't expect seed-lists to be very clean: no scheme, etc.
     '''
-    # use urlparse to accurately test if a scheme is present
-    parts = urllib.parse.urlparse(url)
+    # use urlsplit to accurately test if a scheme is present
+    parts = urllib.parse.urlsplit(url)
     if parts.scheme == '':
         if url.startswith('//'):
             url = 'http:' + url
@@ -221,7 +221,7 @@ def safe_url_canonicalization(url):
     url = unquote(url, unreserved)
 
     try:
-        (scheme, netloc, path, parms, query, fragment) = urllib.parse.urlparse(url)
+        (scheme, netloc, path, query, fragment) = urllib.parse.urlsplit(url)
     except ValueError:
         LOGGER.info('invalid url %s', url)
         raise
@@ -243,7 +243,7 @@ def safe_url_canonicalization(url):
     if fragment is not '':
         fragment = '#' + fragment
 
-    return urllib.parse.urlunparse((scheme, netloc, path, parms, query, None)), fragment
+    return urllib.parse.urlunsplit((scheme, netloc, path, query, None)), fragment
 
 
 def upgrade_url_to_https(url):
@@ -278,7 +278,7 @@ def special_redirect(url, next_url):
     if url.url.startswith('https') and url.url.replace('https', 'http', 1) == next_url.url:
         return 'tohttp'
 
-    if url.urlparse.netloc.startswith('www.'):
+    if url.urlsplit.netloc.startswith('www.'):
         if url.url.replace('www.', '', 1) == next_url.url:
             return 'tononwww'
         else:
@@ -287,7 +287,7 @@ def special_redirect(url, next_url):
             elif (url.url.startswith('https') and
                   url.url.replace('www.', '', 1).replace('https', 'http', 1) == next_url.url):
                 return 'tononwww+tohttp'
-    elif next_url.urlparse.netloc.startswith('www.'):
+    elif next_url.urlsplit.netloc.startswith('www.'):
         if url.url == next_url.url.replace('www.', '', 1):
             return 'towww'
         else:
@@ -312,7 +312,7 @@ def get_hostname(url, parts=None, remove_www=False):
     # TODO: also duplicated in url_allowed.py
     # XXX audit code for other places www is explicitly mentioned
     if not parts:
-        parts = urllib.parse.urlparse(url)
+        parts = urllib.parse.urlsplit(url)
     hostname = parts.netloc
     if remove_www and hostname.startswith('www.'):
         domain = get_domain(hostname)
@@ -322,7 +322,7 @@ def get_hostname(url, parts=None, remove_www=False):
 
 
 # stolen from urllib/parse.py
-ParseResult = namedtuple('ParseResult', 'scheme netloc path params query fragment')
+SplitResult = namedtuple('SplitResult', 'scheme netloc path query fragment')
 
 
 class URL(object):
@@ -343,7 +343,7 @@ class URL(object):
             if url.startswith('http://') or url.startswith('https://'):
                 pass
             elif url.startswith('/') and not url.startswith('//'):
-                url = urljoin.urlparse.scheme + '://' + urljoin.hostname + url
+                url = urljoin.urlsplit.scheme + '://' + urljoin.hostname + url
             else:
                 url = urllib.parse.urljoin(urljoin.url, url)  # expensive
 
@@ -356,13 +356,13 @@ class URL(object):
             self._original_frag = None
 
         try:
-            self._urlparse = urllib.parse.urlparse(url)  # expensive
+            self._urlsplit = urllib.parse.urlsplit(url)  # expensive
         except ValueError:
             LOGGER.info('invalid url %s sent into URL constructor', url)
             # TODO: my code assumes URL() returns something valid, so...
             raise
 
-        (scheme, netloc, path, parms, query, _) = self._urlparse
+        (scheme, netloc, path, query, _) = self._urlsplit
 
         if path == '':
             path = '/'
@@ -374,8 +374,8 @@ class URL(object):
         self._hostname_without_www = surt.discard_www_from_hostname(self._hostname)
         self._surt = surt.surt(url)
 
-        self._urlparse = ParseResult(scheme, netloc, path, parms, query, '')
-        self._url = urllib.parse.urlunparse(self._urlparse)  # final canonicalization
+        self._urlsplit = SplitResult(scheme, netloc, path, query, '')
+        self._url = urllib.parse.urlunsplit(self._urlsplit)  # final canonicalization
         self._registered_domain = tldextract.extract(self._url).registered_domain
 
     @property
@@ -386,8 +386,8 @@ class URL(object):
         return self._url
 
     @property
-    def urlparse(self):
-        return self._urlparse
+    def urlsplit(self):
+        return self._urlsplit
 
     @property
     def netloc(self):

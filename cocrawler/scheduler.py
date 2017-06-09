@@ -196,7 +196,7 @@ def summarize():
             urls_with_tries += 1
         priority_count[v['priority']] += 1
         url = v['url']
-        netlocs[url.urlparse.netloc] += 1
+        netlocs[url.urlsplit.netloc] += 1
 
     print('{} items in crawl queue are retries'.format(urls_with_tries))
     print('{} different hosts in the queue'.format(len(netlocs)))

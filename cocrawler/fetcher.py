@@ -45,11 +45,11 @@ def apply_url_policies(url, ua):
 
     test_host = config.read('Testing', 'TestHostmapAll')
     if test_host:
-        headers['Host'] = url.urlparse.netloc
-        (scheme, netloc, path, params, query, fragment) = url.urlparse
+        headers['Host'] = url.urlsplit.netloc
+        (scheme, netloc, path, query, fragment) = url.urlsplit
         netloc = test_host
-        mock_url = urllib.parse.urlunparse((scheme, netloc, path, params, query, fragment))
-        mock_robots = url.urlparse.scheme + '://' + test_host + '/robots.txt'
+        mock_url = urllib.parse.urlunsplit((scheme, netloc, path, query, fragment))
+        mock_robots = url.urlsplit.scheme + '://' + test_host + '/robots.txt'
 
     # XXX set header Upgrade-Insecure-Requests: 1 ?? config option
 

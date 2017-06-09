@@ -175,7 +175,7 @@ def surt(url, parts=None):
         return '-'
 
     if parts is None:
-        parts = urllib.parse.urlparse(url)
+        parts = urllib.parse.urlsplit(url)
 
     # notes are how IA does it
     # scheme -- ignored, so https had better have the same content as http
@@ -185,7 +185,7 @@ def surt(url, parts=None):
     #   loses leading 'www.' or 'www\d+.' if present (mutilates www.com); lowercased; split and reversed
     #   punycode if necessary
     #  port is ignored
-    # path and params are downcased
+    # path is downcased
     # query is split on '&' and sorted
     # fragment is dropped
 
@@ -200,7 +200,7 @@ def surt(url, parts=None):
     # trailing / in path not dropped (it's usually a redirect or 404, dropping it implies a crawl policy to avoid
     #  seeing a redir from non-/ to / and not deduping the fetch of /
 
-    (scheme, netloc, path, params, query, fragment) = parts
+    (scheme, netloc, path, query, fragment) = parts
 
     scheme = scheme.lower()
     if scheme in no_action_schemes:
@@ -221,8 +221,6 @@ def surt(url, parts=None):
         path = path.rstrip('/')
     path = path.lower()
 
-    # params is not processed, keeps its case
-
     if query is not '':
         query_parts = sorted(query.split('&'))
     else:
@@ -231,9 +229,6 @@ def surt(url, parts=None):
     fragment = ''  # we don't use this anyway
 
     ret = ','.join(hostname_parts) + ')' + path
-
-    if len(params) > 0:
-        ret += ';' + params
 
     if len(query_parts) > 0:
         ret += '?' + '&'.join(query_parts)

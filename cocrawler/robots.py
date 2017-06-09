@@ -61,7 +61,7 @@ class Robots:
             self.magic.close()
 
     async def check(self, url, headers=None, proxy=None, mock_robots=None):
-        schemenetloc = url.urlparse.scheme + '://' + url.urlparse.netloc
+        schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
@@ -72,14 +72,12 @@ class Robots:
                                              headers=headers, proxy=proxy)
 
         # XXX I don't know why I'm building this up, shouldn't I use url.url?
-        if url.urlparse.path:
-            pathplus = url.urlparse.path
+        if url.urlsplit.path:
+            pathplus = url.urlsplit.path
         else:
             pathplus = '/'
-        if url.urlparse.params:
-            pathplus += ';' + url.urlparse.params
-        if url.urlparse.query:
-            pathplus += '?' + url.urlparse.query
+        if url.urlsplit.query:
+            pathplus += '?' + url.urlsplit.query
 
         if robots is None:
             LOGGER.debug('no robots information found for %s, failing %s/%s', schemenetloc, schemenetloc, pathplus)
@@ -156,7 +154,7 @@ class Robots:
         final_url = str(f.response.url)  # this is a yarl.URL object now -- str() or url.human_repr()? XXX
         final_schemenetloc = None
         if final_url != url.url:
-            final_parts = urllib.parse.urlparse(final_url)
+            final_parts = urllib.parse.urlsplit(final_url)
             if final_parts.path == '/robots.txt':
                 final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc
 

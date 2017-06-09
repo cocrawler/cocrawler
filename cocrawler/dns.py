@@ -86,9 +86,9 @@ async def prefetch_dns(url, mock_url, session):
     NS records can lie, but, it seems that most hosting companies use 'em "correctly"
     '''
     if mock_url is None:
-        netloc_parts = url.urlparse.netloc.split(':', maxsplit=1)
+        netloc_parts = url.urlsplit.netloc.split(':', maxsplit=1)
     else:
-        mockurl_parts = urllib.parse.urlparse(mock_url)
+        mockurl_parts = urllib.parse.urlsplit(mock_url)
         netloc_parts = mockurl_parts.netloc.split(':', maxsplit=1)
     host = netloc_parts[0]
     try:

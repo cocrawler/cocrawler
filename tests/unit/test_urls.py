@@ -203,7 +203,7 @@ def test_tldextract():
 def test_URL():
     url = URL('http://www.example.com/')
     assert url.url == 'http://www.example.com/'
-    assert list(url.urlparse) == ['http', 'www.example.com', '/', '', '', '']
+    assert list(url.urlsplit) == ['http', 'www.example.com', '/', '', '']
     assert url.netloc == 'www.example.com'
     assert url.hostname == 'www.example.com'
     assert url.hostname_without_www == 'example.com'
