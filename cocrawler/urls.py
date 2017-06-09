@@ -238,10 +238,8 @@ def safe_url_canonicalization(url):
 
     query = unquote(query, unquote_in_query)
 
-    fragment = unquote(fragment, unquote_in_frag)
-
     if fragment is not '':
-        fragment = '#' + fragment
+        fragment = '#' + unquote(fragment, unquote_in_frag)
 
     return urllib.parse.urlunsplit((scheme, netloc, path, query, None)), fragment
 
