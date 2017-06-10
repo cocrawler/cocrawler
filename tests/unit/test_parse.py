@@ -84,14 +84,14 @@ def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
     assert len(links) == 5
     assert len(embeds) == 0
-    assert 'foo3.html' in links
+    assert 'foo3.html ' in links
     assert 'foo.gif' in links
 
     head, body = parse.split_head_body_re(test_html)
     links, embeds = parse.find_body_links_re(body)
     assert len(links) == 3
     assert len(embeds) == 1
-    assert 'foo3.html' in links
+    assert 'foo3.html ' in links
     assert 'foo.gif' in embeds
 
     head_soup = BeautifulSoup(head, 'lxml')

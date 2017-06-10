@@ -1,7 +1,5 @@
 '''
 Parse links in html and css pages.
-
-XXX also need a gumbocy version
 '''
 
 import logging
@@ -68,13 +66,15 @@ def find_html_links_re(html):
     This can't tell the difference between links and embeds, so we
     call them all links.
 
-    On a 3.4ghz x86 core, this runs at 50 megabytes/sec.
+    On a 3.4ghz x86 core, this runs at 50 megabytes/sec. XXX update for 2 regex
     '''
     stats.stats_sum('html parser bytes', len(html))
 
-    # XXX have this and other regexes enforce that the quotes surrounding
-    # the url (if any) match -- will slow things down 2X
-    links = set(re.findall(r'''\s(?:href|src)=['"]?([^\s'"<>]+)''', html, re.I))
+    delims = set([m[1] for m in re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', html, re.I)])
+    no_delims = set(re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}([^\s'"<>]+)''', html, re.I))
+
+    links = delims.union(no_delims)
+
     return links, set()
 
 
@@ -82,12 +82,16 @@ def find_body_links_re(body):
     '''
     Find links in html, divided among links and embeds.
 
-    On a 3.4 ghz x86 core, runs around 25 megabyte/sec
+    On a 3.4 ghz x86 core, runs around 25 megabyte/sec XXX update now that there are 4 regex
     '''
     stats.stats_sum('html parser body bytes', len(body))
 
-    embeds = set(re.findall(r'''\ssrc=['"]?([^\s'"<>]+)''', body, re.I))
-    links = set(re.findall(r'''\shref=['"]?([^\s'"<>]+)''', body, re.I))
+    embeds_delims = set([m[1] for m in re.findall(r'''\ssrc\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I)])
+    embeds_no_delims = set(re.findall(r'''\ssrc\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
+    embeds = embeds_delims.union(embeds_no_delims)
+    links_delims = set([m[1] for m in re.findall(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I)])
+    links_no_delims = set(re.findall(r'''\shref\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
+    links = links_delims.union(links_no_delims)
 
     return links, embeds
 
@@ -98,9 +102,10 @@ def find_css_links_re(css):
     '''
     stats.stats_sum('html parser css bytes', len(css))
 
-    embeds = set(re.findall(r'''\surl\(\s?['"]?([^\s'"<>()]+)''', css, re.I))
+    embeds_delims = set([m[1] for m in re.findall(r'''\surl\(\s?(?P<delim>['"])(.*?)(?P=delim)''', css, re.I)])
+    embeds_no_delims = set(re.findall(r'''\surl\(\s?([^\s'"<>()]+)''', css, re.I))
 
-    return set(), embeds
+    return set(), embeds_delims.union(embeds_no_delims)
 
 
 def find_head_links_soup(head_soup):
