@@ -70,7 +70,10 @@ def find_html_links_re(html):
     '''
     stats.stats_sum('html parser bytes', len(html))
 
-    delims = set([m[1] for m in re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', html, re.I)])
+    delims = set(
+        [m[1] for m in re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', html, re.I | re.S)]
+    )
+    print('delims', delims)
     no_delims = set(re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}([^\s'"<>]+)''', html, re.I))
 
     links = delims.union(no_delims)
@@ -86,10 +89,14 @@ def find_body_links_re(body):
     '''
     stats.stats_sum('html parser body bytes', len(body))
 
-    embeds_delims = set([m[1] for m in re.findall(r'''\ssrc\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I)])
+    embeds_delims = set(
+        [m[1] for m in re.findall(r'''\ssrc\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I | re.S)]
+    )
     embeds_no_delims = set(re.findall(r'''\ssrc\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
     embeds = embeds_delims.union(embeds_no_delims)
-    links_delims = set([m[1] for m in re.findall(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I)])
+    links_delims = set(
+        [m[1] for m in re.findall(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I | re.S)]
+    )
     links_no_delims = set(re.findall(r'''\shref\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
     links = links_delims.union(links_no_delims)
 
@@ -102,7 +109,9 @@ def find_css_links_re(css):
     '''
     stats.stats_sum('html parser css bytes', len(css))
 
-    embeds_delims = set([m[1] for m in re.findall(r'''\surl\(\s?(?P<delim>['"])(.*?)(?P=delim)''', css, re.I)])
+    embeds_delims = set(
+        [m[1] for m in re.findall(r'''\surl\(\s?(?P<delim>['"])(.*?)(?P=delim)''', css, re.I | re.S)]
+    )
     embeds_no_delims = set(re.findall(r'''\surl\(\s?([^\s'"<>()]+)''', css, re.I))
 
     return set(), embeds_delims.union(embeds_no_delims)

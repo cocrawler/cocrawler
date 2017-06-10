@@ -7,12 +7,15 @@ test_html = '''
 <html>
 <head><title>Foo</title><link href='link.html'></link></head>
 <body>
-<a href="foo1.html">Anchor 1</a>
+<a href =  "foo1.html">Anchor 1</a>
 <a
-href=foo2.htm>Anchor 2</a>
+href = foo2.htm>Anchor 2</a>
 <a
- href="foo3.html ">Anchor 3</a>
+ href='foo3.html '>Anchor 3</a>
 <img src=foo.gif />
+<a href='torture"
+<url>'>torture
+anchor</a>
 </body>
 '''
 
@@ -54,13 +57,13 @@ def test_do_burner_work_html():
     test_html_bytes = test_html.encode(encoding='utf-8', errors='replace')
     headers = {}
     links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
-    assert len(links) == 3
+    assert len(links) == 4
     assert len(embeds) == 2
     linkset = set(u.url for u in links)
     embedset = set(u.url for u in embeds)
     assert 'http://example.com/foo3.html' in linkset
     assert 'http://example.com/foo.gif' in embedset
-    assert sha1 == 'sha1:3458e0857ec379ec56d4c7fb39d33c90c8b5ae93'
+    assert sha1 == 'sha1:cdcb087d39afd827d5d523e165a6566d65a2e9b3'
 
     # as a handwave, let's expect these defective pages to also work.
 
@@ -82,16 +85,20 @@ def test_do_burner_work_html():
 
 def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
-    assert len(links) == 5
+    assert len(links) == 6
     assert len(embeds) == 0
+    assert 'foo2.htm' in links
     assert 'foo3.html ' in links
     assert 'foo.gif' in links
+    assert 'torture"\n<url>' in links
 
     head, body = parse.split_head_body_re(test_html)
     links, embeds = parse.find_body_links_re(body)
-    assert len(links) == 3
+    assert len(links) == 4
     assert len(embeds) == 1
+    assert 'foo2.htm' in links
     assert 'foo3.html ' in links
+    assert 'torture"\n<url>' in links
     assert 'foo.gif' in embeds
 
     head_soup = BeautifulSoup(head, 'lxml')
@@ -100,9 +107,11 @@ def test_individual_parsers():
     lbody, ebody = parse.find_body_links_soup(body_soup)
     links.update(lbody)
     embeds.update(ebody)
-    assert len(links) == 3
+    assert len(links) == 4
     assert len(embeds) == 2
-    assert 'foo3.html ' in links  # this space will disapper in urls.URL()
+    assert 'foo2.htm' in links
+    assert 'foo3.html ' in links
+    assert 'torture"\n<url>' in links
     assert 'foo.gif' in embeds
 
 test_css = '''
