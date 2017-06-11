@@ -6,7 +6,7 @@ language: python
 python:
   - 3.5
   - 3.6
-  - 3.7-dev  ### https://github.com/aio-libs/aiohttp/issues/1839, fixed but not in shipping version
+  - 3.7-dev
   - nightly
 
 matrix:
