@@ -6,6 +6,7 @@ CoCrawler web crawler, main program
 import sys
 import resource
 import os
+import faulthandler
 
 import argparse
 import asyncio
@@ -16,6 +17,8 @@ import cocrawler.config as config
 import cocrawler.stats as stats
 import cocrawler.timer as timer
 import cocrawler.webserver as webserver
+
+faulthandler.enable()
 
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
