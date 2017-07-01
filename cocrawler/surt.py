@@ -83,11 +83,12 @@ def discard_www_from_hostname(hostname):
     it was the lazy way to load-balance when the web was new. Now there are a bazillion links
     to these hosts out there in the wild.
 
-    Traditionally, this transformation has been blindly applied and thus breaks hosts like www1.com.
+    Traditionally, this transformation has been blindly applied and thus breaks hosts like www1.com
+    or www.www672299.com, both of which traditionally surt to 'com'.
     We use the public suffix list to avoid doing that.
 
     TODO: survey the internets and see how many domains really need www\d+
-    hp splitting into hp/hpe has probably made most of the hp.com links moot anyway.
+    hp splitting into hp/hpe has probably made most of the hp.com links obsolete anyway.
     '''
 
     if not hostname.lower().startswith('www'):
