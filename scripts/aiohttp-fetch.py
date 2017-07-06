@@ -26,6 +26,9 @@ async def main(urls):
         print(url, '\n')
         try:
             response = await session.get(url, allow_redirects=True)
+        except aiohttp.client_exceptions.ClientConnectorError:
+            print('saw DNS error for', url)
+            continue
         except Exception as e:
             print('Saw an exception thrown by session.get:')
             print_exc()
