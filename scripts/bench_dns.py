@@ -20,6 +20,7 @@ ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
 ARGS.add_argument('--no-confighome', action='store_true')
 ARGS.add_argument('--count', type=int, default=1000)
+ARGS.add_argument('--expect-not-suitable', action='store_true')
 
 args = ARGS.parse_args()
 
@@ -66,6 +67,7 @@ def create_queue():
             queue.put_nowait('www.google.com')
     return queue
 
+
 async def work():
     while True:
         try:
@@ -79,10 +81,13 @@ async def work():
             result = None
             print('saw exception', e, 'but ignoring it')
 
-        if len(host) > 29 and result is not None:
-            print('invalid hostname got a result: your nameserver is not suitable for crawling')
-            global exit_value
-            exit_value = 1
+        if result is not None:
+            if args.expect_not_suitable:
+                print('as expected, this nameserver is not suitable for crawling')
+            else:
+                print('invalid hostname got a result: your nameserver is not suitable for crawling')
+                global exit_value
+                exit_value = 1
 
         queue.task_done()
 
