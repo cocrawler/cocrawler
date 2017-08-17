@@ -1,4 +1,4 @@
-.PHONY: dist distclean
+.PHONY: init pytest test pylint clean_coverage test_coverage download-stuff run_parsers register distclean dist install mock-webserver
 
 init:
 	pip install -r requirements.txt
@@ -31,6 +31,12 @@ test_coverage: clean_coverage
 	(cd tests/warc; PYTHONPATH=../.. COVERAGE='coverage run -a --source=../../cocrawler,.' ./test.sh)
 	coverage combine .coverage tests/.coverage tests/warc/.coverage
 	coverage report
+
+download-stuff:
+	(cd data; wget -N https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz)
+	(cd data; wget -N https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.tar.gz)
+	(cd data; wget -N https://geolite.maxmind.com/download/geoip/database/GeoLite2-ASN.tar.gz)
+	(cd data; wget -N https://ip-ranges.amazonaws.com/ip-ranges.json)
 
 run_parsers:
 	python ./scripts/run_parsers.py ~/public_html/
