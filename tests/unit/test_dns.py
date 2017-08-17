@@ -11,6 +11,7 @@ import pytest
 
 import cocrawler.dns as dns
 from cocrawler.urls import URL
+import aiodns.error
 
 levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 logging.basicConfig(level=levels[3])
@@ -46,8 +47,9 @@ async def test_resolver():
     iplist = await dns.query('google.com', 'NS')
     assert len(iplist) > 0
 
-    iplist = await dns.query('google.com', 'CNAME')
-    assert iplist is None
+    with pytest.raises(aiodns.error.DNSError):
+        iplist = await dns.query('google.com', 'CNAME')
+        assert iplist is None
 
     iplist = await dns.query('www.blogger.com', 'CNAME')
     assert len(iplist) > 0

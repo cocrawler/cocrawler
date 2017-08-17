@@ -67,11 +67,11 @@ class Crawler:
             raise ValueError('proxies not yet supported')
 
         local_addr = config.read('Fetcher', 'LocalAddr')
-        # TODO: if local_addr is a list, make up an array of TCPConnecter objects, and rotate
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver,
-                            'ttl_dns_cache': 3600*8,  # this is a maximum TTL XXX need to call .clear occasionally
-                            'force_close': True, 'limit': 0}
+        #self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver,
+        #                    'ttl_dns_cache': 3600*8,  # this is a maximum TTL XXX need to call .clear occasionally
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': resolver}
+
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option

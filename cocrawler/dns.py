@@ -2,10 +2,12 @@
 DNS-related code
 '''
 
+import time
 import logging
 import urllib
 import ipaddress
 
+import cachetools
 import aiohttp
 import aiodns
 
@@ -53,13 +55,93 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
         return ret
 
 
-resolver = None
+class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
+    '''
+    A caching dns wrapper that lets us subvert aiohttp's built-in dns policies
+
+    Use a LRU cache which respects TTL and is bounded in size.
+    Set a "dns nap" while doing a fetch.
+    Refetch dns (once!) when the TTL is 9/10ths expired.
+
+    TODO: subtract off dns time from fetch first byte time?
+    TODO: Warc
+    '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._crawllocalhost = config.read(('Fetcher', 'CrawlLocalhost')) or False
+        self._crawlprivate = config.read(('Fetcher', 'CrawlPrivate')) or False
+        self._cachemaxsize = config.read(('Fetcher', 'DNSCacheMaxSize'))
+        self._cache = cachetools.LRUCache(self._cachemaxsize)
+        self._refresh_in_progress = set()
+        LOGGER.error('hey greg init called')
+
+    async def resolve(self, host, port, **kwargs):
+        t = time.time()
+        if host in self._cache:
+            LOGGER.error('hey greg initial hit in cache for %s', host)
+            (addrs, expires, refresh) = self._cache[host]
+            if expires < t:
+                LOGGER.error('hey greg expired for %s', host)
+                del self._cache[host]
+            elif refresh < t and host not in self._refresh_in_progress:
+                # TODO: spawn a thread to await this while I continue on
+                self._refresh_in_progress.add(host)
+                LOGGER.error('hey greg refreshing %s', host)
+                self._cache[host] = await self.actual_async_lookup(host)
+                self._refresh_in_progress.remove(host)
+
+        if host not in self._cache:
+            LOGGER.error('hey greg in the end, a miss for %s', host)
+            self._cache[host] = await self.actual_async_lookup(host)
+
+        (addrs, _, _) = self._cache[host]
+        return addrs[0].host
+
+    async def actual_async_lookup(self, host):
+        '''
+        Do an actual lookup. Always raise if it fails.
+        '''
+        LOGGER.error('hey greg actual lookup for %s', host)
+        with stats.record_latency('fetcher DNS lookup', url=host):
+            with stats.coroutine_state('fetcher DNS lookup'):
+                # XXX TODO: how should I deal with AAAA vs A?
+                LOGGER.error('hey greg query started')
+                addrs = await query(host, 'A')
+                LOGGER.error('hey greg query got %r', addrs)
+
+        # filter return value to exclude unwanted ip addrs
+        ret = []
+        ttl = 0
+        for a in addrs:
+            try:
+                ip = ipaddress.ip_address(a.host)
+            except ValueError:
+                continue
+            if not self._crawllocalhost and ip.is_localhost:
+                continue
+            if not self._crawlprivate and ip.is_private:
+                continue
+            ret.append(a)
+            ttl = a.ttl  # all should be equal, we'll remember the last
+
+        if len(ret) == 0:
+            raise ValueError
+
+        ttl = max(3600*8, min(3600, ttl))  # force ttl into a range of time
+        t = time.time()
+        expires = t + ttl
+        refresh = t + (ttl * 0.75)
+
+        if len(addrs) != len(ret):
+            LOGGER.info('threw out some ip addresses for %s', host)
+
+        LOGGER.error('actual lookup, returning %r', ret)
+
+        return ret, expires, refresh
 
 
 def get_resolver_wrapper(**kwargs):
-    global resolver
-    resolver = CoCrawler_AsyncResolver(**kwargs)
-    return resolver
+    return CoCrawler_Caching_AsyncResolver(**kwargs)
 
 
 '''
@@ -79,8 +161,7 @@ async def prefetch_dns(url, mock_url, session):
 
     Note comments about google crawler at https://developers.google.com/speed/public-dns/docs/performance
     RR types A=1 AAAA=28 CNAME=5 NS=2
-    The root of a domain cannot have CNAME. NS records are only in the root. These rules are not directly
-    enforced and.
+    The root of a domain cannot have CNAME. NS records are only in the root. These rules are not directly enforced
     Query for A when it's a CNAME comes back with answer list CNAME -> ... -> A,A,A...
     If you see a CNAME there should be no NS
     NS records can lie, but, it seems that most hosting companies use 'em "correctly"
@@ -138,8 +219,7 @@ def setup_resolver(ns):
 
 async def query(host, qtype):
     '''
-    aiohttp uses aiodns under the hood, but you can't get
-    directly at the .query method.
+    Use aiodns.query() to fetch dns info
 
     Example results:
 
@@ -157,11 +237,7 @@ async def query(host, qtype):
     if not res:
         raise RuntimeError('no nameservers configured')
 
-    try:
-        # host, ttl
-        return await res.query(host, qtype)
-    except aiodns.error.DNSError:
-        pass
+    return await res.query(host, qtype)
 
 
 def ip_to_geoip(ip):

@@ -56,6 +56,7 @@ Fetcher:
   - 8.8.4.4
   CrawlLocalhost: False  # crawl ips that resolve to localhost
   CrawlPrivate: False  # crawl ips that resolve to private networks (e.g. 10.*/8)
+  DNSCacheMaxSize: 1000000
 
 #CarbonStats:
 #  Server: localhost
