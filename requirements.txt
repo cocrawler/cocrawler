@@ -42,6 +42,6 @@ coveralls==1.2.0
 wheel==0.29.0
 twine==1.9.1
 pypandoc==1.4
-setuptools==36.2.7
+setuptools==36.3.0
 setuptools_scm==1.15.6
 
