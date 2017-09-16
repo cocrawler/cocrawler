@@ -376,7 +376,7 @@ class Crawler:
         if config.read('Multiprocess', 'Affinity'):
             # set the main thread to run on core 0
             p = psutil.Process()
-            p.cpu_affinity([0])
+            p.cpu_affinity([p.cpu_affinity().pop(0)])
 
         while True:
             await asyncio.sleep(1)
