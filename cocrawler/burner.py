@@ -34,7 +34,10 @@ def set_an_affinity(cpu):
     racing.
     '''
     p = psutil.Process()
-    p.cpu_affinity([cpu])
+    try:
+        p.cpu_affinity([cpu])
+    except OSError as e:
+        LOGGER.warning('attempt to set cpu affinity failed with %r', e)
     time.sleep(1)  # no asyncio in this process
 
 
