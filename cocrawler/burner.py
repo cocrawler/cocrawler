@@ -51,18 +51,27 @@ class Burner:
         self.loop = loop
         self.name = name
         self.f = []
+        p = psutil.Process()
 
         if config.read('Multiprocess', 'Affinity'):
-            p = psutil.Process()
             all_cpus = p.cpu_affinity()
             for _ in range(thread_count):
-                cpu = all_cpus.pop()
+                try:
+                    cpu = all_cpus.pop()
+                except IndexError:
+                    LOGGER.error('Too few cpus available (%d) to set affinities for burner threads (%d)',
+                                 len(p.cpu_affinity()), thread_count)
+                    break
                 wrap = functools.partial(set_an_affinity, cpu)
                 f = asyncio.ensure_future(
                     self.loop.run_in_executor(self.executor, wrap))  # pylint: disable=unused-variable
                 self.f.append(f)
                 # I can't await f because I'm not async, and the StackOverflow
                 # answers I see regarding this issue in __init__ look ugly
+        else:
+            if thread_count > len(p.cpu_affinity()):
+                LOGGER.warning('fewer cpus (%d) than burner threads (%d), performance will suffer',
+                               len(p.cpu_affinity()), thread_count)
 
     async def burn(self, partial, url=None):
         '''
