@@ -202,7 +202,7 @@ def stat_value(name):
     # note, not including latency
     if name in coroutine_states:
         return coroutine_states[name]
-    return 0.0
+    return None
 
 
 def burn_values(name):
@@ -221,18 +221,24 @@ def check(no_test=False):
     global exitstatus
     if seq:
         for s in seq:
-            if stat_value(s) != seq[s]:
-                if stat_value(s) is None and seq[s] == 0:
-                    continue
+            if stat_value(s) is None and seq[s] == 0:
+                continue
+            elif stat_value(s) is None:
+                LOGGER.error('Stat %s does not exist, should be == %s', s, seq[s])
+                exitstatus = 1
+            elif stat_value(s) != seq[s]:
                 LOGGER.error('Stat %s=%s is not the expected value of %s', s, stat_value(s), seq[s])
                 exitstatus = 1
             else:
                 LOGGER.debug('Stat %s=%s is the expected value', s, seq[s])
     if sge:
         for s in sge:
-            if stat_value(s) < sge[s]:
-                if stat_value(s) is None and sge[s] == 0:
-                    continue
+            if stat_value(s) is None and sge[s] == 0:
+                continue
+            elif stat_value(s) is None:
+                LOGGER.error('Stat %s does not exist, should be >= %s', s, sge[s])
+                exitstatus = 1
+            elif stat_value(s) < sge[s]:
                 LOGGER.error('Stat %s of %s is not >= %s', s, stat_value(s), sge[s])
                 exitstatus = 1
             else:

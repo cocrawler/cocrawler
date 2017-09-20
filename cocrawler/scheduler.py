@@ -48,6 +48,10 @@ def configure():
 
 
 async def get_work():
+    '''
+    This function is called separately by each worker. It's allowed to sleep and/or requeue
+    if work can't be done immediately.
+    '''
     while True:
         try:
             work = s.q.get_nowait()
@@ -65,35 +69,57 @@ async def get_work():
             s.q.task_done()
             raise asyncio.CancelledError
 
-        # when can this work be done?
+        now = time.time()
         surt = work[2]
         surt_host, _, _ = surt.partition(')')
-        now = time.time()
-        if surt_host in s.next_fetch:
-            dt = max(s.next_fetch[surt_host] - now, 0.)
-        else:
-            dt = 0
+        ridealong = get_ridealong(surt)
 
-        # If it's more than 3 seconds in the future, we are HOL blocked
-        # sleep, requeue, in the hopes that other threads will find doable work
-        if dt > 3.0:
-            stats.stats_sum('scheduler HOL sleep', dt)
-            with stats.coroutine_state('scheduler HOL sleep'):
+        recycle, why, dt = do_we_recycle(now, surt, surt_host, ridealong)
+
+        # sleep then requeue
+        if recycle:
+            stats.stats_sum(why, dt)
+            with stats.coroutine_state(why):
                 await asyncio.sleep(3.0)
                 s.q.put_nowait(work)
                 s.q.task_done()
                 continue
 
-        # Normal case: sleep if needed, and then do the work
+        # Normal case: sleep if needed, and then return the work to the caller.
         s.next_fetch[surt_host] = now + dt + s.delta_t
         if dt > 0:
-            stats.stats_sum('scheduler short sleep', dt)
-            with stats.coroutine_state('scheduler short sleep'):
+            stats.stats_sum(why, dt)
+            with stats.coroutine_state(why):
                 await asyncio.sleep(dt)
 
         if s.remaining_url_budget is not None:
             s.remaining_url_budget -= 1
         return work
+
+
+def do_we_recycle(now, surt, surt_host, ridealong):
+    recycle = False
+    why = None
+    dt = 0
+
+    # does host have cached dns? XXX
+
+    # does host have cached robots? XXX
+
+    # when's the next available rate limit slot?
+    now = time.time()
+    if surt_host in s.next_fetch:
+        dt = max(s.next_fetch[surt_host] - now, 0.)
+    else:
+        dt = 0
+    # If it's more than 3 seconds in the future, we are HOL blocked
+    if dt > 3.0:
+        recycle = True
+        why = 'scheduler ratelimit long sleep'
+    elif dt > 0:
+        why = 'scheduler ratelimit short sleep'
+
+    return recycle, why, dt
 
 
 def work_done():
@@ -121,7 +147,11 @@ def set_ridealong(ridealongid, work):
 
 
 def get_ridealong(ridealongid):
-    return s.ridealong[ridealongid]
+    if ridealongid in s.ridealong:
+        return s.ridealong[ridealongid]
+    else:
+        LOGGER.warning('ridealong data for surt %s not found', ridealongid)
+        return {}
 
 
 def del_ridealong(ridealongid):
