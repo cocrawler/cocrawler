@@ -103,8 +103,12 @@ def do_we_recycle(now, surt, surt_host, ridealong):
     dt = 0
 
     # does host have cached dns? XXX
+    # if not, and we're The One, fetch it
+    # if not, and we aren't The One, recycle
 
     # does host have cached robots? XXX
+    # if not, and we're The One, fetch it
+    # if not, and we aren't The One, recycle
 
     # when's the next available rate limit slot?
     now = time.time()
@@ -112,10 +116,9 @@ def do_we_recycle(now, surt, surt_host, ridealong):
         dt = max(s.next_fetch[surt_host] - now, 0.)
     else:
         dt = 0
-    # If it's more than 3 seconds in the future, we are HOL blocked
     if dt > 3.0:
         recycle = True
-        why = 'scheduler ratelimit long sleep'
+        why = 'scheduler ratelimit recycle'
     elif dt > 0:
         why = 'scheduler ratelimit short sleep'
 
