@@ -92,7 +92,7 @@ def test_individual_parsers():
     assert 'foo.gif' in links
     assert 'torture"\n<url>' in links
 
-    head, body = parse.split_head_body_re(test_html)
+    head, body = parse.split_head_body(test_html)
     links, embeds = parse.find_body_links_re(body)
     assert len(links) == 4
     assert len(embeds) == 1

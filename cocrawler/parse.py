@@ -23,8 +23,8 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     #  soup the head so we can accurately get base and facets
     #  regex the body for links and embeds, for speed
 
-    with stats.record_burn('split_head_body_re', url=url):
-        head, body = split_head_body_re(html)
+    with stats.record_burn('split_head_body', url=url):
+        head, body = split_head_body(html)
 
     with stats.record_burn('head soup', url=url):
         try:
@@ -158,7 +158,10 @@ def report():
         LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
 
 
-def split_head_body_re(html):
+def split_head_body(html):
+    '''
+    This function is not case-blind, needs to be XXX
+    '''
     try:
         head, body = html.split('<body>', maxsplit=1)
     except ValueError:
@@ -169,9 +172,12 @@ def split_head_body_re(html):
             body = html
     return head, body
 
-# try to minimize how many bytes we have to html parse
-# of course, these are all dangerous, but they might be useful
-# if the <head> of a webpage is abnormally large
+
+'''
+Helpers to minimize how many bytes we have to html parse.
+Of course, these are all dangerous, but they might be useful
+if the <head> of a webpage is abnormally large
+'''
 
 
 def regex_out_comments(html):
