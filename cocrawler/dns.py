@@ -140,8 +140,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         return ret, expires, refresh
 
 
+global_resolver = None
+
+
 def get_resolver_wrapper(**kwargs):
-    return CoCrawler_Caching_AsyncResolver(**kwargs)
+    global global_resolver
+    global_resolver = CoCrawler_Caching_AsyncResolver(**kwargs)
+    return global_resolver
 
 
 '''
