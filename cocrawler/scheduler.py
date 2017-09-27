@@ -80,7 +80,7 @@ async def get_work():
         if recycle:
             stats.stats_sum(why, dt)
             with stats.coroutine_state(why):
-                await asyncio.sleep(3.0)
+                await asyncio.sleep(dt)
                 s.q.put_nowait(work)
                 s.q.task_done()
                 continue
@@ -119,6 +119,7 @@ def do_we_recycle(now, surt, surt_host, ridealong):
     if dt > 3.0:
         recycle = True
         why = 'scheduler ratelimit recycle'
+        dt = 3.0
     elif dt > 0:
         why = 'scheduler ratelimit short sleep'
 
