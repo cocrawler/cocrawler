@@ -115,6 +115,12 @@ def clean_webpage_links(link, urljoin=None):
     We allow pluggable parsers, and some of them might non-clever and send us the entire
     rest of the document as an url... or it could be that the webpage lacks a closing
     quote for one of its urls, which can confuse diligent parsers.
+
+    There are formal rules for this in html5, by testing I see that FF and Chrome both
+    truncate *undelimited* urls at the first \>\r\n
+
+    We have no idea which urls were delimited or not at this point. So, only molest
+    ones which seem awfully long.
     '''
 
     if len(link) > 300:  # arbitrary choice
