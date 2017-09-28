@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
-    return response.status in (300, 301, 302, 303, 307)
+    return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
 
 
 '''
