@@ -19,7 +19,7 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     stats.stats_sum('parser html bytes', len(html_bytes))
 
     # This embodies a minimal parsing policy; it needs to be made pluggable/configurable
-    #  split head/body with re
+    #  split head/body
     #  soup the head so we can accurately get base and facets
     #  regex the body for links and embeds, for speed
 
@@ -73,7 +73,6 @@ def find_html_links_re(html):
     delims = set(
         [m[1] for m in re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', html, re.I | re.S)]
     )
-    print('delims', delims)
     no_delims = set(re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}([^\s'"<>]+)''', html, re.I))
 
     links = delims.union(no_delims)
@@ -160,17 +159,33 @@ def report():
 
 def split_head_body(html):
     '''
-    This function is not case-blind, needs to be XXX
+    Efficiently split the head from the body, so we can use different
+    parsers on each.  There's no point doing this split if it's
+    expensive.
+
+    It's legal for webpages to leave off <head> and <body>; the
+    standard requires browsers to figure it out based on the html
+    tags. We can't do that efficiently, so we punt for such webpages,
+    and return the entire page as body.
     '''
-    try:
-        head, body = html.split('<body>', maxsplit=1)
-    except ValueError:
-        try:
-            head, body = html.split('</head>', maxsplit=1)
-        except ValueError:
-            head = ''
-            body = html
-    return head, body
+
+    # hueristic: if there's a <head> tag at all, it's early in the document
+    top = html[:1000]
+    m = re.search(r'<head>', top, re.I)
+    if not m:
+        return '', html
+
+    # hueristic: the head is not overly-large
+    small = html
+    if len(html) > 100000:
+        small = small[:100000]
+
+    m = re.search(r'<(?:/head>|body[\s>])', small, re.I)
+    if not m:
+        return '', html
+
+    print(m.start, m.end)
+    return html[:m.start()], html[m.end():]
 
 
 '''
@@ -186,7 +201,7 @@ def regex_out_comments(html):
 
 def regex_out_some_scripts(html):
     '''
-    This nukes most inline scripts... although some are <script type="...
+    This nukes <script>...</script>, but does not nuke <script type="...
     '''
     return re.sub('<script>.*?</script>', '', html, flags=re.S)
 

@@ -100,6 +100,11 @@ def test_individual_parsers():
     assert 'foo3.html ' in links
     assert 'torture"\n<url>' in links
     assert 'foo.gif' in embeds
+    head_soup = BeautifulSoup(head, 'lxml')
+    links, embeds = parse.find_head_links_soup(head_soup)
+    assert len(links) == 0
+    assert len(embeds) == 1
+    assert 'link.html' in embeds
 
     head_soup = BeautifulSoup(head, 'lxml')
     body_soup = BeautifulSoup(body, 'lxml')
@@ -112,7 +117,9 @@ def test_individual_parsers():
     assert 'foo2.htm' in links
     assert 'foo3.html ' in links
     assert 'torture"\n<url>' in links
+    assert 'link.html' in embeds
     assert 'foo.gif' in embeds
+
 
 test_css = '''
 @import url('foo1.css')
@@ -126,6 +133,34 @@ def test_css_parser():
     assert len(links) == 0
     assert len(embeds) == 3
     assert 'images/foo3.png' in embeds
+
+
+def test_split_head_body():
+    '''
+    Whitebox test of the hueristics in this function
+    '''
+    head, body = parse.split_head_body('x'*100000)
+    assert head == ''
+    assert len(body) == 100000
+    head, body = parse.split_head_body('x' + '<HeAd>' + 'x'*100000)
+    assert head == ''
+    assert len(body) == 100007
+    head, body = parse.split_head_body('x' + '</HeAd>' + 'x'*100000)
+    assert head == ''
+    assert len(body) == 100008
+    head, body = parse.split_head_body('x' + '<BoDy>' + 'x'*100000)
+    assert head == ''
+    assert len(body) == 100007
+    head, body = parse.split_head_body('x' + '<heAd><boDy>' + 'x'*100000)
+    assert head == 'x<heAd>'
+    assert len(body) == 100000
+    head, body = parse.split_head_body('x' + '<hEad></heAd>' + 'x'*100000)
+    assert head == 'x<hEad>'
+    assert len(body) == 100000
+    head, body = parse.split_head_body('x' + '<heaD></Head><bOdy>' + 'x'*100000)
+    assert head == 'x<heaD>'
+    assert len(body) == 100006
+
 
 
 def test_regex_out_comments():
