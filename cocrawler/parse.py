@@ -184,7 +184,6 @@ def split_head_body(html):
     if not m:
         return '', html
 
-    print(m.start, m.end)
     return html[:m.start()], html[m.end():]
 
 
