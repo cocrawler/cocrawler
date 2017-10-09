@@ -8,6 +8,7 @@ Compare counts of urls and embeds
 import sys
 import os
 import logging
+import functools
 
 from bs4 import BeautifulSoup
 
@@ -37,7 +38,7 @@ def parse_all(name, string):
 
     with stats.record_burn('find_html_links_re', url=name):
         links, embeds = parse.find_html_links_re(string)  # embeds is empty here by design
-        all_links.append(links.union(embeds))
+    all_links.append(links.union(embeds))
 
     with stats.record_burn('head_soup', url=name):
         head_soup = BeautifulSoup(head, 'lxml')
@@ -46,24 +47,37 @@ def parse_all(name, string):
 
     with stats.record_burn('find_body_links_re', url=name):
         links, embeds = parse.find_body_links_re(body)
-        all_links.append(links.union(embeds).union(head_links).union(head_embeds))
+    all_links.append(links.union(embeds).union(head_links).union(head_embeds))
 
     with stats.record_burn('body_soup', url=name):
         body_soup = BeautifulSoup(body, 'lxml')
     with stats.record_burn('find_body_links_soup', url=name):
         links, embeds = parse.find_body_links_soup(body_soup)
-        all_links.append(links.union(embeds).union(head_links).union(head_embeds))
+    all_links.append(links.union(embeds).union(head_links).union(head_embeds))
 
     # evaluation
-    return
 
-    if len(all1) != len(all2):
-        print('{} had different link counts of {} and {}'.format(name, len(all1), len(all2)))
-        extra1 = all1.difference(all2)
-        extra2 = all2.difference(all1)
-        print('  extra in links:            {!r}'.format(extra1))
-        print('  extra in links and embeds: {!r}'.format(extra2))
-    return
+    biggest = functools.reduce(max, [len(x) for x in all_links])
+    for i, v in enumerate(all_links):
+        if len(v) == biggest:
+            biggest_index = i
+            biggest_links = v
+
+    names = 'find_html_links_re', 'find_body_links_re', 'find_body_links_soup'
+
+    for i, v in enumerate(all_links):
+        if len(v) != biggest:
+            print('{} had different link counts of {} and {}'.format(name, biggest, len(v)))
+            extra1 = v.difference(biggest_links)
+            extra2 = biggest_links.difference(v)
+            if extra1:
+                print('  extra in {}: {!r}'.format(names[i], extra1))
+            else:
+                print('  count was {} for {}'.format(len(v), names[i]))
+            if extra2:
+                print('  extra in {}: {!r}'.format(names[biggest_index], extra2))
+            else:
+                print('  count was {} for {}'.format(len(biggest_links), names[biggest_index]))
 
 
 LOGGER = logging.getLogger(__name__)
