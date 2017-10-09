@@ -62,11 +62,11 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
 
 def find_html_links_re(html):
     '''
-    Find the outgoing links and embeds in html, body head and body.
+    Find the outgoing links and embeds in html, both head and body.
     This can't tell the difference between links and embeds, so we
     call them all links.
 
-    On a 3.4ghz x86 core, this runs at 50 megabytes/sec. XXX update for 2 regex
+    On a 3.4ghz x86 core, runs at ~ 50 megabytes/sec.
     '''
     stats.stats_sum('html parser bytes', len(html))
 
@@ -82,9 +82,9 @@ def find_html_links_re(html):
 
 def find_body_links_re(body):
     '''
-    Find links in html, divided among links and embeds.
+    Find links in an html body, divided among links and embeds.
 
-    On a 3.4 ghz x86 core, runs around 25 megabyte/sec XXX update now that there are 4 regex
+    On a 3.4 ghz x86 core, runs at ~ 25 megabyte/sec.
     '''
     stats.stats_sum('html parser body bytes', len(body))
 
