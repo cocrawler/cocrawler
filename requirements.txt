@@ -12,11 +12,11 @@ filemagic==1.6
 tldextract==2.1.0
 sortedcontainers==1.5.7
 sortedcollections==0.5.3
-psutil==5.3.1
+psutil==5.4.0
 hdrhistogram==0.5.2
-fakeredis==0.8.2
+fakeredis==0.9.0
 beautifulsoup4==4.6.0
-lxml==4.0.0
+lxml==4.1.0
 extensions==0.4
 warcio==1.4.0
 geoip2==2.5.0
@@ -42,6 +42,6 @@ coveralls==1.2.0
 wheel==0.30.0
 twine==1.9.1
 pypandoc==1.4
-setuptools==36.5.0
+setuptools==36.6.0
 setuptools_scm==1.15.6
 
