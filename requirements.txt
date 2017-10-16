@@ -1,6 +1,7 @@
 # Install with "python -m pip install -r requirements.txt".
 
 # used by the cocrawler system
+uvloop==0.8.1
 aiohttp==2.2.5
 aiodns==1.1.1
 pyyaml==3.12

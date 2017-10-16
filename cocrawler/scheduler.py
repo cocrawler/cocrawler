@@ -10,6 +10,7 @@ hand out work in order, increment deadlines
 '''
 import time
 import asyncio
+import uvloop
 import pickle
 from collections import defaultdict
 from operator import itemgetter
@@ -23,11 +24,29 @@ from . import stats
 LOGGER = logging.getLogger(__name__)
 
 
+class FixupEventLoopPolicy(uvloop.EventLoopPolicy):
+    '''
+    pytest-asyncio is weird and this is one way to work around that.
+    https://github.com/pytest-dev/pytest-asyncio/issues/38
+    '''
+    def new_event_loop(self):
+        if self._local._set_called:
+            # raise RuntimeError('An event loop has already been set')
+            loop = super().get_event_loop()
+            if loop.is_closed():
+                loop = super().new_event_loop()
+            return loop
+        return super().new_event_loop()
+
+
 class Scheduler:
     '''
     Singleton to hold our globals. (Cue argument about singletons.)
+
+    Kludge added for uvloop because this is the first thing to make a loop
     '''
     def __init__(self):
+        asyncio.set_event_loop_policy(FixupEventLoopPolicy())
         self.q = asyncio.PriorityQueue()
         self.ridealong = {}
         self.awaiting_work = 0
