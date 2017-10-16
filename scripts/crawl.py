@@ -65,8 +65,8 @@ def main():
     if args.no_test:
         kwargs['no_test'] = True
 
+    crawler = cocrawler.Crawler(**kwargs)
     loop = asyncio.get_event_loop()
-    crawler = cocrawler.Crawler(loop, **kwargs)
 
     if config.read('CarbonStats'):
         timer.start_carbon(loop)

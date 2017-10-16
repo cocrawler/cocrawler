@@ -18,8 +18,7 @@ def test_cocrawler(capsys):
     config.write('pytest', 'UserAgent', 'MyPrefix')
     config.write('http://example.com/pytest-test-cocrawler.py', 'UserAgent', 'URL')
 
-    loop = asyncio.get_event_loop()
-    crawler = cocrawler.Crawler(loop)
+    crawler = cocrawler.Crawler()
 
     crawler.add_url(0, URL('http://example1.com/'), seed=True)
     crawler.add_url(0, URL('http://example2.com/'), seed=True)

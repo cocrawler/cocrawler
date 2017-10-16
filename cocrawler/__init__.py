@@ -12,6 +12,7 @@ import json
 import traceback
 
 import asyncio
+import uvloop
 import logging
 import aiohttp
 import aiohttp.resolver
@@ -41,14 +42,31 @@ __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2016-2017 Greg Lindahl and others'
 
 
+class FixupEventLoopPolicy(uvloop.EventLoopPolicy):
+    '''
+    pytest-asyncio is weird and hijacking new_event_loop is one way to work around that.
+    https://github.com/pytest-dev/pytest-asyncio/issues/38
+    '''
+    def new_event_loop(self):
+        if self._local._set_called:
+            # raise RuntimeError('An event loop has already been set')
+            loop = super().get_event_loop()
+            if loop.is_closed():
+                loop = super().new_event_loop()
+            return loop
+        return super().new_event_loop()
+
+
 class Crawler:
-    def __init__(self, loop, load=None, no_test=False):
-        self.loop = loop
-        self.burner = burner.Burner(loop, 'parser')
+    def __init__(self, load=None, no_test=False):
+        asyncio.set_event_loop_policy(FixupEventLoopPolicy())
+        self.loop = asyncio.get_event_loop()
+        self.burner = burner.Burner(self.loop, 'parser')
         self.stopping = 0
         self.paused = 0
         self.no_test = no_test
         self.next_minute = time.time() + 60
+        self.scheduler = scheduler.Scheduler(self.loop)
 
         try:
             # this works for the installed package
@@ -60,7 +78,7 @@ class Crawler:
         self.robotname, self.ua = useragent.useragent(self.version)
 
         ns = config.read('Fetcher', 'Nameservers')
-        resolver = dns.get_resolver_wrapper(loop=loop, nameservers=ns)
+        resolver = dns.get_resolver_wrapper(loop=self.loop, nameservers=ns)
 
         proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:
@@ -81,7 +99,7 @@ class Crawler:
             cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
-        self.session = aiohttp.ClientSession(loop=loop, connector=conn, cookie_jar=cookie_jar)
+        self.session = aiohttp.ClientSession(loop=self.loop, connector=conn, cookie_jar=cookie_jar)
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
@@ -118,19 +136,17 @@ class Crawler:
         else:
             self.warcwriter = None
 
-        scheduler.configure()
-
         if load is not None:
             self.load_all(load)
-            LOGGER.info('after loading saved state, work queue is %r urls', scheduler.qsize())
+            LOGGER.info('after loading saved state, work queue is %r urls', self.scheduler.qsize())
             LOGGER.info('at time of loading, stats are')
             stats.report()
         else:
             self._seeds = seeds.expand_seeds(config.read('Seeds'))
             for s in self._seeds:
                 self.add_url(1, s, seed=True)
-            LOGGER.info('after adding seeds, work queue is %r urls', scheduler.qsize())
-            stats.stats_max('initial seeds', scheduler.qsize())
+            LOGGER.info('after adding seeds, work queue is %r urls', self.scheduler.qsize())
+            stats.stats_max('initial seeds', self.scheduler.qsize())
 
         url_allowed.setup(self._seeds)
 
@@ -150,7 +166,7 @@ class Crawler:
 
     @property
     def qsize(self):
-        return scheduler.qsize()
+        return self.scheduler.qsize()
 
     def log_rejected_add_url(self, url):
         if self.rejectedaddurlfd:
@@ -197,9 +213,9 @@ class Crawler:
         else:
             rand = random.uniform(0, 0.99999)
 
-        scheduler.set_ridealong(url.surt, work)
+        self.scheduler.set_ridealong(url.surt, work)
 
-        scheduler.queue_work((priority, rand, url.surt))
+        self.scheduler.queue_work((priority, rand, url.surt))
 
         self.datalayer.add_seen_url(url)
         return 1
@@ -216,8 +232,8 @@ class Crawler:
         self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
-        if scheduler.qsize():
-            LOGGER.warning('at exit, non-zero qsize=%d', scheduler.qsize())
+        if self.scheduler.qsize():
+            LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
 
     async def fetch_and_process(self, work):
         '''
@@ -228,7 +244,7 @@ class Crawler:
         # when we're in the dregs of retried urls with high rand, don't exceed priority+1
         stats.stats_set('priority', priority+min(rand, 0.99))
 
-        ridealong = scheduler.get_ridealong(surt)
+        ridealong = self.scheduler.get_ridealong(surt)
         url = ridealong['url']
         tries = ridealong.get('tries', 0)
         maxtries = config.read('Crawl', 'MaxTries')
@@ -245,7 +261,7 @@ class Crawler:
                         'status': 'robots', 'time': time.time()}
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
-            scheduler.del_ridealong(surt)
+            self.scheduler.del_ridealong(surt)
             return
 
         f = await fetcher.fetch(url, self.session,
@@ -262,19 +278,19 @@ class Crawler:
                 # XXX jsonlog hard fail
                 # XXX remember that this host had a hard fail
                 stats.stats_sum('tries completely exhausted', 1)
-                scheduler.del_ridealong(surt)
+                self.scheduler.del_ridealong(surt)
                 return
             # XXX jsonlog this soft fail?
             ridealong['tries'] = tries
             ridealong['priority'] = priority
-            scheduler.set_ridealong(surt, ridealong)
+            self.scheduler.set_ridealong(surt, ridealong)
             # increment random so that we don't immediately retry
             extra = random.uniform(0, 0.2)
-            priority, rand = scheduler.update_priority(priority, rand+extra)
-            scheduler.requeue_work((priority, rand, surt))
+            priority, rand = self.scheduler.update_priority(priority, rand+extra)
+            self.scheduler.requeue_work((priority, rand, surt))
             return
 
-        scheduler.del_ridealong(surt)
+        self.scheduler.del_ridealong(surt)
 
         json_log['status'] = f.response.status
 
@@ -284,9 +300,9 @@ class Crawler:
         if f.response.status == 200:
             await post_fetch.post_200(f, url, priority, json_log, self)
 
-        LOGGER.debug('size of work queue now stands at %r urls', scheduler.qsize())
-        stats.stats_set('queue size', scheduler.qsize())
-        stats.stats_max('max queue size', scheduler.qsize())
+        LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
+        stats.stats_set('queue size', self.scheduler.qsize())
+        stats.stats_max('max queue size', self.scheduler.qsize())
 
         if self.crawllogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
@@ -297,7 +313,7 @@ class Crawler:
         '''
         try:
             while True:
-                work = await scheduler.get_work()
+                work = await self.scheduler.get_work()
 
                 try:
                     await self.fetch_and_process(work)
@@ -307,7 +323,7 @@ class Crawler:
                     traceback.print_exc()
                     # falling through causes this work item to get marked done, and we continue
 
-                scheduler.work_done()
+                self.scheduler.work_done()
 
                 if self.stopping:
                     raise asyncio.CancelledError
@@ -321,13 +337,13 @@ class Crawler:
             pass
 
     def summarize(self):
-        scheduler.summarize()
+        self.scheduler.summarize()
 
     def save(self, f):
-        scheduler.save(self, f, )
+        self.scheduler.save(self, f, )
 
     def load(self, f):
-        scheduler.load(self, f)
+        self.scheduler.load(self, f)
 
     def get_savefilename(self):
         savefile = config.read('Save', 'Name') or 'cocrawler-save-$$'
@@ -400,11 +416,11 @@ class Crawler:
                 LOGGER.warning('all workers exited, finishing up.')
                 break
 
-            if scheduler.done(len(self.workers)):
+            if self.scheduler.done(len(self.workers)):
                 # this is a little racy with how awaiting work is set and the queue is read
                 # while we're in this join we aren't looking for STOPCRAWLER etc
                 LOGGER.warning('all workers appear idle, queue appears empty, executing join')
-                await scheduler.close()
+                await self.scheduler.close()
                 break
 
             self.update_cpu_stats()
