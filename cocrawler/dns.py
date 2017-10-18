@@ -22,10 +22,7 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
     A dns wrapper that applies our policies
 
     TODO: subtract off dns time from fetch first byte time?
-    TODO: Warc
-    TODO: Use a different call so we can get the real TTL for the warc
-    TODO: clear the cache so it's not unbounded in size
-    TODO: use the real TTL?
+    TODO: Warc the answer
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,7 +61,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
     Refetch dns (once!) when the TTL is 9/10ths expired.
 
     TODO: subtract off dns time from fetch first byte time?
-    TODO: Warc
+    TODO: Warc the answer
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
