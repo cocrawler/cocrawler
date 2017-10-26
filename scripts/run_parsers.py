@@ -45,6 +45,7 @@ def parse_all(name, string):
     with stats.record_burn('find_head_links_soup', url=name):
         head_links, head_embeds = parse.find_head_links_soup(head_soup)
 
+    body = '<html>' + body  # because a closing tag at the start of body screws up lxml
     with stats.record_burn('find_body_links_re', url=name):
         links, embeds = parse.find_body_links_re(body)
     all_links.append(links.union(embeds).union(head_links).union(head_embeds))
