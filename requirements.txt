@@ -2,7 +2,7 @@
 
 # used by the cocrawler system
 uvloop==0.8.1
-aiohttp==2.3.1
+aiohttp==2.3.2
 aiodns==1.1.1
 pyyaml==3.12
 cchardet==2.1.1
@@ -10,17 +10,17 @@ surt==0.3.0
 robotexclusionrulesparser==1.7.1
 cachetools==2.0.1
 filemagic==1.6
-tldextract==2.1.0
+tldextract==2.2.0
 sortedcontainers==1.5.7
 sortedcollections==0.5.3
 psutil==5.4.0
 hdrhistogram==0.5.2
 fakeredis==0.9.0
 beautifulsoup4==4.6.0
-lxml==4.1.0
+lxml==4.1.1
 extensions==0.4
-warcio==1.4.0
-geoip2==2.5.0
+warcio==1.5.0
+geoip2==2.6.0
 
 # used to maintain this file
 pur==4.0.2
@@ -30,7 +30,7 @@ bottle==0.12.13
 gevent==1.2.2
 
 # used by Makefile
-coverage==4.4.1
+coverage==4.4.2
 pylint==1.7.4
 flake8==3.5.0
 pytest==3.2.3
