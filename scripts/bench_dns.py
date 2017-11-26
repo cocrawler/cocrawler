@@ -47,31 +47,33 @@ def create_queue():
     for _ in range(2):
         r = random.Random()
         host = str(r.randrange(1000000000)) + str(r.randrange(1000000000)) + str(r.randrange(1000000000))
-        queue.put_nowait(host + '.com')
+        queue.put_nowait((host + '.com', 'fake'))
 
     # read list of domains to query -- from alexa top million
     head, tail = os.path.split(__file__)
-    alexa = os.path.join(head, os.pardir, 'examples', 'top-1k.txt')
+    alexa = os.path.join(head, os.pardir, 'data', 'top-1k.txt')
     alexa_count = 0
 
     try:
         with open(alexa, 'r') as f:
+            print('Using top-1k from Alexa, expect a few failures')
             for line in f:
-                queue.put_nowait(line.strip())
+                queue.put_nowait((line.strip(), 'real'))
                 alexa_count += 1
                 if alexa_count > args.count:
                     break
     except FileNotFoundError:
         # the alexa file wasn't available (it is not in the repo) so just do a few
+        print('Cannot find top-1k file, so all queries are www.google.com')
         for _ in range(args.count):
-            queue.put_nowait('www.google.com')
+            queue.put_nowait(('www.google.com', 'real'))
     return queue
 
 
 async def work():
     while True:
         try:
-            host = queue.get_nowait()
+            host, kind = queue.get_nowait()
         except asyncio.queues.QueueEmpty:
             break
 
@@ -79,9 +81,10 @@ async def work():
             result = await dns.query(host, 'A')
         except Exception as e:
             result = None
-            print('saw exception', e, 'but ignoring it')
+            if kind is not 'fake':
+                print('saw exception', e, 'but ignoring it')
 
-        if result is not None:
+        if result is not None and kind is 'fake':
             if args.expect_not_suitable:
                 print('as expected, this nameserver is not suitable for crawling')
             else:
