@@ -105,6 +105,13 @@ class Robots:
     async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
         robotexclusionrules parser is not async, so fetch the file ourselves
+
+        Note the following Google semantics:
+        https://developers.google.com/search/reference/robots_txt
+        3xx redir == follow up to 5 hops, then consider it a 404.
+        4xx errors == no crawl restrictions
+        5xx errors == full disallow. fast retry if 503.
+        if site appears to return 5xx for 404, then 5xx is treated as a 404
         '''
         url = URL(schemenetloc + '/robots.txt')
 
@@ -140,7 +147,7 @@ class Robots:
 
         f = await fetcher.fetch(url, self.session,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
-                                allow_redirects=True, stats_me=False)
+                                allow_redirects=True, max_redirects=5, stats_me=False)
         if f.last_exception:
             self.jsonlog(schemenetloc, {'error': 'max tries exceeded, final exception is: ' + f.last_exception,
                                         'action': 'fetch'})
@@ -148,6 +155,9 @@ class Robots:
             return None
 
         stats.stats_sum('robots fetched', 1)
+
+        # if the final status is a redirect, we exceeded max redirects
+        # XXX treat as a 404, same as googlebot
 
         # If the url was redirected to a different host/robots.txt, let's cache that too
         # XXX use f.response.history to get them all
@@ -159,6 +169,7 @@ class Robots:
                 final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc
 
         # if we got a 404, return an empty robots.txt
+        # XXX Googlebot treats all 4xx as an empty robots.txt
         if f.response.status == 404:
             self.jsonlog(schemenetloc, {'error': 'got a 404, treating as empty robots',
                                         'action': 'fetch', 't_first_byte': f.t_first_byte})
@@ -171,7 +182,8 @@ class Robots:
             return parsed
 
         # if we got a non-200, some should be empty and some should be None (XXX Policy)
-        # this implements only None (deny)
+        # this implements only None (deny) 
+        # XXX Googlebot treats all 4xx as an empty robots.txt
         if str(f.response.status).startswith('4') or str(f.response.status).startswith('5'):
             self.jsonlog(schemenetloc,
                          {'error':

@@ -78,7 +78,8 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
 
 
 async def fetch(url, session, headers=None, proxy=None, mock_url=None,
-                allow_redirects=None, stats_me=True, maxlength=-1):
+                allow_redirects=None, max_redirects=None,
+                stats_me=True, maxlength=-1):
     pagetimeout = float(config.read('Crawl', 'PageTimeout'))
 
     if proxy:  # pragma: no cover
@@ -99,6 +100,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 response = None
                 response = await session.get(mock_url or url.url,
                                              allow_redirects=allow_redirects,
+                                             max_redirects=max_redirects,
                                              headers=headers)
                 t_first_byte = '{:.3f}'.format(time.time() - t0)
                 if stats_me:
