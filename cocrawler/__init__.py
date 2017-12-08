@@ -269,6 +269,8 @@ class Crawler:
 
         json_log = {'type': 'get', 'url': url.url, 'priority': priority,
                     't_first_byte': f.t_first_byte, 'time': time.time()}
+        if f.is_truncated:
+            json_log['truncated'] = True
         if tries:
             json_log['retry'] = tries
 

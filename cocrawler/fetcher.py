@@ -74,7 +74,8 @@ def guess_encoding(bytes, headers=None):
 
 
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_headers',
-                                                 't_first_byte', 't_last_byte', 'last_exception'])
+                                                 't_first_byte', 't_last_byte', 'is_truncated',
+                                                 'last_exception'])
 
 
 async def fetch(url, session, headers=None, proxy=None, mock_url=None,
@@ -90,6 +91,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         raise ValueError('not yet implemented')
 
     last_exception = None
+    is_truncated = False
 
     try:
         t0 = time.time()
@@ -113,6 +115,10 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 # use streaming interface to limit bytecount
                 # fully receive headers and body, to cause all network errors to happen
                 body_bytes = await response.content.read(maxlength)
+                if not response.content.at_eof():
+                    response.close()  # should interrupt the network transfer?
+                    is_truncated = True
+
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         stats.stats_sum('fetch timeout', 1)
@@ -140,10 +146,10 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
     if last_exception:
         LOGGER.debug('we failed, the last exception is %s', last_exception)
-        return FetcherResponse(None, None, None, None, None, last_exception)
+        return FetcherResponse(None, None, None, None, None, False, last_exception)
 
     fr = FetcherResponse(response, body_bytes, response.request_info.headers,
-                         t_first_byte, t_last_byte, None)
+                         t_first_byte, t_last_byte, is_truncated, None)
 
     if response.status >= 500:
         LOGGER.debug('server returned http status %d', response.status)

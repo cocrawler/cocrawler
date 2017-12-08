@@ -98,6 +98,12 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
 
 
 async def post_200(f, url, priority, json_log, crawler):
+    # XXX add code to deal with f.is_truncated
+    # add WARC-Truncated: length
+    # make sure WARC Content-Length is the truncated size
+    # presumably the content-length http header is going to be the whole thing
+    # XXX testme
+
     resp_headers = f.response.headers
     content_type = resp_headers.get('content-type', 'None')
     # sometimes content_type comes back multiline. whack it with a wrench.
