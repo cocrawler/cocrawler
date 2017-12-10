@@ -11,7 +11,7 @@ robotexclusionrulesparser==1.7.1
 cachetools==2.0.1
 filemagic==1.6
 tldextract==2.2.0
-sortedcontainers==1.5.7
+sortedcontainers==1.5.9
 sortedcollections==0.5.3
 psutil==5.4.2
 hdrhistogram==0.5.2
