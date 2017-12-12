@@ -34,6 +34,7 @@ def get_serial(name):
     serials[name] = serial
     return '{:05}'.format(serial)
 
+
 prefix = 'CC-TEST-01'
 subprefix = 'FOO'
 max_size = 10000
