@@ -116,24 +116,30 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 # fully receive headers and body, to cause all network errors to happen
                 body_bytes = await response.content.read(maxlength)
                 if not response.content.at_eof():
-                    response.close()  # should interrupt the network transfer?
-                    is_truncated = True
+                    response.close()  # XXX should interrupt the network transfer? -- testme
+                    is_truncated = 'length'
 
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
+        is_truncated = 'time'  # XXX make it possible to WARC this response?
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
-    except (aiohttp.ClientError, aiodns.error.DNSError, RuntimeError) as e:
+    except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
+        # XXX deal with partial fetches and WARC them, is_timeout = 'disconnect'
         stats.stats_sum('fetch network error', 1)
+        last_exception = repr(e)
+    except aiodns.error.DNSError as e:
+        stats.stats_sum('fetch DNS error', 1)
         last_exception = repr(e)
     except ssl.CertificateError as e:
         stats.stats_sum('fetch SSL error', 1)
         last_exception = repr(e)
-    except (ValueError, AttributeError) as e:
+    except (ValueError, AttributeError, RuntimeError) as e:
         # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
         # ValueError Location: https:/// 'Host could not be detected'
         # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
+        # RuntimeError: ?
         stats.stats_sum('fetch other error', 1)
         last_exception = repr(e)
     except asyncio.CancelledError:

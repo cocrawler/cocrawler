@@ -66,7 +66,7 @@ digest = hashlib.sha1(fake_payload).hexdigest()
 fake_digest = 'sha1:FAKE_DIGEST'
 
 main.write_request_response_pair(fake_url, fake_req_headers, fake_resp_headers,
-                                 fake_payload, digest=fake_digest)
+                                 False, fake_payload, digest=fake_digest)
 
 # max size is set to 1000 for sub, make a payload that overflows it
 fake_payload = ('x' * 80 + '\n') * 13
@@ -74,6 +74,8 @@ fake_payload = fake_payload.encode('utf-8')
 digest = hashlib.sha1(fake_payload).hexdigest()
 
 sub.write_request_response_pair(fake_url, fake_req_headers, fake_resp_headers,
-                                fake_payload, digest=digest)
+                                False, fake_payload, digest=digest)
 sub.write_request_response_pair(fake_url, fake_req_headers, fake_resp_headers,
-                                fake_payload, digest=digest)
+                                False, fake_payload, digest=digest)
+
+# XXX test of WARC-Truncate

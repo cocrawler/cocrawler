@@ -30,6 +30,9 @@ from . import stats
 LOGGER = logging.getLogger(__name__)
 
 
+valid_truncations = (('length', 'time', 'disconnect', 'unspecified'))
+
+
 '''
 best practices from http://www.netpreserve.org/sites/default/files/resources/WARC_Guidelines_v1.pdf
 
@@ -183,7 +186,7 @@ class CCWARCWriter:
         LOGGER.debug('wrote warc dns response record%s for host %s', p(self.prefix), host)
         stats.stats_sum('warc dns'+p(self.prefix), 1)
 
-    def write_request_response_pair(self, url, req_headers, resp_headers, payload, digest=None):
+    def write_request_response_pair(self, url, req_headers, resp_headers, is_truncated, payload, digest=None):
         if self.writer is None:
             self.open()
 
@@ -199,6 +202,12 @@ class CCWARCWriter:
         warc_headers_dict = {}
         if digest is not None:
             warc_headers_dict['WARC-Payload-Digest'] = digest
+        if is_truncated:
+            if is_truncated in valid_truncations:
+                warc_headers_dict['WARC-Truncated'] = is_truncated
+            else:
+                LOGGER.error('Invalid is_truncation of '+is_truncated)
+                warc_headers_dict['WARC-Truncated'] = 'unspecified'
 
         response = self.writer.create_warc_record(url, 'response',
                                                   payload=BytesIO(payload),

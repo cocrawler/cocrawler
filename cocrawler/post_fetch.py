@@ -99,14 +99,20 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
 
 async def post_200(f, url, priority, json_log, crawler):
     # XXX add code to deal with f.is_truncated
-    # add WARC-Truncated: length
+    # add WARC-Truncated: length -- to explain why
     # make sure WARC Content-Length is the truncated size
     # presumably the content-length http header is going to be the whole thing
     # XXX testme
 
+    if crawler.warcwriter is not None:
+        # XXX insert the digest we already computed, instead of computing it again?
+        crawler.warcwriter.write_request_response_pair(url.url, f.req_headers,
+                                                       f.response.raw_headers, f.is_truncated, f.body_bytes)
+
     resp_headers = f.response.headers
     content_type = resp_headers.get('content-type', 'None')
     # sometimes content_type comes back multiline. whack it with a wrench.
+    # XXX make sure I'm not creating blank lines and stopping cgi parse early?!
     content_type = content_type.replace('\r', '\n').partition('\n')[0]
     if content_type:
         content_type, _ = cgi.parse_header(content_type)
@@ -115,10 +121,6 @@ async def post_200(f, url, priority, json_log, crawler):
     LOGGER.debug('url %r came back with content type %r', url.url, content_type)
     json_log['content_type'] = content_type
     stats.stats_sum('content-type=' + content_type, 1)
-    if crawler.warcwriter is not None:
-        # XXX digest?
-        crawler.warcwriter.write_request_response_pair(url.url, f.req_headers, f.response.raw_headers, f.body_bytes)
-
     if content_type == 'text/html':
         try:
             with stats.record_burn('response.text() decode', url=url):
