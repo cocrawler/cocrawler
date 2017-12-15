@@ -27,7 +27,6 @@ pur==4.0.3
 
 # used by the mock webserver
 bottle==0.12.13
-gevent==1.2.2
 
 # used by Makefile
 coverage==4.4.2

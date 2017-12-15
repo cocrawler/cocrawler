@@ -2,6 +2,7 @@
 
 init:
 	pip install -r requirements.txt
+	-pip install -r optional-requirements.txt
 
 pytest:
 	tldextract -u -p  # update the database
