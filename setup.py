@@ -30,6 +30,7 @@ packages = [
 ]
 
 requires = [
+    'uvloop',
     'aiohttp',
     'aiodns',
     'pyyaml',
@@ -46,9 +47,11 @@ requires = [
     'fakeredis',
     'beautifulsoup4',
     'lxml',
-    'warcio']
+    'extensions',
+    'warcio',
+    'geoip2']
 
-test_requirements = ['pytest>=3.0.0', 'coverage', 'pytest-cov']
+test_requirements = ['bottle', 'pytest>=3.0.0', 'coverage', 'pytest-cov']
 
 scripts = ['scripts/aiohttp-fetch.py',
            'scripts/bench_burner.py',
