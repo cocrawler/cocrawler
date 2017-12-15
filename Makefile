@@ -4,6 +4,10 @@ init:
 	pip install -r requirements.txt
 	-pip install -r optional-requirements.txt
 
+pur:
+	pur
+	pur -r optional-requirements.txt
+
 pytest:
 	tldextract -u -p  # update the database
 	PYTHONPATH=. py.test
