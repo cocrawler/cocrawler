@@ -26,6 +26,7 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     with stats.record_burn('split_head_body', url=url):
         head, body = split_head_body(html)
 
+    stats.stats_sum('head soup bytes', len(head))
     with stats.record_burn('head soup', url=url):
         try:
             head_soup = BeautifulSoup(head, 'lxml')

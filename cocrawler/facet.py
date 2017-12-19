@@ -48,7 +48,7 @@ def compute_all(html, head, headers_list, embeds, url=None):
     return facet_dedup(facets)
 
 
-def find_head_facets(head, url=None):
+def find_head_facets(head, head_soup=None, url=None):
     '''
     We use html parsing, because the head is smallish and friends don't let
     friends parse html with regexes.
@@ -57,14 +57,14 @@ def find_head_facets(head, url=None):
     '''
     facets = []
 
-    # XXX this belongs moved up a couple into the parser
-    stats.stats_sum('beautiful soup head bytes', len(head))
-    with stats.record_burn('beautiful soup head', url=url):
-        try:
-            soup = BeautifulSoup(head, 'html.parser')
-        except Exception as e:
-            facets.append(('BeautifulSoupException', repr(e)))
-            return facets
+    if head_soup is None:
+        stats.stats_sum('beautiful soup head bytes', len(head))
+        with stats.record_burn('beautiful soup head', url=url):
+            try:
+                soup = BeautifulSoup(head, 'lxml')
+            except Exception as e:
+                facets.append(('BeautifulSoupException', repr(e)))
+                return facets
 
     html = soup.find('html')
     if html:
@@ -81,6 +81,7 @@ def find_head_facets(head, url=None):
             # TODO base affects all relative URLs in doc
             # XXX when I hoist the soup, hoist this code too
             # can get clues here that www. or https is really the canonical site
+            # (also link rel canonical)
 
     meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
