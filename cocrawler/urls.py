@@ -255,6 +255,7 @@ def upgrade_url_to_https(url):
     #  use browser HSTS list to upgrade to https:
     #   https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json
     #  use HTTPSEverwhere? would have to have a fallback if https failed / redir to http
+    #   do not use "mixed" rules from this dataset
     return
 
 
