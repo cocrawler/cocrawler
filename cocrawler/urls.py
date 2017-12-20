@@ -323,8 +323,6 @@ class URL(object):
     Currently idempotent.
     '''
     def __init__(self, url, urljoin=None, seed=False):
-        if seed:
-            url = special_seed_handling(url)
         url = clean_webpage_links(url, urljoin=urljoin)
 
         if urljoin:
