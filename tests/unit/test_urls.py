@@ -54,14 +54,6 @@ def test_clean_webpage_links():
     assert cwl('x'*301) == ''  # throw-up-hands error case
 
 
-def test_special_seed_handling():
-    ssh = urls.special_seed_handling
-    assert ssh('foo') == 'http://foo'
-    assert ssh('//foo') == 'http://foo'
-    assert ssh('https://foo') == 'https://foo'
-    assert ssh('mailto:foo') == 'mailto:foo'
-
-
 def test_remove_dot_segments():
     rds = urls.remove_dot_segments
     # examples from rfc 3986

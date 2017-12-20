@@ -1,3 +1,4 @@
+import urllib
 import logging
 
 from .urls import URL
@@ -34,6 +35,21 @@ def expand_seeds(seeds):
 
     seeds = []
     for r in ret:
+        r = special_seed_handling(r)
         seeds.append(URL(r, seed=True))
 
     return seeds
+
+
+def special_seed_handling(url):
+    '''
+    We don't expect seed-lists to be very clean: no scheme, etc.
+    '''
+    # use urlsplit to accurately test if a scheme is present
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme == '':
+        if url.startswith('//'):
+            url = 'http:' + url
+        else:
+            url = 'http://' + url
+    return url

@@ -138,20 +138,6 @@ def clean_webpage_links(link, urljoin=None):
     return link
 
 
-def special_seed_handling(url):
-    '''
-    We don't expect seed-lists to be very clean: no scheme, etc.
-    '''
-    # use urlsplit to accurately test if a scheme is present
-    parts = urllib.parse.urlsplit(url)
-    if parts.scheme == '':
-        if url.startswith('//'):
-            url = 'http:' + url
-        else:
-            url = 'http://' + url
-    return url
-
-
 def remove_dot_segments(path):
     '''
     Algorithm from RFC 3986. urllib.parse has this algorithm, but it's hidden in urljoin()
