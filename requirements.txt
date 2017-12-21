@@ -30,7 +30,7 @@ bottle==0.12.13
 
 # used by Makefile
 coverage==4.4.2
-pylint==1.7.5
+pylint==1.8.1
 flake8==3.5.0
 pytest==3.3.1
 pytest-cov==2.5.1
