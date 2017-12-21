@@ -22,8 +22,7 @@ Seeds:
 #  - http://xkcd.com/
 #  Files:
 #  - seed_list.txt
-  SeedRedirsFree: 1
-  SeedRedirCount: 2
+  FreeSeedRedirs: 3
 
 REST: {}
 #REST:

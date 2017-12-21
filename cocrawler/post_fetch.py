@@ -78,20 +78,16 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     json_log['redirect'] = next_url.url
 
     kwargs = {}
-    if 'seed' in ridealong:
-        if 'seedredirs' in ridealong:
-            ridealong['seedredirs'] += 1
-        else:
-            ridealong['seedredirs'] = 1
-        if ridealong['seedredirs'] > (config.read('Seeds', 'SeedRedirCount') or 0):
-            del ridealong['seed']
-            del ridealong['seedredirs']
-        else:
-            kwargs['seed'] = ridealong['seed']
-            kwargs['seedredirs'] = ridealong['seedredirs']
-            if config.read('Seeds', 'SeedRedirsFree'):
-                priority -= 1
-            json_log['seedredirs'] = ridealong['seedredirs']
+    if 'freeredirs' in ridealong:
+        priority -= 1
+        json_log['freeredirs'] = ridealong['freeredirs']
+        ridealong['freeredirs'] -= 1
+        if ridealong['freeredirs'] > 0:
+            kwargs['freeredirs'] = ridealong['freeredirs']
+            if 'seed' in ridealong:
+                kwargs['seed'] = True  # bypasses add_url check
+
+    # XXX add_url is going to overwrite ridealong
 
     if crawler.add_url(priority, next_url, **kwargs):
         json_log['found_new_links'] = 1

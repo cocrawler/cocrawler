@@ -322,7 +322,7 @@ class URL(object):
     Precomputes a lot of stuff upon creation, which is usually done in a burner thread.
     Currently idempotent.
     '''
-    def __init__(self, url, urljoin=None, seed=False):
+    def __init__(self, url, urljoin=None):
         url = clean_webpage_links(url, urljoin=urljoin)
 
         if urljoin:

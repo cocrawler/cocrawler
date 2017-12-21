@@ -1,6 +1,7 @@
 import urllib
 import logging
 
+from . import stats
 from .urls import URL
 
 LOGGER = logging.getLogger(__name__)
@@ -36,8 +37,9 @@ def expand_seeds(seeds):
     seeds = []
     for r in ret:
         r = special_seed_handling(r)
-        seeds.append(URL(r, seed=True))
+        seeds.append(URL(r))
 
+    stats.stats_sum('added seeds', len(seeds))
     return seeds
 
 

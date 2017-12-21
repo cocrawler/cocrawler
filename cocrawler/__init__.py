@@ -143,8 +143,9 @@ class Crawler:
             stats.report()
         else:
             self._seeds = seeds.expand_seeds(config.read('Seeds'))
+            freeseedredirs = config.read('Seeds', 'FreeSeedRedirs')
             for s in self._seeds:
-                self.add_url(1, s, seed=True)
+                self.add_url(1, s, seed=True, freeredirs=freeseedredirs)
             LOGGER.info('after adding seeds, work queue is %r urls', self.scheduler.qsize())
             stats.stats_max('initial seeds', self.scheduler.qsize())
 
@@ -172,7 +173,7 @@ class Crawler:
         if self.rejectedaddurlfd:
             print(url.url, file=self.rejectedaddurlfd)
 
-    def add_url(self, priority, url, seed=False, seedredirs=None):
+    def add_url(self, priority, url, seed=False, freeredirs=None):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
         # XXX optionally generate additional urls plugin here
@@ -198,14 +199,11 @@ class Crawler:
         # end allow/deny plugin
 
         LOGGER.debug('actually adding url %s, surt %s', url.url, url.surt)
-        if seed:
-            stats.stats_sum('added seeds', 1)
-        else:
-            stats.stats_sum('added urls', 1)
+        stats.stats_sum('added urls', 1)
 
         work = {'url': url, 'priority': priority}
-        if seed:
-            work['seed'] = True
+        if freeredirs:
+            work['freeredirs'] = freeredirs
 
         # to randomize fetches, and sub-prioritize embeds
         if work.get('embed'):
