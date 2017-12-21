@@ -43,7 +43,6 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     location = resp_headers.get('location')
     if location is None:
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
-        # XXX this raise causes "ERROR:asyncio:Task exception was never retrieved"
         raise ValueError(url.url + ' sent a redirect with no Location: header')
     next_url = urls.URL(location, urljoin=url)
 
