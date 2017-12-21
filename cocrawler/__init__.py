@@ -319,7 +319,7 @@ class Crawler:
                     await self.fetch_and_process(work)
                 except Exception as e:
                     # this catches any buggy code that executes in the main thread
-                    LOGGER.error('Something bad happened somewhere, it\'s a mystery: %s', e)
+                    LOGGER.error('Something bad happened somewhere, it\'s a mystery:\n%s', e)
                     traceback.print_exc()
                     # falling through causes this work item to get marked done, and we continue
 
