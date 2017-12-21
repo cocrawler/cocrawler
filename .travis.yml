@@ -1,6 +1,4 @@
-#to get 14.04:
-#sudo: required
-#dist: trusty
+dist: xenial
 
 language: python
 python:
