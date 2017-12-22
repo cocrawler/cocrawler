@@ -38,6 +38,6 @@ Testing:
     parse in main thread: 10
     warc r/r (prefix Testing): 0
   StatsGE:
-    scheduler ratelimit recycle: 20
-    scheduler ratelimit short sleep: 2
+    scheduler ratelimit recycle sum: 20
+    scheduler ratelimit short sleep sum: 2
     elapsed: 19

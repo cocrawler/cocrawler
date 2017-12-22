@@ -68,7 +68,7 @@ class Scheduler:
 
             # sleep then requeue
             if recycle:
-                stats.stats_sum(why, dt)
+                stats.stats_sum(why+' sum', dt)
                 with stats.coroutine_state(why):
                     await asyncio.sleep(dt)
                     self.q.put_nowait(work)
@@ -78,7 +78,7 @@ class Scheduler:
             # Normal case: sleep if needed, and then return the work to the caller.
             self.next_fetch[surt_host] = now + dt + self.delta_t
             if dt > 0:
-                stats.stats_sum(why, dt)
+                stats.stats_sum(why+' sum', dt)
                 with stats.coroutine_state(why):
                     await asyncio.sleep(dt)
 
@@ -199,17 +199,13 @@ class Scheduler:
                     print('  ', r, self.ridealong[r])
             raise ValueError('cannot continue, I just destroyed the queue')
 
-        urls_with_tries = 0
         priority_count = defaultdict(int)
         netlocs = defaultdict(int)
         for k, v in self.ridealong.items():
-            if 'tries' in v:
-                urls_with_tries += 1
             priority_count[v['priority']] += 1
             url = v['url']
             netlocs[url.urlsplit.netloc] += 1
 
-        print('{} items in crawl queue are retries'.format(urls_with_tries))
         print('{} different hosts in the queue'.format(len(netlocs)))
         print('Queue counts by priority:')
         for p in sorted(list(priority_count.keys())):
