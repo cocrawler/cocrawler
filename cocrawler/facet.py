@@ -4,7 +4,7 @@ Code related to generating webpage facets.
 For normal crawling, we only parse facets we think might be useful
 for crawling and ranking: STS, twitter cards, facebook opengraph.
 
-TODO: find rss feeds (both link alternate and plain href to .xml)
+TODO: find rss feeds (both link alternate and plain href to .xml or maybe .rss)
 TODO: probe with DNT:1 and see who replies TK: N
 
 This module also contains code to post-facto process headers to
@@ -34,7 +34,7 @@ meta_property_prefix = (('al:', 'applinks'),
 
 meta_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 
-save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security',)
+save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
 
 def compute_all(html, head, headers_list, embeds, url=None):
