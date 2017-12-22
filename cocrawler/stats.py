@@ -6,6 +6,7 @@ import logging
 import pickle
 import time
 from contextlib import contextmanager
+from collections import defaultdict
 
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
@@ -210,6 +211,23 @@ def burn_values(name):
         return burners[name].get('time', 0), burners[name].get('count', 0)
     else:
         return None, None
+
+
+def check_collisions():
+    # see stat_value above -- these namespaces are shared when read
+    keys = []
+    keys.extend(maxes.keys())
+    keys.extend(sums.keys())
+    keys.extend(sets.keys())
+    keys.extend(burners.keys())
+    keys.extend(coroutine_states.keys())
+    dedup = set()
+    for k in keys:
+        if k in dedup:
+            LOGGER.error('stat name %s is used in multiple stats', k)
+            global exitstatus
+            exitstatus = 1
+        dedup.add(k)
 
 
 def check(no_test=False):
