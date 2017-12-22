@@ -5,11 +5,10 @@ Stuff related to robots.txt processing
 import asyncio
 
 import time
+import random
 import json
 import logging
 import urllib.parse
-import aiohttp
-import aiodns
 
 import robotexclusionrulesparser
 import magic
@@ -67,7 +66,6 @@ class Robots:
             robots = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
-            # extra semantics and policy inside fetch_robots: 404 returns '', etc. also inserts into cache.
             robots = await self.fetch_robots(schemenetloc, mock_robots,
                                              headers=headers, proxy=proxy)
 
@@ -87,6 +85,7 @@ class Robots:
             return False
 
 #        if robots.sitemaps:
+# XXX want to log this, at least
 #           ...
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
@@ -104,14 +103,14 @@ class Robots:
 
     async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
-        robotexclusionrules parser is not async, so fetch the file ourselves
+        robotexclusionrules fetcher is not async, so fetch the file ourselves
 
         Note the following Google semantics:
         https://developers.google.com/search/reference/robots_txt
         3xx redir == follow up to 5 hops, then consider it a 404.
         4xx errors == no crawl restrictions
         5xx errors == full disallow. fast retry if 503.
-        if site appears to return 5xx for 404, then 5xx is treated as a 404
+           if site appears to return 5xx for 404, then 5xx is treated as a 404
         '''
         url = URL(schemenetloc + '/robots.txt')
 
@@ -122,11 +121,11 @@ class Robots:
         # XXX this is frequently racy, according to the logfiles!
         if schemenetloc in self.in_progress:
             while schemenetloc in self.in_progress:
-                # XXX make this a stat?
-                # XXX does it go off for wide when it shouldn't?
                 LOGGER.debug('sleeping because someone beat me to the robots punch')
+                # XXX make this a stat?
                 with stats.coroutine_state('robots collision sleep'):
-                    await asyncio.sleep(0.3)
+                    interval = random.uniform(0.2, 0.3)
+                    await asyncio.sleep(interval)
 
             # at this point robots might be in the cache... or not.
             try:

@@ -19,6 +19,7 @@ def scheme_allowed(url):
         return False
     return True
 
+
 not_text_extension = set(('jpg', 'jpeg', 'png', 'gif',
                           'mp3', 'mid', 'midi',
                           'pdf', 'ps',
@@ -61,6 +62,7 @@ def url_allowed(url):
         return False
 
     return True
+
 
 valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
 

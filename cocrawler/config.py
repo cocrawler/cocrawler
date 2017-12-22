@@ -23,6 +23,7 @@ Seeds:
 #  Files:
 #  - seed_list.txt
   FreeSeedRedirs: 3
+  SeedRetries: 4
 
 REST: {}
 #REST:

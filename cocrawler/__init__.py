@@ -142,10 +142,7 @@ class Crawler:
             LOGGER.info('at time of loading, stats are')
             stats.report()
         else:
-            self._seeds = seeds.expand_seeds(config.read('Seeds'))
-            freeseedredirs = config.read('Seeds', 'FreeSeedRedirs')
-            for s in self._seeds:
-                self.add_url(1, s, seed=True, freeredirs=freeseedredirs)
+            self._seeds = seeds.expand_seeds_config(config, self)
             LOGGER.info('after adding seeds, work queue is %r urls', self.scheduler.qsize())
             stats.stats_max('initial seeds', self.scheduler.qsize())
 
@@ -173,7 +170,7 @@ class Crawler:
         if self.rejectedaddurlfd:
             print(url.url, file=self.rejectedaddurlfd)
 
-    def add_url(self, priority, url, seed=False, freeredirs=None):
+    def add_url(self, priority, ridealong):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
         # XXX optionally generate additional urls plugin here
@@ -181,6 +178,8 @@ class Crawler:
         # and a non-homepage should add the homepage
         # and a homepage add should add soft404 detection
         # and ...
+
+        url = ridealong['url']
 
         # XXX allow/deny plugin modules go here
         if priority > int(config.read('Crawl', 'MaxDepth')):
@@ -191,7 +190,8 @@ class Crawler:
             stats.stats_sum('rejected by seen_urls', 1)
             self.log_rejected_add_url(url)
             return
-        if not seed and not url_allowed.url_allowed(url):
+        if 'skip_seen_url' not in ridealong and not url_allowed.url_allowed(url):
+            # XXX really I should pass skip_seen_url into url_allowed
             LOGGER.debug('url %s was rejected by url_allow.', url.url)
             stats.stats_sum('rejected by url_allowed', 1)
             self.log_rejected_add_url(url)
@@ -201,17 +201,15 @@ class Crawler:
         LOGGER.debug('actually adding url %s, surt %s', url.url, url.surt)
         stats.stats_sum('added urls', 1)
 
-        work = {'url': url, 'priority': priority}
-        if freeredirs:
-            work['freeredirs'] = freeredirs
+        ridealong['priority'] = priority
 
         # to randomize fetches, and sub-prioritize embeds
-        if work.get('embed'):
+        if ridealong.get('embed'):
             rand = 0.0
         else:
             rand = random.uniform(0, 0.99999)
 
-        self.scheduler.set_ridealong(url.surt, work)
+        self.scheduler.set_ridealong(url.surt, ridealong)
 
         self.scheduler.queue_work((priority, rand, url.surt))
 
@@ -227,6 +225,7 @@ class Crawler:
         stats.report()
         parse.report()
         stats.check(no_test=self.no_test)
+        stats.check_collisions()
         self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
@@ -244,8 +243,6 @@ class Crawler:
 
         ridealong = self.scheduler.get_ridealong(surt)
         url = ridealong['url']
-        tries = ridealong.get('tries', 0)
-        maxtries = config.read('Crawl', 'MaxTries')
 
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.ua)
 
@@ -253,8 +250,7 @@ class Crawler:
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
             # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
-            # XXX treat 'no robots data' as a soft failure?
-            # XXX log more particular robots fail reason here
+            # XXX log more particular robots fail reason here?
             json_log = {'type': 'get', 'url': url.url, 'priority': priority,
                         'status': 'robots', 'time': time.time()}
             if self.crawllogfd:
@@ -269,26 +265,27 @@ class Crawler:
                     't_first_byte': f.t_first_byte, 'time': time.time()}
         if f.is_truncated:
             json_log['truncated'] = True
-        if tries:
-            json_log['retry'] = tries
+        retries_left = ridealong.get('retries_left', 0)
 
         if f.last_exception is not None or f.response.status >= 500:
-            tries += 1
-            if tries > maxtries:
+            retries_left -= 1
+            if retries_left <= 0:
                 # XXX jsonlog hard fail
                 # XXX remember that this host had a hard fail
-                stats.stats_sum('tries completely exhausted', 1)
+                stats.stats_sum('retries completely exhausted', 1)
                 self.scheduler.del_ridealong(surt)
                 return
             # XXX jsonlog this soft fail?
-            ridealong['tries'] = tries
-            ridealong['priority'] = priority
+            ridealong['retries_left'] = retries_left
             self.scheduler.set_ridealong(surt, ridealong)
             # increment random so that we don't immediately retry
             extra = random.uniform(0, 0.2)
             priority, rand = self.scheduler.update_priority(priority, rand+extra)
+            ridealong['priority'] = priority
             self.scheduler.requeue_work((priority, rand, surt))
             return
+
+        # success
 
         self.scheduler.del_ridealong(surt)
 

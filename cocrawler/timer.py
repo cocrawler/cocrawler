@@ -55,7 +55,7 @@ slow_stats = [
     {'name': 'fetch URLs'},
     {'name': 'fetch bytes', 'normalize': 1/1000000000.},
     {'name': 'robots denied'},
-    {'name': 'tries completely exhausted'},
+    {'name': 'retries completely exhausted'},
     {'name': 'max queue size'},
     {'name': 'queue size'},
     {'name': 'added urls'},

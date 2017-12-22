@@ -7,15 +7,17 @@ from .urls import URL
 LOGGER = logging.getLogger(__name__)
 
 
-def expand_seeds(seeds):
-    ret = []
+def expand_seeds_config(config, crawler):
+    urls = []
+    seeds = config.read('Seeds')
 
     if seeds is None:
-        return ret
+        return
 
     if seeds.get('Hosts', []):
         for h in seeds['Hosts']:
-            ret.append(h)
+            u = special_seed_handling(h)
+            urls.append(URL(u))
 
     seed_files = seeds.get('Files', [])
     if seed_files:
@@ -29,18 +31,28 @@ def expand_seeds(seeds):
                         line, _ = line.split('#', 1)
                     if line.strip() == '':
                         continue
-                    ret.append(line.strip())
+                    u = special_seed_handling(line.strip())
+                    urls.append(URL(u))
 
     # sitemaps are a little tedious, so I'll implement later.
     # needs to be fetched and then xml parsed and then <urlset ><url><loc></loc> elements extracted
 
-    seeds = []
-    for r in ret:
-        r = special_seed_handling(r)
-        seeds.append(URL(r))
+    return seed_some_urls(urls, config, crawler)
 
-    stats.stats_sum('added seeds', len(seeds))
-    return seeds
+
+def seed_some_urls(urls, config, crawler):
+    freeseedredirs = config.read('Seeds', 'FreeSeedRedirs')
+    retries_left = config.read('Seeds', 'SeedRetries') or config.read('Crawl', 'MaxTries')
+    priority = 1
+
+    for u in urls:
+        work = {'url': u, 'priority': priority, 'skip_seen_url': True, 'retries_left': retries_left}
+        if freeseedredirs:
+            work['free_redirs'] = freeseedredirs
+        crawler.add_url(priority, work)
+
+    stats.stats_sum('added seeds', len(urls))
+    return urls
 
 
 def special_seed_handling(url):

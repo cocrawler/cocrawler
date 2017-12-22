@@ -20,9 +20,10 @@ def test_cocrawler(capsys):
 
     crawler = cocrawler.Crawler()
 
-    crawler.add_url(0, URL('http://example1.com/'), seed=True)
-    crawler.add_url(0, URL('http://example2.com/'), seed=True)
-    crawler.add_url(0, URL('http://example3.com/'), seed=True)
+    crawler.add_url(0, {'url': URL('http://example1.com/'), 'skip_seen_url': True})
+    crawler.add_url(0, {'url': URL('http://example2.com/'), 'skip_seen_url': True})
+    crawler.add_url(0, {'url': URL('http://example3.com/'), 'skip_seen_url': True})
+
     assert crawler.qsize == 3
 
     f = tempfile.NamedTemporaryFile(delete=False)
@@ -32,7 +33,7 @@ def test_cocrawler(capsys):
         crawler.save(f)
     assert crawler.qsize == 0
 
-    crawler.add_url(0, URL('http://example4.com/'), seed=True)
+    crawler.add_url(0, {'url': URL('http://example4.com/'), 'skip_seen_url': True})
     assert crawler.qsize == 1
 
     with open(name, 'rb') as f:
@@ -51,4 +52,4 @@ def test_cocrawler(capsys):
     out, err = capsys.readouterr()
 
     assert err == ''
-    assert len(out) >= 242  # not a very good test, but at least it is something
+    assert len(out) >= 200  # not a very good test, but at least it is something

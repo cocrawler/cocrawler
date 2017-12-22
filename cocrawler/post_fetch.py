@@ -38,35 +38,37 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, ridealong, priority, json_log, crawler):
+def handle_redirect(f, url, work, priority, json_log, crawler):
     resp_headers = f.response.headers
     location = resp_headers.get('location')
     if location is None:
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
     next_url = urls.URL(location, urljoin=url)
+    work['url'] = next_url
 
     kind = urls.special_redirect(url, next_url)
     if kind is not None:
-        if 'seed' in ridealong:
+        if 'seed' in work:
             prefix = 'redirect seed'
         else:
             prefix = 'redirect'
         stats.stats_sum(prefix+' '+kind, 1)
 
-    # XXX need to handle 'samesurt' case
     if kind is None:
         pass
     elif kind == 'same':
         LOGGER.info('attempted redirect to myself: %s to %s', url.url, next_url.url)
         if 'Set-Cookie' not in resp_headers:
-            LOGGER.info('redirect to myself had no cookies.')
+            LOGGER.info('redirect to myself and had no cookies.')
             # XXX try swapping www/not-www? or use a non-crawler UA.
             # looks like some hosts have extra defenses on their redir servers!
         else:
             # XXX we should use a cookie jar with this domain?
             pass
         # fall through; will fail seen-url test in addurl
+    elif kind == 'samesurt':  # uh oh
+        work['skip_seen_url'] = True
     else:
         # LOGGER.info('special redirect of type %s for url %s', kind, url.url)
         # XXX push this info onto a last-k for the host
@@ -74,22 +76,22 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
         pass
 
     priority += 1
-    json_log['redirect'] = next_url.url
 
-    kwargs = {}
-    if 'freeredirs' in ridealong:
+    if 'freeredirs' in work:
         priority -= 1
-        json_log['freeredirs'] = ridealong['freeredirs']
-        ridealong['freeredirs'] -= 1
-        if ridealong['freeredirs'] > 0:
-            kwargs['freeredirs'] = ridealong['freeredirs']
-            if 'seed' in ridealong:
-                kwargs['seed'] = True  # bypasses add_url check
+        json_log['freeredirs'] = work['freeredirs']
+        work['freeredirs'] -= 1
+        if work['freeredirs'] == 0:
+            del work['freeredirs']
+    work['priority'] = priority
 
-    # XXX add_url is going to overwrite ridealong
+    crawler.add_url(priority, work)
 
-    if crawler.add_url(priority, next_url, **kwargs):
-        json_log['found_new_links'] = 1
+    json_log['redirect'] = next_url.url
+    json_log['location'] = location
+    json_log['kind'] = kind
+    json_log['found_new_links'] = 1
+    # after we return, json_log will get logged
 
 
 async def post_200(f, url, priority, json_log, crawler):
@@ -155,15 +157,20 @@ async def post_200(f, url, priority, json_log, crawler):
         json_log['found_links'] = len(links) + len(embeds)
         stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
+        max_tries = config.read('Crawl', 'MaxTries')
+
         new_links = 0
         for u in links:
-            if crawler.add_url(priority + 1, u):
+            work = {'url': u, 'priority': priority+1, 'retries_left': max_tries}
+            if crawler.add_url(priority + 1, work):
                 new_links += 1
         for u in embeds:
-            if crawler.add_url(priority - 1, u):
+            work = {'url': u, 'priority': priority-1, 'retries_left': max_tries}
+            if crawler.add_url(priority - 1, work):
                 new_links += 1
 
         if new_links:
             json_log['found_new_links'] = new_links
 
         # XXX plugin for links and new links - post to Kafka, etc
+        # neah stick that in add_url!
