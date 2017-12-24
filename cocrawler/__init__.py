@@ -140,8 +140,11 @@ class Crawler:
 
         self.workers = []
 
-        LOGGER.info('Touch ~/STOPCRAWLER.%d to stop the crawler.', os.getpid())
-        LOGGER.info('Touch ~/PAUSECRAWLER.%d to pause the crawler.', os.getpid())
+        self.stop_crawler = os.path.expanduser('~/STOPCRAWLER.{}'.format(os.getpid()))
+        self.pause_crawler = os.path.expanduser('~/PAUSECRAWLER.{}'.format(os.getpid()))
+
+        LOGGER.info('Touch %s to stop the crawler.', self.stop_crawler)
+        LOGGER.info('Touch %s to pause the crawler.', self.pause_crawler)
 
     def __del__(self):
         self.connector.close()
@@ -384,11 +387,11 @@ class Crawler:
         while True:
             await asyncio.sleep(1)
 
-            if os.path.exists(os.path.expanduser('~/STOPCRAWLER.{}'.format(os.getpid()))):
+            if os.path.exists(self.stop_crawler):
                 LOGGER.warning('saw STOPCRAWLER file, stopping crawler and saving queues')
                 self.stopping = 1
 
-            if os.path.exists(os.path.expanduser('~/PAUSECRAWLER.{}'.format(os.getpid()))):
+            if os.path.exists(self.pause_crawler):
                 LOGGER.warning('saw PAUSECRAWLER file, pausing crawler')
                 self.paused = 1
             elif self.paused:
