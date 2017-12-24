@@ -26,8 +26,8 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._crawllocalhost = config.read(('Fetcher', 'CrawlLocalhost')) or False
-        self._crawlprivate = config.read(('Fetcher', 'CrawlPrivate')) or False
+        self._crawllocalhost = config.read('Fetcher', 'CrawlLocalhost') or False
+        self._crawlprivate = config.read('Fetcher', 'CrawlPrivate') or False
 
     async def resolve(self, host, port, **kwargs):
         with stats.record_latency('fetcher DNS lookup', url=host):
@@ -37,8 +37,8 @@ class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
         ret = []
         for a in addrs:
             try:
-                ip = ipaddress.ip_address(a.host)
-            except ValueError:
+                ip = ipaddress.ip_address(a['host'])
+            except KeyError:
                 continue
             if not self._crawllocalhost and ip.is_localhost:
                 continue
@@ -65,10 +65,10 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._crawllocalhost = config.read(('Fetcher', 'CrawlLocalhost')) or False
-        self._crawlprivate = config.read(('Fetcher', 'CrawlPrivate')) or False
-        self._cachemaxsize = config.read(('Fetcher', 'DNSCacheMaxSize'))
-        self._cache = cachetools.LRUCache(self._cachemaxsize)
+        self._crawllocalhost = config.read('Fetcher', 'CrawlLocalhost') or False
+        self._crawlprivate = config.read('Fetcher', 'CrawlPrivate') or False
+        self._cachemaxsize = config.read('Fetcher', 'DNSCacheMaxSize')
+        self._cache = cachetools.LRUCache(int(self._cachemaxsize))
         self._refresh_in_progress = set()
 
     async def resolve(self, host, port, **kwargs):
@@ -76,6 +76,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         if host in self._cache:
             (addrs, expires, refresh) = self._cache[host]
             if expires < t:
+                # TODO: if I expire one, examine the next hundred entries so I don't accumulate stale entries
                 del self._cache[host]
             elif refresh < t and host not in self._refresh_in_progress:
                 # TODO: spawn a thread to await this while I continue on
@@ -84,34 +85,40 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
-            self._cache[host] = await self.actual_async_lookup(host)
+            self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
 
         (addrs, _, _) = self._cache[host]
-        return addrs[0].host
+        return addrs
 
-    async def actual_async_lookup(self, host):
+    async def actual_async_lookup(self, host, port, **kwargs):
         '''
         Do an actual lookup. Always raise if it fails.
         '''
         with stats.record_latency('fetcher DNS lookup', url=host):
             with stats.coroutine_state('fetcher DNS lookup'):
                 # XXX TODO: how should I deal with AAAA vs A?
-                addrs = await query(host, 'A')
+                #addrs = await query(host, 'A')
+                addrs = await super().resolve(host, port, **kwargs)
 
         # filter return value to exclude unwanted ip addrs
         ret = []
         ttl = 0
         for a in addrs:
+            if 'host' not in a:
+                continue
             try:
-                ip = ipaddress.ip_address(a.host)
+                ip = ipaddress.ip_address(a['host'])
             except ValueError:
                 continue
-            if not self._crawllocalhost and ip.is_localhost:
+            if not self._crawllocalhost and ip.is_loopback:
                 continue
             if not self._crawlprivate and ip.is_private:
                 continue
+            if ip.is_multicast:
+                continue
             ret.append(a)
-            ttl = a.ttl  # all should be equal, we'll remember the last
+            if 'ttl' in a:
+                ttl = a['ttl']  # all should be equal, we'll remember the last
 
         if len(ret) == 0:
             raise ValueError
@@ -123,8 +130,6 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
 
         if len(addrs) != len(ret):
             LOGGER.info('threw out some ip addresses for %s', host)
-
-        LOGGER.error('actual lookup, returning %r', ret)
 
         return ret, expires, refresh
 
