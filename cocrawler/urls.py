@@ -127,7 +127,9 @@ def clean_webpage_links(link, urljoin=None):
         m = re.match(r'(.*?)[<>\"\'\r\n ]', link)  # rare  in urls and common in html markup
         if m:
             link = m.group(1)
-        if len(link) > 600:
+        if len(link) > 2000:
+            if link.startswith('javascript:') or link.startswith('data:'):
+                return ''
             LOGGER.info('webpage urljoin=%s has an invalid-looking link %s', str(urljoin), link)
             return ''  # will urljoin to the urljoin
 

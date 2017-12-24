@@ -51,7 +51,7 @@ def test_clean_webpage_links():
     assert cwl('x'*100 + ' ' + 'x'*400) == 'x' * 100
     assert cwl('x'*100 + '\r >"' + 'x'*400) == 'x' * 100
     assert cwl('x'*100 + '\n' + 'x'*400) == 'x' * 100
-    assert cwl('x'*601) == ''  # throw-up-hands error case
+    assert cwl('x'*2001) == ''  # throw-up-hands error case
 
 
 def test_remove_dot_segments():
