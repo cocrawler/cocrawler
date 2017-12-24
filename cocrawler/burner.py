@@ -3,6 +3,7 @@ import time
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 import functools
+import traceback
 
 import psutil
 
@@ -22,6 +23,7 @@ def stats_wrap(partial, name, url=None):
             ret = list(partial())  # XXX what's pythonic here?
         except Exception as e:
             LOGGER.info('burner thread sees an exception %r', e)
+            traceback.print_exc()
             ret = []
     s = stats.raw()
     return s, ret
