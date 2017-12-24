@@ -266,5 +266,5 @@ class Robots:
         if self.robotslogfd:
             json_log = d
             json_log['host'] = schemenetloc
-            json_log['time'] = '{:.3f}'.format(time.time())
+            json_log['time'] = time.time()
             print(json.dumps(json_log, sort_keys=True), file=self.robotslogfd, flush=True)
