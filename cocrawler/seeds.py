@@ -49,11 +49,11 @@ def seed_some_urls(urls, config, crawler):
     url_allowed.setup_seeds(urls)
 
     for u in urls:
-        work = {'url': u, 'priority': priority, 'seed': True,
+        ridealong = {'url': u, 'priority': priority, 'seed': True,
                 'skip_seen_url': True, 'retries_left': retries_left}
         if freeseedredirs:
-            work['free_redirs'] = freeseedredirs
-        crawler.add_url(priority, work)
+            ridealong['free_redirs'] = freeseedredirs
+        crawler.add_url(priority, ridealong)
 
     stats.stats_sum('added seeds', len(urls))
     return urls
