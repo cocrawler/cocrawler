@@ -24,6 +24,8 @@ Seeds:
 #  - seed_list.txt
   FreeSeedRedirs: 3
   SeedRetries: 4
+#  Policy: www-then-non-www
+  Policy: None
 
 REST: {}
 #REST:

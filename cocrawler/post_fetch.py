@@ -17,6 +17,7 @@ from . import urls
 from . import parse
 from . import stats
 from . import config
+from . import seeds
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     resp_headers = f.response.headers
     location = resp_headers.get('location')
     if location is None:
+        seeds.fail(ridealong, crawler)
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
     next_url = urls.URL(location, urljoin=url)
@@ -74,6 +76,8 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
         else:
             # XXX we should use a cookie jar with this host
             stats.stats_sum('redirect same without set-cookie', 1)
+        seeds.fail(ridealong, crawler)
+        # fall through, will fail samesurt test
     else:
         LOGGER.info('special redirect of type %s for url %s', kind, url.url)
         # XXX push this info onto a last-k for the host

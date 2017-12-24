@@ -132,7 +132,7 @@ class Crawler:
             LOGGER.info('at time of loading, stats are')
             stats.report()
         else:
-            self._seeds = seeds.expand_seeds_config(config, self)
+            self._seeds = seeds.expand_seeds_config(self)
             LOGGER.info('after adding seeds, work queue is %r urls', self.scheduler.qsize())
             stats.stats_max('initial seeds', self.scheduler.qsize())
 
@@ -266,9 +266,10 @@ class Crawler:
                 # XXX jsonlog hard fail
                 # XXX remember that this host had a hard fail
                 stats.stats_sum('retries completely exhausted', 1)
+                seeds.fail(ridealong, self)
                 self.scheduler.del_ridealong(surt)
                 return
-            # XXX jsonlog this soft fail?
+            # XXX jsonlog this soft fail
             ridealong['retries_left'] = retries_left
             self.scheduler.set_ridealong(surt, ridealong)
             # increment random so that we don't immediately retry
