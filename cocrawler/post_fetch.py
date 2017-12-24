@@ -105,7 +105,8 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
 
     json_log['redirect'] = next_url.url
     json_log['location'] = location
-    json_log['kind'] = kind
+    if kind is not None:
+        json_log['kind'] = kind
     json_log['found_new_links'] = 1
     # after we return, json_log will get logged
 
