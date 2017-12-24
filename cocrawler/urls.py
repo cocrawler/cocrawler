@@ -127,7 +127,7 @@ def clean_webpage_links(link, urljoin=None):
         m = re.match(r'(.*?)[<>\"\'\r\n ]', link)  # rare  in urls and common in html markup
         if m:
             link = m.group(1)
-        if len(link) > 300:
+        if len(link) > 600:
             LOGGER.info('webpage urljoin=%s has an invalid-looking link %s', str(urljoin), link)
             return ''  # will urljoin to the urljoin
 
@@ -210,6 +210,7 @@ def safe_url_canonicalization(url):
     Good discussion: https://en.wikipedia.org/wiki/URL_normalization
     '''
 
+    original_url = url
     url = unquote(url, unreserved)
 
     try:
@@ -219,12 +220,18 @@ def safe_url_canonicalization(url):
         raise
 
     scheme = scheme.lower()
+    if scheme not in ('http', 'https', 'ftp'):
+        return original_url, ''
 
     netloc = surt.netloc_to_punycanon(scheme, netloc)
 
     if path == '':
         path = '/'
-    path = remove_dot_segments(path)
+    try:
+        path = remove_dot_segments(path)
+    except ValueError:
+        LOGGER.info('remove_dot_segments puking on url %s', url)
+        raise
     path = path.replace('\\', '/')  # might not be 100% safe but is needed for Windows buffoons
     path = unquote(path, unquote_in_path)
 
