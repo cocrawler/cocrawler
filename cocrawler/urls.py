@@ -248,11 +248,9 @@ def upgrade_url_to_https(url):
 def special_redirect(url, next_url):
     '''
     Classifies some redirects that we wish to do special processing for
-
-    XXX the case where SURT(url) == SURT(redirect) needs to be handled: 'samesurt'
     '''
 
-    if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'  # what about 'samesurt' ?
+    if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'
         return None
 
     if url.url == next_url.url:

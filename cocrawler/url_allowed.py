@@ -56,7 +56,8 @@ def url_allowed(url):
         if url.hostname_without_www not in SEEDS:
             return False
     elif POLICY == 'OnlySeeds':
-        return False  # cheating :-)
+        if url.url not in SEEDS:
+            return False
     elif POLICY == 'AllDomains':
         pass
     else:
@@ -71,20 +72,27 @@ def url_allowed(url):
 valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
 
 
-def setup(seeds):
+def setup():
     global POLICY
     POLICY = config.read('Plugins', 'url_allowed')
 
     if POLICY not in valid_policies:
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))
+    LOGGER.debug('Seed policy: %s', POLICY)
 
+
+def setup_seeds(seeds):
     if POLICY == 'SeedsDomain':
         for s in seeds:
             SEEDS.add(s.registered_domain)
     elif POLICY == 'SeedsHostname':
         for s in seeds:
             SEEDS.add(s.hostname_without_www)
+    elif POLICY == 'OnlySeeds':
+        for s in seeds:
+            SEEDS.add(s.url)
 
-    LOGGER.debug('Seed list:')
-    for s in SEEDS:
-        LOGGER.debug('  Seed: %s', s)
+    if LOGGER.isEnabledFor(logging.DEBUG):
+        LOGGER.debug('Seed list:')
+        for s in SEEDS:
+            LOGGER.debug('  Seed: %s', s)

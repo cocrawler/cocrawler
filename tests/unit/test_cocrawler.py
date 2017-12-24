@@ -14,15 +14,17 @@ from cocrawler.urls import URL
 def test_cocrawler(capsys):
     config.config(None, None, confighome=False)
 
-    # ok, we have to get around the useragent checks
+    # we have to get around the useragent checks
     config.write('pytest', 'UserAgent', 'MyPrefix')
     config.write('http://example.com/pytest-test-cocrawler.py', 'UserAgent', 'URL')
+    # and configure url_allowed
+    config.write('AllDomains', 'Plugins', 'url_allowed')
 
     crawler = cocrawler.Crawler()
 
-    crawler.add_url(0, {'url': URL('http://example1.com/'), 'skip_seen_url': True})
-    crawler.add_url(0, {'url': URL('http://example2.com/'), 'skip_seen_url': True})
-    crawler.add_url(0, {'url': URL('http://example3.com/'), 'skip_seen_url': True})
+    crawler.add_url(0, {'url': URL('http://example1.com/')})
+    crawler.add_url(0, {'url': URL('http://example2.com/')})
+    crawler.add_url(0, {'url': URL('http://example3.com/')})
 
     assert crawler.qsize == 3
 
@@ -33,7 +35,7 @@ def test_cocrawler(capsys):
         crawler.save(f)
     assert crawler.qsize == 0
 
-    crawler.add_url(0, {'url': URL('http://example4.com/'), 'skip_seen_url': True})
+    crawler.add_url(0, {'url': URL('http://example4.com/')})
     assert crawler.qsize == 1
 
     with open(name, 'rb') as f:

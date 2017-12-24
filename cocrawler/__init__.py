@@ -136,6 +136,8 @@ class Crawler:
         else:
             self.warcwriter = None
 
+        url_allowed.setup()
+
         if load is not None:
             self.load_all(load)
             LOGGER.info('after loading saved state, work queue is %r urls', self.scheduler.qsize())
@@ -145,8 +147,6 @@ class Crawler:
             self._seeds = seeds.expand_seeds_config(config, self)
             LOGGER.info('after adding seeds, work queue is %r urls', self.scheduler.qsize())
             stats.stats_max('initial seeds', self.scheduler.qsize())
-
-        url_allowed.setup(self._seeds)
 
         self.max_workers = int(config.read('Crawl', 'MaxWorkers'))
 
@@ -186,12 +186,14 @@ class Crawler:
             stats.stats_sum('rejected by MaxDepth', 1)
             self.log_rejected_add_url(url)
             return
-        if self.datalayer.seen_url(url):
-            stats.stats_sum('rejected by seen_urls', 1)
-            self.log_rejected_add_url(url)
-            return
-        if 'skip_seen_url' not in ridealong and not url_allowed.url_allowed(url):
-            # XXX really I should pass skip_seen_url into url_allowed
+        if 'skip_seen_url' not in ridealong:
+            if self.datalayer.seen_url(url):
+                stats.stats_sum('rejected by seen_urls', 1)
+                self.log_rejected_add_url(url)
+                return
+        else:
+            del ridealong['skip_seen_url']
+        if not url_allowed.url_allowed(url):
             LOGGER.debug('url %s was rejected by url_allow.', url.url)
             stats.stats_sum('rejected by url_allowed', 1)
             self.log_rejected_add_url(url)

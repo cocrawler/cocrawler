@@ -137,7 +137,7 @@ class Scheduler:
         if ridealongid in self.ridealong:
             return self.ridealong[ridealongid]
         else:
-            LOGGER.warning('ridealong data for surt %s not found', ridealongid)
+            LOGGER.error('ridealong data for surt %s not found', ridealongid)
             return {}
 
     def del_ridealong(self, ridealongid):

@@ -38,54 +38,64 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, work, priority, json_log, crawler):
+def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     resp_headers = f.response.headers
     location = resp_headers.get('location')
     if location is None:
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
     next_url = urls.URL(location, urljoin=url)
-    work['url'] = next_url
+    ridealong['url'] = next_url
 
     kind = urls.special_redirect(url, next_url)
+    samesurt = True if url.surt == next_url.surt else False
+    LOGGER.debug('samesurt %r before %s after %s', samesurt, url.surt, next_url.surt)
+
     if kind is not None:
-        if 'seed' in work:
+        if 'seed' in ridealong:
             prefix = 'redirect seed'
         else:
             prefix = 'redirect'
         stats.stats_sum(prefix+' '+kind, 1)
+    else:
+        stats.stats_sum('redirect non-special', 1)
 
     if kind is None:
-        pass
+        if samesurt:
+            LOGGER.info('Whoops, redirect is samesurt but not a special_redirect: %s to %s, location %s',
+                        url.url, next_url.url, location)
     elif kind == 'same':
-        LOGGER.info('attempted redirect to myself: %s to %s', url.url, next_url.url)
+        LOGGER.info('attempted redirect to myself: %s to %s, location was %s', url.url, next_url.url, location)
         if 'Set-Cookie' not in resp_headers:
             LOGGER.info('redirect to myself and had no cookies.')
+            stats.stats_sum('redirect same with set-cookie', 1)
             # XXX try swapping www/not-www? or use a non-crawler UA.
             # looks like some hosts have extra defenses on their redir servers!
         else:
-            # XXX we should use a cookie jar with this domain?
-            pass
-        # fall through; will fail seen-url test in addurl
-    elif kind == 'samesurt':  # uh oh
-        work['skip_seen_url'] = True
+            # XXX we should use a cookie jar with this host
+            stats.stats_sum('redirect same without set-cookie', 1)
     else:
-        # LOGGER.info('special redirect of type %s for url %s', kind, url.url)
+        LOGGER.info('special redirect of type %s for url %s', kind, url.url)
         # XXX push this info onto a last-k for the host
         # to be used pre-fetch to mutate urls we think will redir
-        pass
 
     priority += 1
 
-    if 'freeredirs' in work:
-        priority -= 1
-        json_log['freeredirs'] = work['freeredirs']
-        work['freeredirs'] -= 1
-        if work['freeredirs'] == 0:
-            del work['freeredirs']
-    work['priority'] = priority
+    if samesurt:
+        if kind == 'same':
+            pass  # fall through to fail in seen_url
+        else:
+            ridealong['skip_seen_url'] = True
 
-    crawler.add_url(priority, work)
+    if 'freeredirs' in ridealong:
+        priority -= 1
+        json_log['freeredirs'] = ridealong['freeredirs']
+        ridealong['freeredirs'] -= 1
+        if ridealong['freeredirs'] == 0:
+            del ridealong['freeredirs']
+    ridealong['priority'] = priority
+
+    crawler.add_url(priority, ridealong)
 
     json_log['redirect'] = next_url.url
     json_log['location'] = location

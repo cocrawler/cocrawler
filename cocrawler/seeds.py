@@ -3,6 +3,7 @@ import logging
 
 from . import stats
 from .urls import URL
+from . import url_allowed
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,8 +46,11 @@ def seed_some_urls(urls, config, crawler):
     retries_left = config.read('Seeds', 'SeedRetries') or config.read('Crawl', 'MaxTries')
     priority = 1
 
+    url_allowed.setup_seeds(urls)
+
     for u in urls:
-        work = {'url': u, 'priority': priority, 'skip_seen_url': True, 'retries_left': retries_left}
+        work = {'url': u, 'priority': priority, 'seed': True,
+                'skip_seen_url': True, 'retries_left': retries_left}
         if freeseedredirs:
             work['free_redirs'] = freeseedredirs
         crawler.add_url(priority, work)
