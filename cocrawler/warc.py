@@ -16,6 +16,8 @@ from io import BytesIO
 
 import six
 
+from . import config
+
 try:
     import collections.abc as collections_abc  # only works on python 3.3+
 except ImportError:
@@ -248,3 +250,20 @@ def p(prefix):
         return ' (prefix '+prefix+')'
     else:
         return ''
+
+
+def setup(version, local_addr):
+    warcall = config.read('WARC', 'WARCAll')
+    if warcall is not None and warcall:
+        max_size = config.read('WARC', 'WARCMaxSize')
+        prefix = config.read('WARC', 'WARCPrefix')
+        subprefix = config.read('WARC', 'WARCSubPrefix')
+        description = config.read('WARC', 'WARCDescription')
+        creator = config.read('WARC', 'WARCCreator')
+        operator = config.read('WARC', 'WARCOperator')
+        warcwriter = CCWARCWriter(prefix, max_size, subprefix=subprefix)  # XXX get_serial lacks a default
+        warcwriter.create_default_info(version, local_addr,
+                                       description=description, creator=creator, operator=operator)
+    else:
+        warcwriter = None
+    return warcwriter

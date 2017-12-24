@@ -32,7 +32,7 @@ from . import url_allowed
 from . import cookies
 from . import post_fetch
 from . import config
-from .warc import CCWARCWriter
+from . import warc
 from . import dns
 
 LOGGER = logging.getLogger(__name__)
@@ -122,19 +122,7 @@ class Crawler:
         else:
             self.facetlogfd = None
 
-        warcall = config.read('WARC', 'WARCAll')
-        if warcall is not None and warcall:
-            max_size = config.read('WARC', 'WARCMaxSize')
-            prefix = config.read('WARC', 'WARCPrefix')
-            subprefix = config.read('WARC', 'WARCSubPrefix')
-            description = config.read('WARC', 'WARCDescription')
-            creator = config.read('WARC', 'WARCCreator')
-            operator = config.read('WARC', 'WARCOperator')
-            self.warcwriter = CCWARCWriter(prefix, max_size, subprefix=subprefix)  # XXX get_serial lacks a default
-            self.warcwriter.create_default_info(self.version, local_addr,
-                                                description=description, creator=creator, operator=operator)
-        else:
-            self.warcwriter = None
+        self.warcwriter = warc.setup(self.version, local_addr)
 
         url_allowed.setup()
 
