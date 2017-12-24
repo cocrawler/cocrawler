@@ -6,7 +6,6 @@ import logging
 import pickle
 import time
 from contextlib import contextmanager
-from collections import defaultdict
 
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
@@ -263,15 +262,27 @@ def check(no_test=False):
                 LOGGER.debug('Stat %s=%s is the expected value', s, sge[s])
 
 
+def burners_to_boring():
+    d = dict()
+    for k in burners:
+        d[k] = burners[k]
+        d[k]['list'] = dict(burners[k].get('list', dict()))
+    return d
+
+
+def boring_to_burners(d):
+    global burners
+    for k in d:
+        burners[k] = d[k]
+        burners[k]['list'] = ValueSortedDict(d[k].get('list', dict()))
+
+
 def raw():
     '''
     Return a list of stuff suitable to feeding to stats.update() in a different thread.
     As a wart, ValueSortedDict can't be pickled. Turn it into a dict.
     '''
-    d = dict()
-    for k in burners:
-        d[k] = burners[k]
-        d[k]['list'] = dict(burners[k].get('list', dict()))
+    d = burners_to_boring()
 
     # note, not including latency
     return maxes, sums, d
@@ -308,7 +319,7 @@ def clear():
 def save(f):
     pickle.dump('stats', f)
     pickle.dump(start_time, f)
-    pickle.dump(burners, f)
+    pickle.dump(burners_to_boring(), f)
     pickle.dump(maxes, f)
     pickle.dump(sums, f)
 
@@ -318,8 +329,8 @@ def load(f):
         raise ValueError('invalid stats section in savefile')
     global start_time
     start_time = pickle.load(f)
-    global burners
-    burners = pickle.load(f)
+    boring = pickle.load(f)
+    boring_to_burners(boring)
     global maxes
     maxes = pickle.load(f)
     global sums
