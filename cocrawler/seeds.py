@@ -23,6 +23,8 @@ def expand_seeds_config(crawler):
     POLICY = config.read('Seeds', 'Policy')
     if POLICY not in valid_policies:
         raise ValueError('config Seeds Policy is not valid: '+POLICY)
+    else:
+        LOGGER.info('configuring a seeds policy of %s', POLICY)
 
     if seeds.get('Hosts', []):
         for h in seeds['Hosts']:
@@ -55,7 +57,7 @@ def seed_some_urls(urls, crawler):
     retries_left = config.read('Seeds', 'SeedRetries') or config.read('Crawl', 'MaxTries')
     priority = 1
 
-    url_allowed.setup_seeds(urls)
+    # url_allowed.setup_seeds(urls)  # add_url now does this
 
     for u in urls:
         ridealong = {'url': u, 'priority': priority, 'seed': True,
@@ -66,6 +68,10 @@ def seed_some_urls(urls, crawler):
 
     stats.stats_sum('seeds added', len(urls))
     return urls
+
+
+def seed_from_redir(url):
+    url_allowed.setup_seeds((url,))
 
 
 def special_seed_handling(url):
@@ -79,14 +85,19 @@ def special_seed_handling(url):
         else:
             url = 'http://' + url
 
+    global POLICY
     if POLICY == 'www-then-non-www':
         # does hostname already have www? use URL() to find out
         temp = URL(url)
         if temp.hostname == temp.hostname_without_www:
-            url.replace('http://', 'http://www.')
+            LOGGER.debug('adding a www to %s', url)
+            url = url.replace('http://', 'http://www.')
 
     url = URL(url)
     return url
+
+
+previous_fails = set()
 
 
 def fail(ridealong, crawler):
@@ -97,6 +108,10 @@ def fail(ridealong, crawler):
         return
 
     url = ridealong['url']
+    if url.url in previous_fails:
+        return
+    previous_fails.add(url.url)
+
     LOGGER.info('Received a final failure for seed url %s', url.url)
     stats.stats_sum('seeds failed', 1)
 

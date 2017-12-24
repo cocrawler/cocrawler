@@ -43,6 +43,7 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     resp_headers = f.response.headers
     location = resp_headers.get('location')
     if location is None:
+        # XXX the ridealong is never nuked in this case
         seeds.fail(ridealong, crawler)
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
@@ -99,6 +100,7 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
             del ridealong['freeredirs']
     ridealong['priority'] = priority
 
+    LOGGER.debug('about to add url on redir, ridealong is %r', ridealong)
     crawler.add_url(priority, ridealong)
 
     json_log['redirect'] = next_url.url
@@ -153,14 +155,24 @@ async def post_200(f, url, priority, json_log, crawler):
 
         if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
             stats.stats_sum('parse in burner thread', 1)
-            links, embeds, sha1, facets = await crawler.burner.burn(
-                partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
-                url=url)
+            try:
+                links, embeds, sha1, facets = await crawler.burner.burn(
+                    partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
+                    url=url)
+            except ValueError:  # if it pukes, we get back 0 values
+                stats.stats_sum('parser raised', 1)
+                # XXX jsonlog
+                return
         else:
             stats.stats_sum('parse in main thread', 1)
-            with stats.coroutine_state('await main thread parser'):
-                links, embeds, sha1, facets = parse.do_burner_work_html(
-                    body, f.body_bytes, resp_headers_list, url=url)
+            try:
+                with stats.coroutine_state('await main thread parser'):
+                    links, embeds, sha1, facets = parse.do_burner_work_html(
+                        body, f.body_bytes, resp_headers_list, url=url)
+            except ValueError:  # if it pukes, ..
+                stats.stats_sum('parser raised', 1)
+                # XXX jsonlog
+                return
         json_log['checksum'] = sha1
 
         if crawler.facetlogfd:

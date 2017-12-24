@@ -78,7 +78,7 @@ def setup():
 
     if POLICY not in valid_policies:
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))
-    LOGGER.debug('Seed policy: %s', POLICY)
+    LOGGER.info('url_allowed policy: %s', POLICY)
 
 
 def setup_seeds(seeds):
@@ -94,5 +94,5 @@ def setup_seeds(seeds):
 
     if LOGGER.isEnabledFor(logging.DEBUG):
         LOGGER.debug('Seed list:')
-        for s in SEEDS:
+        for s in seeds:  # only print the new ones
             LOGGER.debug('  Seed: %s', s)

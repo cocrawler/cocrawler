@@ -171,6 +171,8 @@ class Crawler:
         # and ...
 
         url = ridealong['url']
+        if 'seed' in ridealong:
+            seeds.seed_from_redir(url)
 
         # XXX allow/deny plugin modules go here
         if priority > int(config.read('Crawl', 'MaxDepth')):
@@ -266,8 +268,8 @@ class Crawler:
                 # XXX jsonlog hard fail
                 # XXX remember that this host had a hard fail
                 stats.stats_sum('retries completely exhausted', 1)
-                seeds.fail(ridealong, self)
                 self.scheduler.del_ridealong(surt)
+                seeds.fail(ridealong, self)
                 return
             # XXX jsonlog this soft fail
             ridealong['retries_left'] = retries_left
@@ -310,7 +312,7 @@ class Crawler:
                     await self.fetch_and_process(work)
                 except Exception as e:
                     # this catches any buggy code that executes in the main thread
-                    LOGGER.error('Something bad happened somewhere, it\'s a mystery:\n%s', e)
+                    LOGGER.error('Something bad happened working on %s, it\'s a mystery:\n%s', work[2], e)
                     traceback.print_exc()
                     # falling through causes this work item to get marked done, and we continue
 
@@ -416,9 +418,6 @@ class Crawler:
 
             self.update_cpu_stats()
             self.minute()
-
-            # XXX clear the DNS cache every few hours; currently the
-            # in-memory one is kept for the entire crawler run
 
         self.cancel_workers()
 

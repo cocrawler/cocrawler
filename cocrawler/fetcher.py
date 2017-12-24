@@ -147,11 +147,13 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
     except Exception as e:
         last_exception = repr(e)
         stats.stats_sum('fetch surprising error', 1)
-        LOGGER.info('Saw surprising exception in fetcher')
+        LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', mock_url or url.url, e)
         traceback.print_exc()
 
     if last_exception:
-        LOGGER.debug('we failed, the last exception is %s', last_exception)
+        LOGGER.debug('we failed working on %s, the last exception is %s', mock_url or url.url, last_exception)
+        #if LOGGER.isEnabledFor(logging.DEBUG):
+        #    traceback.print_last()  # this often says "no last exception and raises ValueError
         return FetcherResponse(None, None, None, None, None, False, last_exception)
 
     fr = FetcherResponse(response, body_bytes, response.request_info.headers,
