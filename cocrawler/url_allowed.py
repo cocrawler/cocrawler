@@ -23,8 +23,12 @@ def scheme_allowed(url):
 not_text_extension = set(('jpg', 'jpeg', 'png', 'gif',
                           'mp3', 'mid', 'midi',
                           'pdf', 'ps',
-                          'gz', 'tar', 'tgz', 'zip',
-                          'doc', 'docx', 'ppt', 'pptx'))
+                          'gz', 'bz2', 'tar', 'tgz', 'zip', 'rar',
+                          'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
+                          'swf'))
+
+# not yet used
+text_extension = set(('txt', 'html', 'php', 'htm', 'aspx', 'asp', 'shtml', 'jsp'))
 
 
 def extension_allowed(url):
