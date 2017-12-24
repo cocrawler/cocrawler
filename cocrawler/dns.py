@@ -70,25 +70,20 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         self._cachemaxsize = config.read(('Fetcher', 'DNSCacheMaxSize'))
         self._cache = cachetools.LRUCache(self._cachemaxsize)
         self._refresh_in_progress = set()
-        LOGGER.error('hey greg init called')
 
     async def resolve(self, host, port, **kwargs):
         t = time.time()
         if host in self._cache:
-            LOGGER.error('hey greg initial hit in cache for %s', host)
             (addrs, expires, refresh) = self._cache[host]
             if expires < t:
-                LOGGER.error('hey greg expired for %s', host)
                 del self._cache[host]
             elif refresh < t and host not in self._refresh_in_progress:
                 # TODO: spawn a thread to await this while I continue on
                 self._refresh_in_progress.add(host)
-                LOGGER.error('hey greg refreshing %s', host)
                 self._cache[host] = await self.actual_async_lookup(host)
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
-            LOGGER.error('hey greg in the end, a miss for %s', host)
             self._cache[host] = await self.actual_async_lookup(host)
 
         (addrs, _, _) = self._cache[host]
@@ -98,13 +93,10 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         '''
         Do an actual lookup. Always raise if it fails.
         '''
-        LOGGER.error('hey greg actual lookup for %s', host)
         with stats.record_latency('fetcher DNS lookup', url=host):
             with stats.coroutine_state('fetcher DNS lookup'):
                 # XXX TODO: how should I deal with AAAA vs A?
-                LOGGER.error('hey greg query started')
                 addrs = await query(host, 'A')
-                LOGGER.error('hey greg query got %r', addrs)
 
         # filter return value to exclude unwanted ip addrs
         ret = []
