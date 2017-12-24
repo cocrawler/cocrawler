@@ -88,6 +88,10 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
             self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
 
         (addrs, _, _) = self._cache[host]
+        # if the cached entry was made with a different port, lie about it
+        for a in addrs:
+            if 'port' in a:
+                a['port'] = port
         return addrs
 
     async def actual_async_lookup(self, host, port, **kwargs):
