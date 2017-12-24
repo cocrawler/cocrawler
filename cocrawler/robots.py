@@ -78,9 +78,9 @@ class Robots:
             pathplus += '?' + url.urlsplit.query
 
         if robots is None:
-            LOGGER.debug('no robots information found for %s, failing %s/%s', schemenetloc, schemenetloc, pathplus)
+            LOGGER.debug('no robots information found for %s, failing %s%s', schemenetloc, schemenetloc, pathplus)
             self.jsonlog(schemenetloc, {'error': 'unable to find robots information', 'action': 'deny'})
-            stats.stats_sum('robots denied - robots not found', 1)
+            stats.stats_sum('robots denied - robots info not known', 1)
             stats.stats_sum('robots denied', 1)
             return False
 
@@ -92,11 +92,11 @@ class Robots:
             check = robots.is_allowed(self.robotname, pathplus)
 
         if check:
-            LOGGER.debug('robots allowed for %s/%s', schemenetloc, pathplus)
+            LOGGER.debug('robots allowed for %s%s', schemenetloc, pathplus)
             stats.stats_sum('robots allowed', 1)
             return True
 
-        LOGGER.debug('robots denied for %s/%s', schemenetloc, pathplus)
+        LOGGER.debug('robots denied for %s%s', schemenetloc, pathplus)
         self.jsonlog(schemenetloc, {'url': pathplus, 'action': 'deny'})
         stats.stats_sum('robots denied', 1)
         return False
