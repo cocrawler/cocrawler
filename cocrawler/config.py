@@ -107,6 +107,10 @@ def print_default():
     print(default_yaml)
 
 
+def print_final():
+    print(repr(__global_config))
+
+
 def merge_dicts(a, b):
     '''
     Merge 2-level dict b into a, b overwriting a if present.
