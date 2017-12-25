@@ -101,11 +101,20 @@ class Robots:
         stats.stats_sum('robots denied', 1)
         return False
 
+    def _cache_empty_robots(self, schemenetloc, final_schemenetloc):
+        parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
+        parsed.parse('')
+        self.datalayer.cache_robots(schemenetloc, parsed)
+        if final_schemenetloc:
+            self.datalayer.cache_robots(final_schemenetloc, parsed)
+        self.in_progress.discard(schemenetloc)
+        return parsed
+
+
     async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
         robotexclusionrules fetcher is not async, so fetch the file ourselves
 
-        Note the following Google semantics:
         https://developers.google.com/search/reference/robots_txt
         3xx redir == follow up to 5 hops, then consider it a 404.
         4xx errors == no crawl restrictions
@@ -155,9 +164,6 @@ class Robots:
 
         stats.stats_sum('robots fetched', 1)
 
-        # if the final status is a redirect, we exceeded max redirects
-        # XXX treat as a 404, same as googlebot
-
         # If the url was redirected to a different host/robots.txt, let's cache that too
         # XXX use f.response.history to get them all
         final_url = str(f.response.url)  # this is a yarl.URL object now -- str() or url.human_repr()? XXX
@@ -167,26 +173,23 @@ class Robots:
             if final_parts.path == '/robots.txt':
                 final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc
 
-        # if we got a 404, return an empty robots.txt
-        # XXX Googlebot treats all 4xx as an empty robots.txt
-        if f.response.status == 404:
-            self.jsonlog(schemenetloc, {'error': 'got a 404, treating as empty robots',
-                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
-            parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
-            parsed.parse('')
-            self.datalayer.cache_robots(schemenetloc, parsed)
-            if final_schemenetloc:
-                self.datalayer.cache_robots(final_schemenetloc, parsed)
-            self.in_progress.discard(schemenetloc)
-            return parsed
+        status = f.response.status
 
-        # if we got a non-200, some should be empty and some should be None (XXX Policy)
-        # this implements only None (deny) 
-        # XXX Googlebot treats all 4xx as an empty robots.txt
-        if str(f.response.status).startswith('4') or str(f.response.status).startswith('5'):
+        # if the final status is a redirect, we exceeded max redirects -- treat as a 404, same as googlebot
+        # Googlebot treats all 4xx as an empty robots.txt
+        if str(status).startswith('3') or str(status).startswith('4'):
+            if status >= 400:
+                error = 'got a 4xx, treating as empty robots'
+            else:
+                error = 'got too many redirects, treating as empty robots'
+            self.jsonlog(schemenetloc, {'error': error, 'code': status,
+                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
+            return self._cache_empty_robots(schemenetloc, final_schemenetloc)
+
+        # Googlebot treats all 5xx as deny, unless they think the host returns 5xx instead of 404:
+        if str(status).startswith('5'):
             self.jsonlog(schemenetloc,
-                         {'error':
-                          'got an unexpected status of {}, treating as deny'.format(f.response.status),
+                         {'error': 'got a 5xx, treating as deny', 'code': status,
                           'action': 'fetch', 't_first_byte': f.t_first_byte})
             self.in_progress.discard(schemenetloc)
             return None
@@ -196,13 +199,7 @@ class Robots:
             self.jsonlog(schemenetloc,
                          {'warning': 'saw an implausible robots.txt, treating as empty',
                           'action': 'fetch', 't_first_byte': f.t_first_byte})
-            parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
-            parsed.parse('')
-            self.datalayer.cache_robots(schemenetloc, parsed)
-            if final_schemenetloc:
-                self.datalayer.cache_robots(final_schemenetloc, parsed)
-            self.in_progress.discard(schemenetloc)
-            return parsed
+            return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
         # go from bytes to a string, despite bogus utf8
         try:
@@ -267,4 +264,4 @@ class Robots:
             json_log = d
             json_log['host'] = schemenetloc
             json_log['time'] = time.time()
-            print(json.dumps(json_log, sort_keys=True), file=self.robotslogfd, flush=True)
+            print(json.dumps(json_log, sort_keys=True), file=self.robotslogfd)
