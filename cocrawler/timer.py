@@ -141,7 +141,7 @@ class CarbonTimer:
             new = {}
             for s in self.stats_list:
                 n = s['name']
-                new[n] = stats.stat_value(n)
+                new[n] = stats.stat_value(n) or 0
 
             if self.last:
                 qps_total = 0
