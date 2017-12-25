@@ -244,12 +244,7 @@ class Crawler:
         with stats.coroutine_state('fetching/checking robots'):
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
-            # XXX there are 2 kinds of fail, no robots data and robots denied. robotslog has the full details.
-            # XXX log more particular robots fail reason here?
-            json_log = {'type': 'get', 'url': url.url, 'priority': priority,
-                        'status': 'robots', 'time': time.time()}
-            if self.crawllogfd:
-                print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
+            # logged in robotslog. give up. XXX retry
             self.scheduler.del_ridealong(surt)
             return
 
