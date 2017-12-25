@@ -130,7 +130,9 @@ def clean_webpage_links(link, urljoin=None):
         if len(link) > 2000:
             if link.startswith('javascript:') or link.startswith('data:'):
                 return ''
-            LOGGER.info('webpage urljoin=%s has an invalid-looking link %s', str(urljoin), link)
+            logstr = link[:50] + '...'
+            LOGGER.info('webpage urljoin=%s has an invalid-looking link %s of length %d',
+                        str(urljoin), logstr, len(link))
             return ''  # will urljoin to the urljoin
 
     # remove unquoted \r and \n anywhere in the url
@@ -146,7 +148,9 @@ def remove_dot_segments(path):
     This is a stand-alone version. Since this is working on a non-relative url, path MUST begin with '/'
     '''
     if path[0] != '/':
-        raise ValueError('Invalid path, must start with /: '+path)
+        # raise ValueError('Invalid path, must start with /: '+path)
+        # lots of invalid webpages! examples; '&x39;/', '%20/'
+        return path
 
     segments = path.split('/')
     # drop empty segment pieces to avoid // in output... but not the first segment
@@ -257,6 +261,8 @@ def upgrade_url_to_https(url):
 def special_redirect(url, next_url):
     '''
     Classifies some redirects that we wish to do special processing for
+
+    # XXX note that we are not normalizing unicode other than the surt hostname
     '''
 
     if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'
@@ -264,6 +270,9 @@ def special_redirect(url, next_url):
 
     if url.url == next_url.url:
         return 'same'
+
+    if url.url.casefold() == next_url.url.casefold():
+        return 'case-change'
 
     if not url.url.endswith('/') and url.url + '/' == next_url.url:
         return 'addslash'
