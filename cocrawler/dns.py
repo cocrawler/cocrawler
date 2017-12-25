@@ -124,16 +124,15 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
             if 'ttl' in a:
                 ttl = a['ttl']  # all should be equal, we'll remember the last
 
+        if len(addrs) != len(ret):
+            LOGGER.info('threw out some ip addresses for %s', host)
         if len(ret) == 0:
-            raise ValueError
+            raise ValueError('no A records found')
 
         ttl = max(3600*8, min(3600, ttl))  # force ttl into a range of time
         t = time.time()
         expires = t + ttl
         refresh = t + (ttl * 0.75)
-
-        if len(addrs) != len(ret):
-            LOGGER.info('threw out some ip addresses for %s', host)
 
         return ret, expires, refresh
 
