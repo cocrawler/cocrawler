@@ -78,18 +78,16 @@ class Robots:
             pathplus += '?' + url.urlsplit.query
 
         if robots is None:
-            LOGGER.debug('no robots information found for %s, failing %s%s', schemenetloc, schemenetloc, pathplus)
-            self.jsonlog(schemenetloc, {'error': 'unable to find robots information', 'action': 'deny'})
+            LOGGER.debug('no robots info known for %s, failing %s%s', schemenetloc, schemenetloc, pathplus)
+            self.jsonlog(schemenetloc, {'error': 'no robots info known', 'action': 'deny'})
             stats.stats_sum('robots denied - robots info not known', 1)
             stats.stats_sum('robots denied', 1)
             return False
 
-#        if robots.sitemaps:
-# XXX want to log this, at least
-#           ...
-
         with stats.record_burn('robots is_allowed', url=schemenetloc):
             check = robots.is_allowed(self.robotname, pathplus)
+            if not check:
+                google_check = robots.is_allowed('googlebot', pathplus)
 
         if check:
             LOGGER.debug('robots allowed for %s%s', schemenetloc, pathplus)
@@ -97,8 +95,14 @@ class Robots:
             return True
 
         LOGGER.debug('robots denied for %s%s', schemenetloc, pathplus)
-        self.jsonlog(schemenetloc, {'url': pathplus, 'action': 'deny'})
+
+        jsonlog = {'url': pathplus, 'action': 'deny'}
+        if google_check:
+            jsonlog['google-action'] = 'allow'
+        self.jsonlog(schemenetloc, jsonlog)
         stats.stats_sum('robots denied', 1)
+        if google_check:
+            stats.stats_sum('robots denied - but googlebot allowed', 1)
         return False
 
     def _cache_empty_robots(self, schemenetloc, final_schemenetloc):
@@ -216,14 +220,22 @@ class Robots:
             self.in_progress.discard(schemenetloc)
             return None
 
+        jsonlog = {'action': 'fetch', 'code': status, 't_first_byte': f.t_first_byte}
+        if self.robotname in body:
+            jsonlog['mentions-us'] = True
+
         with stats.record_burn('robots parse', url=schemenetloc):
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
             parsed.parse(preprocess_robots(body))
         self.datalayer.cache_robots(schemenetloc, parsed)
         self.in_progress.discard(schemenetloc)
         if final_schemenetloc:
+            # we did not set this but we'll discard it anyway
             self.in_progress.discard(final_schemenetloc)
-        self.jsonlog(schemenetloc, {'action': 'fetch', 't_first_byte': f.t_first_byte})
+        if parsed.sitemaps:
+            jsonlog['has-sitemaps'] = True
+
+        self.jsonlog(schemenetloc, jsonlog)
         return parsed
 
     def is_plausible_robots(self, schemenetloc, body_bytes, t_first_byte):
