@@ -121,18 +121,19 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
-        is_truncated = 'time'  # XXX make it possible to WARC this response?
+        is_truncated = 'time'  # XXX test WARC of this response?
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
-        # XXX deal with partial fetches and WARC them, is_timeout = 'disconnect'
+        # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
         stats.stats_sum('fetch network error', 1)
         last_exception = repr(e)
     except aiodns.error.DNSError as e:
         stats.stats_sum('fetch DNS error', 1)
         last_exception = repr(e)
     except ssl.CertificateError as e:
+        # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
         stats.stats_sum('fetch SSL error', 1)
         last_exception = repr(e)
     except (ValueError, AttributeError, RuntimeError) as e:
@@ -151,7 +152,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         traceback.print_exc()
 
     if last_exception:
-        LOGGER.debug('we failed working on %s, the last exception is %s', mock_url or url.url, last_exception)
+        LOGGER.info('we failed working on %s, the last exception is %s', mock_url or url.url, last_exception)
         #if LOGGER.isEnabledFor(logging.DEBUG):
         #    traceback.print_last()  # this often says "no last exception and raises ValueError
         return FetcherResponse(None, None, None, None, None, False, last_exception)
