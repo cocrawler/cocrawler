@@ -32,6 +32,7 @@ def stats_max(name, value):
 
 def stats_sum(name, value):
     sums[name] = sums.get(name, 0) + value
+    return sums[name]
 
 
 def stats_set(name, value):
