@@ -122,26 +122,41 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         is_truncated = 'time'  # XXX test WARC of this response?
-        stats.stats_sum('fetch timeout', 1)
+        if stats.stats_sum('fetch timeout', 1) < 10:
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
         last_exception = repr(e)
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
-        stats.stats_sum('fetch network error', 1)
+        if stats.stats_sum('fetch network error', 1) < 10:
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
+            try:
+                body_bytes = await response.content.read(maxlength)
+                LOGGER.info('I received %d bytes in the body', len(body_bytes))
+            except Exception:
+                pass
         last_exception = repr(e)
     except aiodns.error.DNSError as e:
-        stats.stats_sum('fetch DNS error', 1)
+        if stats.stats_sum('fetch DNS error', 1) < 10:
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
         last_exception = repr(e)
     except ssl.CertificateError as e:
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
-        stats.stats_sum('fetch SSL error', 1)
+        if stats.stats_sum('fetch SSL error', 1) < 10:
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
         last_exception = repr(e)
     except (ValueError, AttributeError, RuntimeError) as e:
         # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
         # ValueError Location: https:/// 'Host could not be detected'
         # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
         # RuntimeError: ?
-        stats.stats_sum('fetch other error', 1)
+        if stats.stats_sum('fetch other error', 1) < 50:  # more because there are 3
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
         last_exception = repr(e)
     except asyncio.CancelledError:
         raise
