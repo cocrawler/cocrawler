@@ -88,6 +88,7 @@ class Robots:
             check = robots.is_allowed(self.robotname, pathplus)
             if not check:
                 google_check = robots.is_allowed('googlebot', pathplus)
+                generic_check = robots.is_allowed('*', pathplus)
 
         if check:
             LOGGER.debug('robots allowed for %s%s', schemenetloc, pathplus)
@@ -99,10 +100,14 @@ class Robots:
         jsonlog = {'url': pathplus, 'action': 'deny'}
         if google_check:
             jsonlog['google-action'] = 'allow'
+        if generic_check:
+            jsonlog['generic-action'] = 'allow'
         self.jsonlog(schemenetloc, jsonlog)
         stats.stats_sum('robots denied', 1)
         if google_check:
             stats.stats_sum('robots denied - but googlebot allowed', 1)
+        if generic_check:
+            stats.stats_sum('robots denied - but * allowed', 1)
         return False
 
     def _cache_empty_robots(self, schemenetloc, final_schemenetloc):
@@ -113,7 +118,6 @@ class Robots:
             self.datalayer.cache_robots(final_schemenetloc, parsed)
         self.in_progress.discard(schemenetloc)
         return parsed
-
 
     async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
         '''
