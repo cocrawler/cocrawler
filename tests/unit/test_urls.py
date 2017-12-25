@@ -61,8 +61,7 @@ def test_remove_dot_segments():
     assert rds('/mid/content=5/../6') == '/mid/6'
 
     # and a few test cases of our own
-    with pytest.raises(ValueError):
-        rds('foo')
+    assert rds('foo') == 'foo'  # we used to raise ValueError, but it's too common
     assert rds('/') == '/'
     assert rds('/..') == '/'
     assert rds('/.') == '/'
