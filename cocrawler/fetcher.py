@@ -128,15 +128,17 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         last_exception = repr(e)
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
+        # e.g. DNS errors
         # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
         if stats.stats_sum('fetch network error', 1) < 10:
             LOGGER.info('Example traceback for %r:', e)
             traceback.print_exc()
-            try:
-                body_bytes = await response.content.read(maxlength)
-                LOGGER.info('I received %d bytes in the body', len(body_bytes))
-            except Exception:
-                pass
+        try:
+            body_bytes = await response.content.read(maxlength)
+            stats.stats_sum('fetcher received partial response before disconnect', 1)
+            LOGGER.info('I received %d bytes in the body', len(body_bytes))
+        except Exception:
+            pass
         last_exception = repr(e)
     except aiodns.error.DNSError as e:
         if stats.stats_sum('fetch DNS error', 1) < 10:
@@ -149,12 +151,25 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
             LOGGER.info('Example traceback for %r:', e)
             traceback.print_exc()
         last_exception = repr(e)
-    except (ValueError, AttributeError, RuntimeError) as e:
+    #except (ValueError, AttributeError, RuntimeError) as e:
         # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
-        # ValueError Location: https:/// 'Host could not be detected'
-        # AttributeError: 'NoneType' object has no attribute 'errno' - fires when CNAME has no A
+        # ValueError Location: https:/// 'Host could not be detected' -- robots fetch
+        # ValueError Location: http:// /URL should be absolute/ -- robots fetch
+        # ValueError 'Can redirect only to http or https' -- robots fetch -- looked OK to curl!
+        # AttributeError: ?
         # RuntimeError: ?
-        if stats.stats_sum('fetch other error', 1) < 50:  # more because there are 3
+    except ValueError as e:
+        if stats.stats_sum('fetch other error - ValueError', 1) < 10:
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
+        last_exception = repr(e)
+    except AttributeError as e:
+        if stats.stats_sum('fetch other error - AttributeError', 1) < 10:
+            LOGGER.info('Example traceback for %r:', e)
+            traceback.print_exc()
+        last_exception = repr(e)
+    except RuntimeError as e:
+        if stats.stats_sum('fetch other error - RuntimeError', 1) < 10:
             LOGGER.info('Example traceback for %r:', e)
             traceback.print_exc()
         last_exception = repr(e)
