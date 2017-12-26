@@ -80,7 +80,7 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
 
 async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 allow_redirects=None, max_redirects=None,
-                stats_me=True, maxlength=-1):
+                stats_prefix='', maxlength=-1):
     pagetimeout = float(config.read('Crawl', 'PageTimeout'))
 
     if proxy:  # pragma: no cover
@@ -98,28 +98,27 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         last_exception = None
 
         with stats.coroutine_state('fetcher fetching'):
-            with aiohttp.Timeout(pagetimeout):
-                response = None
-                response = await session.get(mock_url or url.url,
-                                             allow_redirects=allow_redirects,
-                                             max_redirects=max_redirects,
-                                             headers=headers)
-                t_first_byte = '{:.3f}'.format(time.time() - t0)
-                if stats_me:
-                    stats.record_a_latency('fetcher fetching', t0, url=url)
+            with stats.record_latency(stats_prefix+'fetcher fetching'):
+                with aiohttp.Timeout(pagetimeout):
+                    response = None
+                    response = await session.get(mock_url or url.url,
+                                                 allow_redirects=allow_redirects,
+                                                 max_redirects=max_redirects,
+                                                 headers=headers)
+                    t_first_byte = '{:.3f}'.format(time.time() - t0)
 
-                # reddit.com is an example of a CDN-related SSL fail
-                # XXX when we retry, if local_addr was a list, switch to a different source IP
-                #   (change out the TCPConnector)
+                    # reddit.com is an example of a CDN-related SSL fail
+                    # XXX when we retry, if local_addr was a list, switch to a different source IP
+                    #   (change out the TCPConnector)
 
-                # use streaming interface to limit bytecount
-                # fully receive headers and body, to cause all network errors to happen
-                body_bytes = await response.content.read(maxlength)
-                if not response.content.at_eof():
-                    response.close()  # XXX should interrupt the network transfer? -- testme
-                    is_truncated = 'length'
+                    # use streaming interface to limit bytecount
+                    # fully receive headers and body, to cause all network errors to happen
+                    body_bytes = await response.content.read(maxlength)
+                    if not response.content.at_eof():
+                        response.close()  # XXX should interrupt the network transfer? -- testme
+                        is_truncated = 'length'
 
-                t_last_byte = '{:.3f}'.format(time.time() - t0)
+                    t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         is_truncated = 'time'  # XXX test WARC of this response?
         if stats.stats_sum('fetch timeout', 1) < 10:
@@ -195,9 +194,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
     stats.stats_sum('fetch bytes', len(body_bytes) + len(response.raw_headers))
 
-    if stats_me:
-        stats.stats_sum('fetch URLs', 1)
-        stats.stats_sum('fetch http code=' + str(response.status), 1)
+    stats.stats_sum(stats_prefix+'fetch URLs', 1)
+    stats.stats_sum(stats_prefix+'fetch http code=' + str(response.status), 1)
 
     # checks after fetch:
     # hsts header?

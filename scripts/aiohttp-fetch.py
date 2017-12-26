@@ -61,7 +61,7 @@ async def main(urls):
         print('')
 
         try:
-            #print(await response.text(errors='ignore'))
+            print(await response.text(errors='ignore'))
             pass
         except Exception as e:
             print_exc()

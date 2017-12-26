@@ -30,12 +30,11 @@ class Scheduler:
         self.awaiting_work = 0
         self.maxhostqps = None
         self.delta_t = None
-        self.remaining_url_budget = None
         self.next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
         self.frozen_until = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds is longer than our typical delay
         self.maxhostqps = float(config.read('Crawl', 'MaxHostQPS'))
         self.delta_t = 1./self.maxhostqps
-        self.remaining_url_budget = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
+        self.max_crawled_urls = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
 
     async def get_work(self):
         '''
@@ -54,7 +53,8 @@ class Scheduler:
                     work = await self.q.get()
                 self.awaiting_work -= 1
 
-            if self.remaining_url_budget is not None and self.remaining_url_budget <= 0:
+            if ((self.max_crawled_urls is not None and
+                 (stats.stat_value('fetch http code=200') or 0) >= self.max_crawled_urls)):
                 self.q.put_nowait(work)
                 self.q.task_done()
                 raise asyncio.CancelledError
@@ -82,8 +82,6 @@ class Scheduler:
                 with stats.coroutine_state(why):
                     await asyncio.sleep(dt)
 
-            if self.remaining_url_budget is not None:
-                self.remaining_url_budget -= 1
             return work
 
     def do_we_recycle(self, now, surt, surt_host, ridealong):

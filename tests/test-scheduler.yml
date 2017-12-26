@@ -30,12 +30,12 @@ Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
-    fetch URLs: 10
-    fetch http code=200: 10
+    fetch URLs: 11
+    fetch http code=200: 11
     max urls found on a page: 3
-    robots denied: 1
+    robots denied: 4
     parse in burner thread: 0
-    parse in main thread: 10
+    parse in main thread: 11
     warc r/r (prefix Testing): 0
   StatsGE:
     scheduler ratelimit recycle sum: 20

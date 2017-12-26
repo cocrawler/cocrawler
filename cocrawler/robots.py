@@ -163,7 +163,7 @@ class Robots:
 
         f = await fetcher.fetch(url, self.session,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
-                                allow_redirects=True, max_redirects=5, stats_me=False)
+                                allow_redirects=True, max_redirects=5, stats_prefix='robots ')
         if f.last_exception:
             self.jsonlog(schemenetloc, {'error': 'max tries exceeded, final exception is: ' + f.last_exception,
                                         'action': 'fetch'})

@@ -34,6 +34,6 @@ Testing:
     fetch URLs: 0
     fetch http code=200: 0
     max urls found on a page: 0
-    robots denied: 2
-    robots denied - robots info not known: 2
+    robots denied: 8
+    robots denied - robots info not known: 8
     fetch surprising error: 0

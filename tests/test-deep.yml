@@ -34,7 +34,8 @@ Testing:
     fetch URLs: 1000
     fetch http code=200: 1000
     max urls found on a page: 3
-    robots denied: 1
+#    robots denied: 1
+    robots denied: 4  # one url, with retries
     warc r/r (prefix Testing): 1000
     parse in burner thread: 1000
     parse in main thread: 0

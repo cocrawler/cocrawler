@@ -227,6 +227,26 @@ class Crawler:
         if self.scheduler.qsize():
             LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
 
+    def _retry_if_able(self, work, ridealong):
+        priority, rand, surt = work
+        retries_left = ridealong.get('retries_left', 0) - 1
+        if retries_left <= 0:
+            # XXX jsonlog hard fail
+            # XXX remember that this host had a hard fail
+            stats.stats_sum('retries completely exhausted', 1)
+            self.scheduler.del_ridealong(surt)
+            seeds.fail(ridealong, self)
+            return
+        # XXX jsonlog this soft fail
+        ridealong['retries_left'] = retries_left
+        self.scheduler.set_ridealong(surt, ridealong)
+        # increment random so that we don't immediately retry
+        extra = random.uniform(0, 0.2)
+        priority, rand = self.scheduler.update_priority(priority, rand+extra)
+        ridealong['priority'] = priority
+        self.scheduler.requeue_work((priority, rand, surt))
+        return
+
     async def fetch_and_process(self, work):
         '''
         Fetch and process a single url.
@@ -244,8 +264,10 @@ class Crawler:
         with stats.coroutine_state('fetching/checking robots'):
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
-            # logged in robotslog. give up. XXX retry
-            self.scheduler.del_ridealong(surt)
+            # really, we shouldn't retry a robots.txt rule failure
+            # but we do want to retry robots.txt failed to fetch
+            self._retry_if_able(work, ridealong)
+            #self.scheduler.del_ridealong(surt)  # if not retry_if_able
             return
 
         f = await fetcher.fetch(url, self.session,
@@ -255,25 +277,9 @@ class Crawler:
                     't_first_byte': f.t_first_byte, 'time': time.time()}
         if f.is_truncated:
             json_log['truncated'] = True
-        retries_left = ridealong.get('retries_left', 0)
 
         if f.last_exception is not None or f.response.status >= 500:
-            retries_left -= 1
-            if retries_left <= 0:
-                # XXX jsonlog hard fail
-                # XXX remember that this host had a hard fail
-                stats.stats_sum('retries completely exhausted', 1)
-                self.scheduler.del_ridealong(surt)
-                seeds.fail(ridealong, self)
-                return
-            # XXX jsonlog this soft fail
-            ridealong['retries_left'] = retries_left
-            self.scheduler.set_ridealong(surt, ridealong)
-            # increment random so that we don't immediately retry
-            extra = random.uniform(0, 0.2)
-            priority, rand = self.scheduler.update_priority(priority, rand+extra)
-            ridealong['priority'] = priority
-            self.scheduler.requeue_work((priority, rand, surt))
+            self._retry_if_able(work, ridealong)
             return
 
         # success

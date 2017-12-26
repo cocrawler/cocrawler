@@ -141,6 +141,8 @@ async def post_200(f, url, priority, json_log, crawler):
                 # need to guess at a reasonable encoding here
                 # can't use the hidden algo from f.response.text() thanks to the use of streaming to limit bytes
                 # hidden algo is: 1) consult headers, 2) if json, assume utf8, 3) call cchardet 4) assume utf8
+                # XXX
+                # let's not trust the headers too much!
                 body = f.body_bytes.decode(encoding='utf8')
         except (UnicodeDecodeError, LookupError):
             # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
