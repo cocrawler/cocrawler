@@ -74,18 +74,23 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
     async def resolve(self, host, port, **kwargs):
         t = time.time()
         if host in self._cache:
+            stats.stats_sum('DNS cache hit', 1)
             (addrs, expires, refresh) = self._cache[host]
             if expires < t:
+                stats.stats_sum('DNS cache hit expired entry', 1)
                 # TODO: if I expire one, examine the next hundred entries so I don't accumulate stale entries
                 del self._cache[host]
             elif refresh < t and host not in self._refresh_in_progress:
+                stats.stats_sum('DNS cache hit entry refresh', 1)
                 # TODO: spawn a thread to await this while I continue on
                 self._refresh_in_progress.add(host)
                 self._cache[host] = await self.actual_async_lookup(host)
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
+            stats.stats_sum('DNS lookup after cache miss begun', 1)
             self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
+            stats.stats_sum('DNS lookup after cache miss success', 1)
 
         (addrs, _, _) = self._cache[host]
         # if the cached entry was made with a different port, lie about it
@@ -101,7 +106,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         with stats.record_latency('fetcher DNS lookup', url=host):
             with stats.coroutine_state('fetcher DNS lookup'):
                 # XXX TODO: how should I deal with AAAA vs A?
-                #addrs = await query(host, 'A')
+                # XXX this can raise OSError: Domain name not found which ends up being ClientConnectError
                 addrs = await super().resolve(host, port, **kwargs)
 
         # filter return value to exclude unwanted ip addrs
@@ -115,10 +120,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
             except ValueError:
                 continue
             if not self._crawllocalhost and ip.is_loopback:
+                stats.stats_sum('DNS lookup removed loopback', 1)
                 continue
             if not self._crawlprivate and ip.is_private:
+                stats.stats_sum('DNS lookup removed private', 1)
                 continue
             if ip.is_multicast:
+                stats.stats_sum('DNS lookup removed multicast', 1)
                 continue
             ret.append(a)
             if 'ttl' in a:
@@ -127,6 +135,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         if len(addrs) != len(ret):
             LOGGER.info('threw out some ip addresses for %s', host)
         if len(ret) == 0:
+            stats.stats_sum('DNS lookup no A records found', 1)
             raise ValueError('no A records found')
 
         ttl = max(3600*8, min(3600, ttl))  # force ttl into a range of time
