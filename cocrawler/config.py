@@ -40,6 +40,8 @@ Crawl:
   MaxWorkers: 10
   MaxHostQPS: 10
   MaxPageSize: 1000000
+  PreventCompression: False
+  UpgradeInsecureRequests: 1
 #  MaxCrawledUrls: 11
 #  CookieJar: Defective
 

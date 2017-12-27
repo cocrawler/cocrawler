@@ -68,6 +68,8 @@ class Crawler:
         self.next_minute = time.time() + 60
         self.scheduler = scheduler.Scheduler(self.loop)
         self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
+        self.prevent_compression = config.read('Crawl', 'PreventCompression')
+        self.upgrade_insecure_requests = config.read('Crawl', 'UpgradeInsecureRequests')
 
         try:
             # this works for the installed package
@@ -260,7 +262,7 @@ class Crawler:
         ridealong = self.scheduler.get_ridealong(surt)
         url = ridealong['url']
 
-        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self.ua)
+        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
 
         with stats.coroutine_state('fetching/checking robots'):
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)

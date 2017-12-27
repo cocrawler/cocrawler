@@ -35,13 +35,13 @@ LOGGER = logging.getLogger(__name__)
 # XXX cookie handling -- no way to have a cookie jar other than at session level
 #    need to directly manipulate domain-level cookie jars to get cookies
 #    CookieJar.add_cookie_header(request) is tied to urlllib.request, how does aiohttp use it?! probably duck
-def apply_url_policies(url, ua):
+def apply_url_policies(url, crawler):
     headers = {}
     proxy = None
     mock_url = None
     mock_robots = None
 
-    headers['User-Agent'] = ua
+    headers['User-Agent'] = crawler.ua
 
     test_host = config.read('Testing', 'TestHostmapAll')
     if test_host:
@@ -51,7 +51,11 @@ def apply_url_policies(url, ua):
         mock_url = urllib.parse.urlunsplit((scheme, netloc, path, query, fragment))
         mock_robots = url.urlsplit.scheme + '://' + test_host + '/robots.txt'
 
-    # XXX set header Upgrade-Insecure-Requests: 1 ?? config option
+    if crawler.prevent_compression:
+        headers['Accept-Encoding'] = 'identity'
+
+    if crawler.upgrade_insecure_requests:
+        headers['Upgrade-Insecure-Requests'] = '1'
 
     return headers, proxy, mock_url, mock_robots
 
