@@ -47,6 +47,7 @@ class Robots:
         self.session = session
         self.datalayer = datalayer
         self.max_tries = config.read('Robots', 'MaxTries')
+        self.max_robots_page_size = int(config.read('Robots', 'MaxRobotsPageSize'))
         self.in_progress = set()
         self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
         self.robotslog = config.read('Logging', 'Robotslog')
@@ -161,7 +162,7 @@ class Robots:
 
         self.in_progress.add(schemenetloc)
 
-        f = await fetcher.fetch(url, self.session,
+        f = await fetcher.fetch(url, self.session, max_page_size=self.max_robots_page_size,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, max_redirects=5, stats_prefix='robots ')
         if f.last_exception:

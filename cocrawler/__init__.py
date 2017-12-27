@@ -67,6 +67,7 @@ class Crawler:
         self.no_test = no_test
         self.next_minute = time.time() + 60
         self.scheduler = scheduler.Scheduler(self.loop)
+        self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
 
         try:
             # this works for the installed package
@@ -270,7 +271,7 @@ class Crawler:
             #self.scheduler.del_ridealong(surt)  # if not retry_if_able
             return
 
-        f = await fetcher.fetch(url, self.session,
+        f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,
                                 headers=req_headers, proxy=proxy, mock_url=mock_url)
 
         json_log = {'type': 'get', 'url': url.url, 'priority': priority,

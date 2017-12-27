@@ -80,7 +80,7 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
 
 async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 allow_redirects=None, max_redirects=None,
-                stats_prefix='', maxlength=-1):
+                stats_prefix='', max_page_size=-1):
     pagetimeout = float(config.read('Crawl', 'PageTimeout'))
 
     if proxy:  # pragma: no cover
@@ -113,7 +113,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
                     # use streaming interface to limit bytecount
                     # fully receive headers and body, to cause all network errors to happen
-                    body_bytes = await response.content.read(maxlength)
+                    body_bytes = await response.content.read(max_page_size)
                     if not response.content.at_eof():
                         response.close()  # XXX should interrupt the network transfer? -- testme
                         is_truncated = 'length'
@@ -133,7 +133,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
             LOGGER.info('Example traceback for %r:', e)
             traceback.print_exc()
         try:
-            body_bytes = await response.content.read(maxlength)
+            body_bytes = await response.content.read(max_page_size)
             # This never goes off
             stats.stats_sum('fetcher received partial response before disconnect', 1)
             LOGGER.info('I received %d bytes in the body', len(body_bytes))

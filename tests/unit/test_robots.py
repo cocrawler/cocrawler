@@ -22,7 +22,10 @@ def test_robots():
     There's already end-to-end testing for the normal functionality.
     Exercise only the weird stuff here.
     '''
-    config.set_config({'Robots': {'MaxTries': 4}, 'Logging': {}})
+    config.set_config({'Robots': {'MaxTries': 4, 'MaxRobotsPageSize': 500000},
+                       'Logging': {}})
+    # XXX really I should use the defaults in config.py so that I don't have
+    # to edit the above as I add mandatory args
     r = robots.Robots('foo', None, None)
 
     robots_txt = b'<'

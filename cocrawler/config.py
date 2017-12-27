@@ -39,6 +39,7 @@ Crawl:
   RetryTimeout: 5
   MaxWorkers: 10
   MaxHostQPS: 10
+  MaxPageSize: 1000000
 #  MaxCrawledUrls: 11
 #  CookieJar: Defective
 
@@ -51,6 +52,7 @@ Robots:
   MaxTries: 4
   RobotsCacheSize: 1000
   RobotsCacheTimeout: 86400
+  MaxRobotsPageSize: 500000
 
 Fetcher:
   Nameservers:
