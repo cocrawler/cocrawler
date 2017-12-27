@@ -127,13 +127,14 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         last_exception = repr(e)
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
-        # e.g. DNS errors
+        # e.g. DNS errors, '400' errors for http parser errors
         # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
         if stats.stats_sum('fetch network error', 1) < 10:
             LOGGER.info('Example traceback for %r:', e)
             traceback.print_exc()
         try:
             body_bytes = await response.content.read(maxlength)
+            # This never goes off
             stats.stats_sum('fetcher received partial response before disconnect', 1)
             LOGGER.info('I received %d bytes in the body', len(body_bytes))
         except Exception:
