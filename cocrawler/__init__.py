@@ -371,6 +371,7 @@ class Crawler:
         if time.time() > self.next_minute:
             self.next_minute = time.time() + 60
             stats.report()
+            stats.coroutine_report()
 
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start
