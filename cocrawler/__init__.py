@@ -17,6 +17,7 @@ import logging
 import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
+import aiodns
 import psutil
 
 from . import scheduler
@@ -81,7 +82,7 @@ class Crawler:
         self.robotname, self.ua = useragent.useragent(self.version)
 
         ns = config.read('Fetcher', 'Nameservers')
-        resolver = dns.get_resolver_wrapper(loop=self.loop, nameservers=ns)
+        self.resolver = dns.get_resolver_wrapper(loop=self.loop, nameservers=ns)
 
         proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:
@@ -89,9 +90,9 @@ class Crawler:
 
         local_addr = config.read('Fetcher', 'LocalAddr')
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        #self.conn_kwargs = {'use_dns_cache': True, 'resolver': resolver,
+        #self.conn_kwargs = {'use_dns_cache': True, 'resolver': self.resolver,
         #                    'ttl_dns_cache': 3600*8,  # this is a maximum TTL XXX need to call .clear occasionally
-        self.conn_kwargs = {'use_dns_cache': False, 'resolver': resolver}
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver}
 
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
@@ -263,6 +264,16 @@ class Crawler:
         url = ridealong['url']
 
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
+
+        if not mock_url:
+            with stats.coroutine_state('DNS prefetch'):
+                with stats.record_latency('DNS prefetch', url=url.hostname):
+                    try:
+                        await self.resolver.resolve(url.hostname, 80)
+                    except OSError:  # aiodns.error.DNSError if it was a .get
+                        stats.stats_sum('DNS prefetch error', 1)
+                        # fall through, depend on DNS negative caching to make the next fail immediate
+                        pass
 
         with stats.coroutine_state('fetching/checking robots'):
             r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
