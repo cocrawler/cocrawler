@@ -133,7 +133,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
         # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
-        if stats.stats_sum('fetch network error', 1) < 10:
+        if stats.stats_sum('fetch ClientError', 1) < 50:
             LOGGER.info('Example traceback for %r:', e)
             traceback.print_exc()
         try:
