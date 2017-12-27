@@ -101,7 +101,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         t0 = time.time()
         last_exception = None
 
-        with stats.coroutine_state('fetcher fetching'):
+        with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
                 with aiohttp.Timeout(pagetimeout):
                     response = None

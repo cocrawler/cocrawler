@@ -5,7 +5,7 @@ REST:
 Crawl:
   MaxCrawledUrls: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
-  PageTimeout: 3  # we talk to google.com:81 so don't make this too short
+  PageTimeout: 5  # we talk to google.com:81 so don't make this too short
   RetryTimeout: 0.3
 
 CarbonStats:
@@ -17,8 +17,8 @@ Plugins:
 
 Seeds:
   Hosts:
-  - http://thissubdomaindoesnotresolve.cocrawler.org
-  - http://www.google.com:81/ # will never connect
+  - http://thissubdomaindoesnotresolve.cocrawler.org # dns failure
+  - http://www.google.com:81/ # will never connect, so robots fail
 
 Logging:
   Crawllog: crawllog.jsonl
@@ -34,6 +34,4 @@ Testing:
     fetch URLs: 0
     fetch http code=200: 0
     max urls found on a page: 0
-    robots denied: 8
-    robots denied - robots info not known: 8
     fetch surprising error: 0

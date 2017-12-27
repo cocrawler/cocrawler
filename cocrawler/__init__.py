@@ -82,7 +82,8 @@ class Crawler:
         self.robotname, self.ua = useragent.useragent(self.version)
 
         ns = config.read('Fetcher', 'Nameservers')
-        self.resolver = dns.get_resolver_wrapper(loop=self.loop, nameservers=ns)
+        self.resolver = dns.get_resolver_wrapper(loop=self.loop, nameservers=ns,
+                                                 timeout=3.0, tries=10)  # XXX config me
 
         proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:
@@ -269,19 +270,19 @@ class Crawler:
             with stats.coroutine_state('DNS prefetch'):
                 with stats.record_latency('DNS prefetch', url=url.hostname):
                     try:
-                        await self.resolver.resolve(url.hostname, 80)
+                        await self.resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
                     except OSError:  # aiodns.error.DNSError if it was a .get
                         stats.stats_sum('DNS prefetch error', 1)
-                        # fall through, depend on DNS negative caching to make the next fail immediate
-                        pass
+                        # don't just fall through: if we continue we'll lookup inside
+                        # the .get() and that will fail, too
+                        self._retry_if_able(work, ridealong)
+                        return
 
-        with stats.coroutine_state('fetching/checking robots'):
-            r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
+        r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
             # really, we shouldn't retry a robots.txt rule failure
             # but we do want to retry robots.txt failed to fetch
             self._retry_if_able(work, ridealong)
-            #self.scheduler.del_ridealong(surt)  # if not retry_if_able
             return
 
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,

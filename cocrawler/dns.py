@@ -71,26 +71,26 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         self._cache = cachetools.LRUCache(int(self._cachemaxsize))
         self._refresh_in_progress = set()
 
-    async def resolve(self, host, port, **kwargs):
+    async def resolve(self, host, port, stats_prefix='', **kwargs):
         t = time.time()
         if host in self._cache:
-            stats.stats_sum('DNS cache hit', 1)
+            stats.stats_sum(stats_prefix+'DNS cache hit', 1)
             (addrs, expires, refresh) = self._cache[host]
             if expires < t:
-                stats.stats_sum('DNS cache hit expired entry', 1)
+                stats.stats_sum(stats_prefix+'DNS cache hit expired entry', 1)
                 # TODO: if I expire one, examine the next hundred entries so I don't accumulate stale entries
                 del self._cache[host]
             elif refresh < t and host not in self._refresh_in_progress:
-                stats.stats_sum('DNS cache hit entry refresh', 1)
+                stats.stats_sum(stats_prefix+'DNS cache hit entry refresh', 1)
                 # TODO: spawn a thread to await this while I continue on
                 self._refresh_in_progress.add(host)
                 self._cache[host] = await self.actual_async_lookup(host)
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
-            stats.stats_sum('DNS lookup after cache miss begun', 1)
+            stats.stats_sum(stats_prefix+'DNS lookup after cache miss begun', 1)
             self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
-            stats.stats_sum('DNS lookup after cache miss success', 1)
+            stats.stats_sum(stats_prefix+'DNS lookup after cache miss success', 1)
 
         (addrs, _, _) = self._cache[host]
         # if the cached entry was made with a different port, lie about it
@@ -103,11 +103,9 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         '''
         Do an actual lookup. Always raise if it fails.
         '''
-        with stats.record_latency('fetcher DNS lookup', url=host):
-            with stats.coroutine_state('fetcher DNS lookup'):
-                # XXX TODO: how should I deal with AAAA vs A?
-                # XXX this can raise OSError: Domain name not found which ends up being ClientConnectError
-                addrs = await super().resolve(host, port, **kwargs)
+        # this will raise OSError: Domain name not found
+        # which ends up being ClientConnectError if inside an aiohttp .get
+        addrs = await super().resolve(host, port, **kwargs)
 
         # filter return value to exclude unwanted ip addrs
         ret = []
