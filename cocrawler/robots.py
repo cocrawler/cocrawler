@@ -21,6 +21,15 @@ from . import config
 LOGGER = logging.getLogger(__name__)
 
 
+def strip_bom(b):
+    if b[:3] == b'\xef\xbb\xbf':  # utf-8, e.g. microsoft.com's sitemaps
+        return b[3:].strip()
+    elif b[:2] in (b'\xfe\xff', b'\xff\xfe'):  # utf-16 BE and LE, respectively
+        return b[2:].strip()
+    else:
+        return b.strip()
+
+
 def preprocess_robots(text):
     '''
     robotsexclusionrulesparser does not follow the de-factor robots.txt standard.
@@ -203,6 +212,9 @@ class Robots:
             self.in_progress.discard(schemenetloc)
             return None
 
+        body_bytes = f.body_bytes
+        body_bytes = strip_bom(body_bytes)
+
         if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte):
             # policy: treat as empty
             self.jsonlog(schemenetloc,
@@ -252,13 +264,6 @@ class Robots:
             self.jsonlog(schemenetloc, {'error': 'robots appears to be html or xml, ignoring',
                                         'action': 'fetch', 't_first_byte': t_first_byte})
             return False
-
-        # OK: BOM, it signals a text file ... utf8 or utf16 be/le
-        # (this info doesn't appear to be recognized by libmagic?!)
-        if (body_bytes.startswith(b'\xef\xbb\xbf') or
-                body_bytes.startswith(b'\xfe\xff') or
-                body_bytes.startswith(b'\xff\xfe')):  # pragma: no cover
-            return True
 
         # OK: file magic mimetype is 'text' or similar -- too expensive, 3ms per call
         # mime_type = self.magic.id_buffer(body_bytes)

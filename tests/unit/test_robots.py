@@ -3,6 +3,7 @@ import pytest
 import cocrawler.robots as robots
 import cocrawler.config as config
 
+
 def test_preprocess_robots():
     robots_txt = '''
 foo
@@ -15,6 +16,23 @@ baz
 
     assert robots.preprocess_robots('') == ''
     assert robots.preprocess_robots('foo') == 'foo\n'
+
+
+def test_strip_bom():
+    robots_txt = b'\xef\xbb\xbf'
+    assert robots.strip_bom(robots_txt) == b''
+    robots_txt = b'\xef\xbb\xbf  '
+    assert robots.strip_bom(robots_txt) == b''
+    robots_txt = b'\xef\xbb\xbf  <'
+    assert robots.strip_bom(robots_txt) == b'<'
+
+    robots_txt = b'\xfe\xff'
+    assert robots.strip_bom(robots_txt) == b''
+    robots_txt = b'\xfe\xff  \n \t \vwumpus'
+    assert robots.strip_bom(robots_txt) == b'wumpus'
+
+    robots_txt = b'\xff\xfe'
+    assert robots.strip_bom(robots_txt) == b''
 
 
 def test_robots():
@@ -30,13 +48,6 @@ def test_robots():
 
     robots_txt = b'<'
     assert not r.is_plausible_robots('example.com', robots_txt, 1.0)
-
-    robots_txt = b'\xef\xbb\xbf'  # BOM
-    assert r.is_plausible_robots('example.com', robots_txt, 1.0)
-    robots_txt = b'\xfe\xff'
-    assert r.is_plausible_robots('example.com', robots_txt, 1.0)
-    robots_txt = b'\xff\xfe'
-    assert r.is_plausible_robots('example.com', robots_txt, 1.0)
 
     robots_txt = b''  # application/x-empty
     assert r.is_plausible_robots('example.com', robots_txt, 1.0)
