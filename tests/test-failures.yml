@@ -35,3 +35,4 @@ Testing:
     fetch http code=200: 0
     max urls found on a page: 0
     fetch surprising error: 0
+    prefetch DNS error: 8

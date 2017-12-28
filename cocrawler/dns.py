@@ -22,8 +22,8 @@ async def prefetch(url, resolver):
         with stats.record_latency('DNS prefetch', url=url.hostname):
             try:
                 await resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
-            except OSError:  # aiodns.error.DNSError if it was a .get
-                stats.stats_sum('DNS prefetch error', 1)
+            except OSError:  # mapped to aiodns.error.DNSError if it was a .get
+                stats.stats_sum('prefetch DNS error', 1)
                 return False
     return True
 
