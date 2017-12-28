@@ -115,27 +115,21 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                     # XXX when we retry, if local_addr was a list, switch to a different source IP
                     #   (change out the TCPConnector)
 
-                    # use streaming interface to limit bytecount
-                    # fully receive headers and body, to cause all network errors to happen
                     body_bytes = await response.content.read(max_page_size)
                     if not response.content.at_eof():
-                        response.close()  # XXX should interrupt the network transfer? -- testme
-                        is_truncated = 'length'
+                        response.close()  # this does interrupt the network transfer
+                        is_truncated = 'length'  # XXX test WARc of this resopnse
 
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
-        is_truncated = 'time'  # XXX test WARC of this response?
-        if stats.stats_sum('fetch timeout', 1) < 10:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
+        is_truncated = 'time'  # XXX test WARC of this response
+        stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
         # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
-        if stats.stats_sum('fetch ClientError', 1) < 50:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
+        stats.stats_sum('fetch ClientError', 1)
         try:
             body_bytes = await response.content.read(max_page_size)
             # This never goes off
@@ -144,16 +138,9 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         except Exception:
             pass
         last_exception = repr(e)
-    except aiodns.error.DNSError as e:
-        if stats.stats_sum('fetch DNS error', 1) < 10:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
-        last_exception = repr(e)
     except ssl.CertificateError as e:
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
-        if stats.stats_sum('fetch SSL error', 1) < 10:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
+        stats.stats_sum('fetch SSL error', 1)
         last_exception = repr(e)
     #except (ValueError, AttributeError, RuntimeError) as e:
         # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
@@ -163,19 +150,13 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # AttributeError: ?
         # RuntimeError: ?
     except ValueError as e:
-        if stats.stats_sum('fetch other error - ValueError', 1) < 10:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
+        stats.stats_sum('fetch other error - ValueError', 1)
         last_exception = repr(e)
     except AttributeError as e:
-        if stats.stats_sum('fetch other error - AttributeError', 1) < 10:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
+        stats.stats_sum('fetch other error - AttributeError', 1)
         last_exception = repr(e)
     except RuntimeError as e:
-        if stats.stats_sum('fetch other error - RuntimeError', 1) < 10:
-            LOGGER.info('Example traceback for %r:', e)
-            traceback.print_exc()
+        stats.stats_sum('fetch other error - RuntimeError', 1)
         last_exception = repr(e)
     except asyncio.CancelledError:
         raise
@@ -187,8 +168,6 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
     if last_exception:
         LOGGER.info('we failed working on %s, the last exception is %s', mock_url or url.url, last_exception)
-        #if LOGGER.isEnabledFor(logging.DEBUG):
-        #    traceback.print_last()  # this often says "no last exception and raises ValueError
         return FetcherResponse(None, None, None, None, None, False, last_exception)
 
     fr = FetcherResponse(response, body_bytes, response.request_info.headers,
