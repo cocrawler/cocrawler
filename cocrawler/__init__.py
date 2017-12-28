@@ -270,16 +270,10 @@ class Crawler:
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
 
         if not mock_url:
-            with stats.coroutine_state('DNS prefetch'):
-                with stats.record_latency('DNS prefetch', url=url.hostname):
-                    try:
-                        await self.resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
-                    except OSError:  # aiodns.error.DNSError if it was a .get
-                        stats.stats_sum('DNS prefetch error', 1)
-                        # don't just fall through: if we continue we'll lookup inside
-                        # the .get() and that will fail, too
-                        self._retry_if_able(work, ridealong)
-                        return
+            if not dns.prefetch(url, self.resolver):
+                # fail out, we don't want to do DNS in the robots or page fetch
+                self._retry_if_able(work, ridealong)
+                return
 
         r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:

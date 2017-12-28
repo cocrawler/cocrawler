@@ -17,6 +17,17 @@ from . import config
 LOGGER = logging.getLogger(__name__)
 
 
+async def prefetch(url, resolver):
+    with stats.coroutine_state('DNS prefetch'):
+        with stats.record_latency('DNS prefetch', url=url.hostname):
+            try:
+                await resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
+            except OSError:  # aiodns.error.DNSError if it was a .get
+                stats.stats_sum('DNS prefetch error', 1)
+                return False
+    return True
+
+
 class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
     '''
     A dns wrapper that applies our policies
