@@ -33,23 +33,32 @@ LOGGER = logging.getLogger(__name__)
 fast_prefix = 'cocrawler.fast'
 
 fast_stats = [
-    {'name': 'DNS prefetches', 'kind': 'delta', 'qps_total': True},
+    # derived stats
+    # XXX these need to be udpated, some names have changed?
+    # XXX emit a json Graphite config for the qps graph
+    {'name': 'DNS prefetches', 'kind': 'delta', 'qps_total': True},  # qps_total True belongs in qps graph
     {'name': 'fetch URLs', 'kind': 'delta', 'qps_total': True},
     {'name': 'robots fetched', 'kind': 'delta', 'qps_total': True},
-    {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},
+    {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},  # has its own bandwidth graph
+    {'name': 'priority'},  # has its own priority graph, called 'depth from seed'
+
+    # coroutine state - XXX these should autoconfigure
+    # XXX emit a json Graphite config for the coroutine state graph
     {'name': 'awaiting work'},
     {'name': 'await burner thread parser'},
     {'name': 'await main thread parser'},
     {'name': 'fetcher fetching'},
-    {'name': 'fetching/checking robots'},
+    {'name': 'robots fetcher fetching'},
     {'name': 'robots collision sleep'},
     {'name': 'fetcher DNS lookup'},
-    {'name': 'priority'},
 ]
 
 slow_prefix = 'cocrawler.slow'
 
 slow_stats = [
+    # XXX these need to be udpated, some names have changed
+    # XXX emit a json Graphite config for some graphs?
+    # right now I have a cpu consumption graph and an URL stats graph
     {'name': 'initial seeds'},
     {'name': 'added seeds'},
     {'name': 'fetch URLs'},
