@@ -100,6 +100,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
     try:
         t0 = time.time()
         last_exception = None
+        body_bytes = None
 
         with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
@@ -131,12 +132,14 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
         stats.stats_sum('fetch ClientError', 1)
         try:
-            body_bytes = await response.content.read(max_page_size)
-            # This never goes off
-            stats.stats_sum('fetcher received partial response before disconnect', 1)
-            LOGGER.info('I received %d bytes in the body', len(body_bytes))
+            if body_bytes is not None:
+                stats.stats_sum('fetcher received partial response before disconnect raise XXX', 1)
+            body_bytes += await response.content.read(max_page_size)
+            stats.stats_sum('fetcher received more partial response after disconnect raise XXX', 1)
         except Exception:
             pass
+        if body_bytes is not None:
+            LOGGER.info('I received %d bytes in the body', len(body_bytes))
         last_exception = repr(e)
     except ssl.CertificateError as e:
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
