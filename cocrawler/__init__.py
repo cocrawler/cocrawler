@@ -84,9 +84,7 @@ class Crawler:
 
         self.robotname, self.ua = useragent.useragent(self.version)
 
-        ns = config.read('Fetcher', 'Nameservers')
-        self.resolver = dns.get_resolver_wrapper(loop=self.loop, nameservers=ns,
-                                                 timeout=3.0, tries=10)  # XXX config me
+        self.resolver = dns.get_resolver()
 
         proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:

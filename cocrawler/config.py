@@ -61,6 +61,8 @@ Fetcher:
   Nameservers:
   - 8.8.8.8
   - 8.8.4.4
+  NameserverTries: 10
+  NameserverTimeout: 3.0
   CrawlLocalhost: False  # crawl ips that resolve to localhost
   CrawlPrivate: False  # crawl ips that resolve to private networks (e.g. 10.*/8)
   DNSCacheMaxSize: 1000000

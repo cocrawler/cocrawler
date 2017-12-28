@@ -28,50 +28,13 @@ async def prefetch(url, resolver):
     return True
 
 
-class CoCrawler_AsyncResolver(aiohttp.resolver.AsyncResolver):
-    '''
-    A dns wrapper that applies our policies
-
-    TODO: subtract off dns time from fetch first byte time?
-    TODO: Warc the answer
-    '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._crawllocalhost = config.read('Fetcher', 'CrawlLocalhost') or False
-        self._crawlprivate = config.read('Fetcher', 'CrawlPrivate') or False
-
-    async def resolve(self, host, port, **kwargs):
-        with stats.record_latency('fetcher DNS lookup', url=host):
-            with stats.coroutine_state('fetcher DNS lookup'):
-                addrs = await super().resolve(host, port, **kwargs)
-
-        ret = []
-        for a in addrs:
-            try:
-                ip = ipaddress.ip_address(a['host'])
-            except KeyError:
-                continue
-            if not self._crawllocalhost and ip.is_localhost:
-                continue
-            if not self._crawlprivate and ip.is_private:
-                continue
-            ret.append(a)
-
-        if len(addrs) != len(ret):
-            LOGGER.info('threw out some ip addresses for %s', host)
-
-        return ret
-
-
 class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
     '''
     A caching dns wrapper that lets us subvert aiohttp's built-in dns policies
 
     Use a LRU cache which respects TTL and is bounded in size.
-    Set a "dns nap" while doing a fetch.
     Refetch dns (once!) when the TTL is 9/10ths expired.
 
-    TODO: subtract off dns time from fetch first byte time?
     TODO: Warc the answer
     '''
     def __init__(self, *args, **kwargs):
@@ -155,17 +118,17 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         return ret, expires, refresh
 
 
-global_resolver = None
+def get_resolver(**kwargs):
+    ns = config.read('Fetcher', 'Nameservers')
+    ns_tries = config.read('Fetcher', 'NameserverTries')
+    ns_timeout = config.read('Fetcher', 'NameserverTimeout')
 
-
-def get_resolver_wrapper(**kwargs):
-    global global_resolver
-    global_resolver = CoCrawler_Caching_AsyncResolver(**kwargs)
-    return global_resolver
+    return CoCrawler_Caching_AsyncResolver(nameservers=ns, tries=ns_tries,
+                                           timeout=ns_timeout, rotate=True)
 
 
 '''
-Code below is not actually used by crawling
+Code below is dead. Still wired into stuff but not the crawler.
 '''
 
 
