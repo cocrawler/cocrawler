@@ -89,22 +89,24 @@ class Crawler:
         if proxy:
             raise ValueError('proxies not yet supported')
 
-        local_addr = config.read('Fetcher', 'LocalAddr')
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        #self.conn_kwargs = {'use_dns_cache': True, 'resolver': self.resolver,
-        #                    'ttl_dns_cache': 3600*8,  # this is a maximum TTL XXX need to call .clear occasionally
-        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver}
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver,
+                            'limit': 6000}  # XXX config option
 
+        local_addr = config.read('Fetcher', 'LocalAddr')
         if local_addr:
             self.conn_kwargs['local_addr'] = local_addr
-        self.conn_kwargs['family'] = socket.AF_INET  # XXX config option
+        self.conn_kwargs['family'] = socket.AF_INET  # XXX config option -- this is ipv4 only
+
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
+
         if (config.read('Crawl', 'CookieJar') or '') == 'Defective':
             cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
-        self.session = aiohttp.ClientSession(loop=self.loop, connector=conn, cookie_jar=cookie_jar)
+        self.session = aiohttp.ClientSession(loop=self.loop, connector=conn, cookie_jar=cookie_jar,
+                                             conn_timeout=5)  # XXX config option
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
