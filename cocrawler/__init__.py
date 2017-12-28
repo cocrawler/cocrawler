@@ -10,6 +10,7 @@ from pkg_resources import get_distribution, DistributionNotFound
 from setuptools_scm import get_version
 import json
 import traceback
+import concurrent
 
 import asyncio
 import uvloop
@@ -71,6 +72,8 @@ class Crawler:
         self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
         self.prevent_compression = config.read('Crawl', 'PreventCompression')
         self.upgrade_insecure_requests = config.read('Crawl', 'UpgradeInsecureRequests')
+        self.max_workers = int(config.read('Crawl', 'MaxWorkers'))
+        self.workers = []
 
         try:
             # this works for the installed package
@@ -90,8 +93,7 @@ class Crawler:
             raise ValueError('proxies not yet supported')
 
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver,
-                            'limit': 6000}  # XXX config option
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver, 'limit': self.max_workers}
 
         local_addr = config.read('Fetcher', 'LocalAddr')
         if local_addr:
@@ -101,12 +103,15 @@ class Crawler:
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
 
+        conn_timeout = config.read('Crawl', 'ConnectTimeout')
+        if not conn_timeout:
+            conn_timeout = None  # docs say 0. is no timeout, docs lie
         if (config.read('Crawl', 'CookieJar') or '') == 'Defective':
             cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
         self.session = aiohttp.ClientSession(loop=self.loop, connector=conn, cookie_jar=cookie_jar,
-                                             conn_timeout=5)  # XXX config option
+                                             conn_timeout=conn_timeout)
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
@@ -142,10 +147,6 @@ class Crawler:
             self._seeds = seeds.expand_seeds_config(self)
             LOGGER.info('after adding seeds, work queue is %r urls', self.scheduler.qsize())
             stats.stats_max('initial seeds', self.scheduler.qsize())
-
-        self.max_workers = int(config.read('Crawl', 'MaxWorkers'))
-
-        self.workers = []
 
         self.stop_crawler = os.path.expanduser('~/STOPCRAWLER.{}'.format(os.getpid()))
         self.pause_crawler = os.path.expanduser('~/PAUSECRAWLER.{}'.format(os.getpid()))
@@ -328,6 +329,8 @@ class Crawler:
 
                 try:
                     await self.fetch_and_process(work)
+                except concurrent.futures._base.CancelledError:  # seen with ^C
+                    pass
                 except Exception as e:
                     # this catches any buggy code that executes in the main thread
                     LOGGER.error('Something bad happened working on %s, it\'s a mystery:\n%s', work[2], e)

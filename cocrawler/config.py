@@ -42,6 +42,7 @@ Crawl:
   MaxPageSize: 1000000
   PreventCompression: False
   UpgradeInsecureRequests: 1
+  ConnectTimeout: 0.  # seconds, 0.=none
 #  MaxCrawledUrls: 11
 #  CookieJar: Defective
 
