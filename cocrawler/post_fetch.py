@@ -162,8 +162,9 @@ async def post_200(f, url, priority, json_log, crawler):
                 links, embeds, sha1, facets = await crawler.burner.burn(
                     partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
                     url=url)
-            except ValueError:  # if it pukes, we get back 0 values
+            except ValueError as e:  # if it pukes, we get back 0 values
                 stats.stats_sum('parser raised', 1)
+                LOGGER.info('parser raised', repr(e))
                 # XXX jsonlog
                 return
         else:
