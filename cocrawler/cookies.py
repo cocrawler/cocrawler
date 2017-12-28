@@ -15,7 +15,7 @@ class DefectiveCookieJar:
     '''
     Defective cookie jar loses cookies.
     '''
-    def __init__(self, unsafe=False, loop=None):
+    def __init__(self, unsafe=False):
         pass
 
     def __iter__(self):

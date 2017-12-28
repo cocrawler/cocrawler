@@ -86,17 +86,17 @@ ft = None
 st = None
 
 
-def start_carbon(loop):
+def start_carbon():
     server = config.read('CarbonStats', 'Server') or 'localhost'
     port = int(config.read('CarbonStats', 'Port') or '2004')
 
     global ft
-    fast = CarbonTimer(1, fast_prefix, fast_stats, server, port, loop)
-    ft = asyncio.Task(exception_wrapper(fast.timer, 'fast carbon timer'), loop=loop)
+    fast = CarbonTimer(1, fast_prefix, fast_stats, server, port)
+    ft = asyncio.Task(exception_wrapper(fast.timer, 'fast carbon timer'))
 
     global st
-    slow = CarbonTimer(30, slow_prefix, slow_stats, server, port, loop)
-    st = asyncio.Task(exception_wrapper(slow.timer, 'slow carbon timer'), loop=loop)
+    slow = CarbonTimer(30, slow_prefix, slow_stats, server, port)
+    st = asyncio.Task(exception_wrapper(slow.timer, 'slow carbon timer'))
 
 
 def close():
@@ -106,12 +106,12 @@ def close():
         st.cancel()
 
 
-async def carbon_push(server, port, tuples, loop):
+async def carbon_push(server, port, tuples):
     payload = pickle.dumps(tuples, protocol=2)
     header = struct.pack("!L", len(payload))
     message = header + payload
     try:
-        _, w = await asyncio.open_connection(host=server, port=port, loop=loop)
+        _, w = await asyncio.open_connection(host=server, port=port)
         w.write(message)
         await w.drain()
         w.close()
@@ -121,13 +121,12 @@ async def carbon_push(server, port, tuples, loop):
 
 
 class CarbonTimer:
-    def __init__(self, dt, prefix, stats_list, server, port, loop):
+    def __init__(self, dt, prefix, stats_list, server, port):
         self.dt = dt
         self.prefix = prefix
         self.stats_list = stats_list
         self.server = server
         self.port = port
-        self.loop = loop
         self.last_t = None
         self.last = None
         for sl in stats_list:
@@ -181,7 +180,7 @@ class CarbonTimer:
                 carbon_tuples += self.vmem_timebin.gettuples(self.prefix+'.vmem')
 
                 if carbon_tuples:
-                    await carbon_push(self.server, self.port, carbon_tuples, self.loop)
+                    await carbon_push(self.server, self.port, carbon_tuples)
 
             self.last = new
             self.last_t = t

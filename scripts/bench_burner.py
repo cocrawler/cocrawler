@@ -45,7 +45,7 @@ c = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
 config.set_config(c)
 
 loop = asyncio.get_event_loop()
-b = burner.Burner(loop, 'parser')
+b = burner.Burner('parser')
 queue = asyncio.Queue()
 for _ in range(args.count):
     queue.put_nowait((args.duration, 'x' * args.datasize))

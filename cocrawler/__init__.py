@@ -63,12 +63,12 @@ class Crawler:
     def __init__(self, load=None, no_test=False):
         asyncio.set_event_loop_policy(FixupEventLoopPolicy())
         self.loop = asyncio.get_event_loop()
-        self.burner = burner.Burner(self.loop, 'parser')
+        self.burner = burner.Burner('parser')
         self.stopping = 0
         self.paused = 0
         self.no_test = no_test
         self.next_minute = time.time() + 60
-        self.scheduler = scheduler.Scheduler(self.loop)
+        self.scheduler = scheduler.Scheduler()
         self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
         self.prevent_compression = config.read('Crawl', 'PreventCompression')
         self.upgrade_insecure_requests = config.read('Crawl', 'UpgradeInsecureRequests')
@@ -108,7 +108,7 @@ class Crawler:
             cookie_jar = cookies.DefectiveCookieJar()
         else:
             cookie_jar = None  # which means a normal cookie jar
-        self.session = aiohttp.ClientSession(loop=self.loop, connector=conn, cookie_jar=cookie_jar,
+        self.session = aiohttp.ClientSession(connector=conn, cookie_jar=cookie_jar,
                                              conn_timeout=conn_timeout)
 
         self.datalayer = datalayer.Datalayer()
@@ -392,7 +392,7 @@ class Crawler:
         '''
         Run the crawler until it's out of work
         '''
-        self.workers = [asyncio.Task(self.work(), loop=self.loop) for _ in range(self.max_workers)]
+        self.workers = [asyncio.Task(self.work()) for _ in range(self.max_workers)]
 
         # this is now the 'main' coroutine
 

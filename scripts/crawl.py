@@ -69,10 +69,10 @@ def main():
     loop = asyncio.get_event_loop()
 
     if config.read('CarbonStats'):
-        timer.start_carbon(loop)
+        timer.start_carbon()
 
     if config.read('REST'):
-        app = webserver.make_app(loop)
+        app = webserver.make_app()
     else:
         app = None
 

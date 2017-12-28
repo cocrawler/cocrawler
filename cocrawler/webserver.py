@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from aiohttp import web
 
 from . import config
@@ -6,7 +7,8 @@ from . import config
 LOGGER = logging.getLogger(__name__)
 
 
-def make_app(loop):
+def make_app():
+    loop = asyncio.get_event_loop()
     # TODO switch this to socket.getaddrinfo() -- see https://docs.python.org/3/library/socket.html
     serverip = config.read('REST', 'ServerIP')
     if serverip is None:
@@ -22,7 +24,7 @@ def make_app(loop):
     srv = loop.run_until_complete(f)
     LOGGER.info('REST serving on %s', srv.sockets[0].getsockname())
 
-    app['cocrawler'] = handler, srv, loop
+    app['cocrawler'] = handler, srv
     return app
 
 
@@ -30,7 +32,8 @@ def close(app):
     if app is None:
         return
 
-    handler, srv, loop = app['cocrawler']
+    handler, srv = app['cocrawler']
+    loop = asyncio.get_event_loop()
     srv.close()
     loop.run_until_complete(srv.wait_closed())
     loop.run_until_complete(app.shutdown())

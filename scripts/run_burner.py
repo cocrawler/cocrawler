@@ -13,7 +13,7 @@ import cocrawler.config as config
 c = {'Multiprocess': {'BurnerThreads': 2}}
 config.set_config(c)
 loop = asyncio.get_event_loop()
-b = burner.Burner(loop, 'parser')
+b = burner.Burner('parser')
 queue = asyncio.Queue()
 
 

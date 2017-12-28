@@ -47,10 +47,10 @@ class Burner:
     On my test machine, it takes about 0.5 milliseconds in the main async
     thread for a single call to the burner thread.
     '''
-    def __init__(self, loop, name):
+    def __init__(self, name):
         thread_count = int(config.read('Multiprocess', 'BurnerThreads'))
         self.executor = ProcessPoolExecutor(thread_count)
-        self.loop = loop
+        self.loop = asyncio.get_event_loop()
         self.name = name
         self.f = []
         p = psutil.Process()
