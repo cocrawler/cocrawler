@@ -268,7 +268,7 @@ class Crawler:
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
 
         if not mock_url:
-            if not dns.prefetch(url, self.resolver):
+            if not await dns.prefetch(url, self.resolver):
                 # fail out, we don't want to do DNS in the robots or page fetch
                 self._retry_if_able(work, ridealong)
                 return
