@@ -193,7 +193,7 @@ def facets_from_embeds(embeds):
             facets.append(('google adsense', True))
         if 'google.com/adsense/domains' in u:
             facets.append(('google adsense for domains', True))
-        if 'googleadmanager.com' in u:
+        if 'googletagmanager.com' in u:
             facets.append(('google tag manager', True))
             cgi = url.urlsplit.query
             cgi_list = cgi.split('&')
