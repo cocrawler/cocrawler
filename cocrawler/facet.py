@@ -171,8 +171,9 @@ def facets_from_response_headers(headers_list):
     facets = []
     for h in headers_list:
         k, v = h
-        if k in save_response_headers:
-            facets.append(('header-'+k, v))
+        #if k in save_response_headers:
+        #    facets.append(('header-'+k, v))
+        facets.append(('header-'+k, v))  # XXX save them all for one run
 
     return facets
 
@@ -187,15 +188,19 @@ def facets_from_embeds(embeds):
         if 'www.google-analytics.com' in u:
             # frequently the above link doesn't actually appear as a link, it's hidden in the js snippet
             # so the U-NNNNN-N string detection code is better
-            facets.append(('google analytics', True))
+            facets.append(('google analytics link', True))
         if 'googlesyndication.com' in u:
             facets.append(('google adsense', True))
         if 'google.com/adsense/domains' in u:
             facets.append(('google adsense for domains', True))
+        if 'googleadmanager.com' in u:
+            facets.append(('google tag manager', True))
+            cgi = url.urlsplit.query
+            cgi_list = cgi.split('&')
+            for c in cgi_list:
+                if c.startswith('id=GTM-'):
+                    facets.append(('google tag manager id', c[3:]))
         '''
-        TODO: Google tag manager <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M9L9Q5
-         this appears in the body, so...
-         is there a pure js version of gtm?
         <script src="//cdn.optimizely.com/js/860020523.js"></script>
         <link rel="shortcut icon" href="//d5y6wgst0yi78.cloudfront.net/images/favicon.ico" />
         <link rel="stylesheet" href="//s3-us-west-1.amazonaws.com/nwusa-cloudfront/font-awesome/css/font-awesome.min.css" />
@@ -396,6 +401,9 @@ go through headers and save more headers (grep 'not saving')
  server: ECS == Edgecast CDN
  server: Windows-Azure-Blob == Azure CDN
  server: PWS == CDNetworks
+
+# https://github.com/EnableSecurity/wafw00f -- detects web application firewalls ... passive and active
+
 
 
 '''
