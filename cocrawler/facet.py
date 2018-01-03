@@ -21,7 +21,7 @@ from . import facet_fingerprints as fingerprints
 
 meta_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
                          'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',
-                         'parsely-title'))
+                         'parsely-title', 'apple-itunes-app', 'google-play-app'))
 meta_name_generator_special = ('wordpress', 'movable type', 'drupal')
 meta_name_prefix = (('twitter:', 'twitter card'),)
 
@@ -79,16 +79,13 @@ def find_head_facets(head, head_soup=None, url=None):
         if base.get('href'):
             facets.append(('base', base.get('href')))
             # can also have target= but we don't care
-            # TODO base affects all relative URLs in doc
-            # XXX when I hoist the soup, hoist this code too
-            # can get clues here that www. or https is really the canonical site
-            # (also link rel canonical)
 
     meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
         n = m.get('name').lower()
-        if n in meta_name_content:
-            facets.append((n, m.get('content')))
+        #if n in meta_name_content:
+        #    facets.append((n, m.get('content')))
+        facets.append(('meta-'+n, m.get('content')))  # XXX get all of these for now
         if n == 'generator':
             g = m.get('content', '')
             gl = g.lower()

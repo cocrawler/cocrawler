@@ -16,12 +16,12 @@ def test_double_entries():
     <meta name="format-detection" content="email=no"/>
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('robots', 'noarchive'),
-                      ('robots', 'index, follow'),
-                      ('referrer', 'unsafe-url'),
-                      ('referrer', 'always'),
-                      ('format-detection', 'telephone=no'),
-                      ('format-detection', 'email=no')]
+    assert facets == [('meta-robots', 'noarchive'),
+                      ('meta-robots', 'index, follow'),
+                      ('meta-referrer', 'unsafe-url'),
+                      ('meta-referrer', 'always'),
+                      ('meta-format-detection', 'telephone=no'),
+                      ('meta-format-detection', 'email=no')]
 
 
 def test_generator():
@@ -32,13 +32,13 @@ def test_generator():
     <meta name="generator" content="Drupal 7 (http://drupal.org)" />
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('generator', 'WordPress 2.5.1'),
+    assert facets == [('meta-generator', 'WordPress 2.5.1'),
                       ('wordpress', True),
-                      ('generator', 'Movable Type 3.33'),
+                      ('meta-generator', 'Movable Type 3.33'),
                       ('movable type', True),
-                      ('generator', 'Movable Type Publishing Platform 4.01'),
+                      ('meta-generator', 'Movable Type Publishing Platform 4.01'),
                       ('movable type', True),
-                      ('generator', 'Drupal 7 (http://drupal.org)'),
+                      ('meta-generator', 'Drupal 7 (http://drupal.org)'),
                       ('drupal', True)]
 
 
@@ -87,13 +87,23 @@ def test_twitter():
     <meta name="twitter:app:id:ipad" content="306934135" />
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('twitter card', True), ('twitter card', True),
-                      ('twitter card', True), ('twitter card', True),
+    assert facets == [('meta-twitter:app:id:iphone', '300255638'),
+                      ('twitter card', True),
+                      ('meta-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
+                      ('twitter card', True),
+                      ('meta-twitter:app:name:ipad', 'ABC News'),
+                      ('twitter card', True),
+                      ('meta-twitter:app:id:ipad', '306934135'),
+                      ('twitter card', True),
                       ('twitter:site', '@ABC'),
                       ('twitter:creator', '@brianross')]
 
     facets = facet.facet_dedup(facets)
-    assert facets == [('twitter card', True),
+    assert facets == [('meta-twitter:app:id:iphone', '300255638'),
+                      ('twitter card', True),
+                      ('meta-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
+                      ('meta-twitter:app:name:ipad', 'ABC News'),
+                      ('meta-twitter:app:id:ipad', '306934135'),
                       ('twitter:site', '@ABC'),
                       ('twitter:creator', '@brianross')]
 
@@ -113,7 +123,7 @@ def test_misc_meta_name():
     <meta name="parsely-title" content="Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising Effort">
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('parsely-title',
+    assert facets == [('meta-parsely-title',
                        'Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising '
                        'Effort')]
 

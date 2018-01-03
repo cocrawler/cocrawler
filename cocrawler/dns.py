@@ -18,6 +18,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 async def prefetch(url, resolver):
+    LOGGER.info('prefetch %s', url.hostname)
     with stats.coroutine_state('DNS prefetch'):
         with stats.record_latency('DNS prefetch', url=url.hostname):
             try:
