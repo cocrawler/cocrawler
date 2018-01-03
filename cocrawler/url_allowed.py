@@ -19,6 +19,10 @@ def scheme_allowed(url):
         return False
     return True
 
+# not yet used
+video_extension = set(('3gp', 'af', 'asf', 'avchd', 'avi', 'cam', 'dsh', 'flv', 'm1v', 'm2v',
+                       'fla', 'flr', 'm4v', 'mkv', 'sol', 'wrap', 'mng', 'mov', 'mpg', 'mpeg',
+                       'mp4', 'mpe', 'mxf', 'nsv', 'ogg', 'rm', 'svi', 'smi', 'wmv', 'webm'))
 
 not_text_extension = set(('jpg', 'jpeg', 'png', 'gif',
                           'mp3', 'mid', 'midi',
