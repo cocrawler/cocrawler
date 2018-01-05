@@ -226,19 +226,19 @@ def facets_from_cookies(headers_list):
         else:
             if ((len(key) == 32 and
                  re.fullmatch(r'[0-9a-f]{32}', key))):
-                facets.append(('Mystery 1', True))
+                facets.append(('cookie-mystery-1', key))
             elif (len(key) == 36 and key.startswith('SESS') and
                   re.fullmatch(r'SESS[0-9a-f]{32}', key)):
-                facets.append(('Mystery 2', True))
+                facets.append(('cookie-mystery-2', key))
             elif (len(key) == 15 and key.startswith('SN') and
                   re.fullmatch(r'SN[0-9a-f]{13}', key)):
-                facets.append(('Mystery 3', True))
+                facets.append(('cookie-mystery-3', key))
             elif (len(key) == 10 and key.startswith('TS') and
                   re.fullmatch(r'TS[0-9a-f]{8}', key)):
-                facets.append(('BIG-IP Application Security Manager (F5)', True))
+                facets.append(('BIG-IP Application Security Manager (F5)', key))
             elif (len(key) == 42 and key.startswith('wordpress_') and
                   re.fullmatch(r'wordpress_[0-9a-f]{32}', key)):
-                facets.append(('WordPress', True))
+                facets.append(('cookie-wordpress_', key))
     return facets
 
 '''

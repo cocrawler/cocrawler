@@ -208,11 +208,11 @@ def test_facets_from_embeds():
     assert facets == [('google amp', True)]
 
 def test_facets_from_cookies_mysteries():
-    mysteries = {'0b2a2ea1719965db9784044304710a9c': 'Mystery 1',
-                 'SESS0084bfbcced439ebac5f559df8dd21e0': 'Mystery 2',
-                 'SN54bceb45e3fd0': 'Mystery 3',
+    mysteries = {'0b2a2ea1719965db9784044304710a9c': 'cookie-mystery-1',
+                 'SESS0084bfbcced439ebac5f559df8dd21e0': 'cookie-mystery-2',
+                 'SN54bceb45e3fd0': 'cookie-mystery-3',
                  'TS0103d65d': 'BIG-IP Application Security Manager (F5)',
-                 'wordpress_07dcfa44f6c1a509a602e92e749c7b6d': 'WordPress'}
+                 'wordpress_07dcfa44f6c1a509a602e92e749c7b6d': 'cookie-wordpress_'}
     for m in mysteries:
         f = facet.facets_from_cookies((('set-cookie', m+'=foo'),))
         assert f[0][0] == mysteries[m]
