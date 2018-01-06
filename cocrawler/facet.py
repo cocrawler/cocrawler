@@ -148,7 +148,7 @@ def facets_grep(head):
     if 'http://schema.org' in head:
         facets.append(('schema.org', True))
 
-    pub_matches = re.findall(r'[\'"]pub-\d{15,18}[\'"]', head)  # actually 16 digits
+    pub_matches = re.findall(r'[\'"](?:ca-)?pub-\d{15,18}[\'"]', head)  # actually 16 digits
     if pub_matches:
         for p in pub_matches:
             facets.append(('google publisher id', p.strip('\'"')))

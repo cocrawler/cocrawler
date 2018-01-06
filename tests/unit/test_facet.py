@@ -170,9 +170,11 @@ def test_facets_grep():
 
     # adense embeds the external script name in inline js
     google_ad_client = "pub-5692821333050410"; # publisher ID
+    google_ad_client = "ca-pub-5692821333050411"; # publisher ID
     '''
     facets = facet.facets_grep(t)
     assert facets == [('google publisher id', 'pub-5692821333050410'),
+                      ('google publisher id', 'ca-pub-5692821333050411'),
                       ('google analytics', 'UA-63787687-1'),
                       ('google analytics', 'UA-8162380-2'),
                       ('google analytics', 'UA-1234567-6')]
