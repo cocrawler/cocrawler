@@ -145,7 +145,7 @@ def facet_dedup(facets):
 def facets_grep(head):
     facets = []
     # look for this one as a grep, because if present, it's embedded in a <script> jsonl
-    if 'http://schema.org' in head:
+    if 'http://schema.org' in head or 'https://schema.org' in head:
         facets.append(('schema.org', True))
 
     pub_matches = re.findall(r'[\'"\-]pub-\d{15,18}[\'"]', head)  # actually 16 digits
