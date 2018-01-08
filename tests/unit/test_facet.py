@@ -16,12 +16,12 @@ def test_double_entries():
     <meta name="format-detection" content="email=no"/>
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('meta-robots', 'noarchive'),
-                      ('meta-robots', 'index, follow'),
-                      ('meta-referrer', 'unsafe-url'),
-                      ('meta-referrer', 'always'),
-                      ('meta-format-detection', 'telephone=no'),
-                      ('meta-format-detection', 'email=no')]
+    assert facets == [('meta-name-robots', 'noarchive'),
+                      ('meta-name-robots', 'index, follow'),
+                      ('meta-name-referrer', 'unsafe-url'),
+                      ('meta-name-referrer', 'always'),
+                      ('meta-name-format-detection', 'telephone=no'),
+                      ('meta-name-format-detection', 'email=no')]
 
 
 def test_generator():
@@ -32,13 +32,13 @@ def test_generator():
     <meta name="generator" content="Drupal 7 (http://drupal.org)" />
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('meta-generator', 'WordPress 2.5.1'),
+    assert facets == [('meta-name-generator', 'WordPress 2.5.1'),
                       ('wordpress', True),
-                      ('meta-generator', 'Movable Type 3.33'),
+                      ('meta-name-generator', 'Movable Type 3.33'),
                       ('movable type', True),
-                      ('meta-generator', 'Movable Type Publishing Platform 4.01'),
+                      ('meta-name-generator', 'Movable Type Publishing Platform 4.01'),
                       ('movable type', True),
-                      ('meta-generator', 'Drupal 7 (http://drupal.org)'),
+                      ('meta-name-generator', 'Drupal 7 (http://drupal.org)'),
                       ('drupal', True)]
 
 
@@ -49,11 +49,11 @@ def test_link_rel():
     <link rel="canonical" href="https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort">
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('amphtml',
+    assert facets == [('link-rel-amphtml',
                        ('http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092',
                         'notype')),
-                      ('alternate', ('http://applinks.org/faqs/feed/', 'application/rss+xml')),
-                      ('canonical',
+                      ('link-rel-alternate', ('http://applinks.org/faqs/feed/', 'application/rss+xml')),
+                      ('link-rel-canonical',
                        ('https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort',
                         'notype'))]
 
@@ -68,12 +68,16 @@ def test_facebook():
     <meta property="op:markup_version" content="v1.0">
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('fb:admins', '704409894'),
+    assert facets == [('meta-property-fb:admins', '704409894'),
+                      ('fb:admins', '704409894'),
+                      ('meta-property-fb:app_id', '4942312939'),
                       ('fb:app_id', '4942312939'),
+                      ('meta-property-og:site_name', 'ABC News'),
                       ('opengraph', True),
+                      ('meta-property-op:markup_version', 'v1.0'),
                       ('fb instant', True),
-                      ('opengraph', ('...', 'notype')),
-                      ('origin', ('...', 'notype'))]
+                      ('link-rel-opengraph', ('...', 'notype')),
+                      ('link-rel-origin', ('...', 'notype'))]
 
 
 def test_twitter():
@@ -87,24 +91,30 @@ def test_twitter():
     <meta name="twitter:app:id:ipad" content="306934135" />
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('meta-twitter:app:id:iphone', '300255638'),
+    assert facets == [('meta-name-twitter:app:id:iphone', '300255638'),
                       ('twitter card', True),
-                      ('meta-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
+                      ('meta-name-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
                       ('twitter card', True),
-                      ('meta-twitter:app:name:ipad', 'ABC News'),
+                      ('meta-name-twitter:app:name:ipad', 'ABC News'),
                       ('twitter card', True),
-                      ('meta-twitter:app:id:ipad', '306934135'),
+                      ('meta-name-twitter:app:id:ipad', '306934135'),
                       ('twitter card', True),
+                      ('meta-property-twitter:card', 'summary_large_image'),
+                      ('meta-property-twitter:site', '@ABC'),
                       ('twitter:site', '@ABC'),
+                      ('meta-property-twitter:creator', '@brianross'),
                       ('twitter:creator', '@brianross')]
 
     facets = facet.facet_dedup(facets)
-    assert facets == [('meta-twitter:app:id:iphone', '300255638'),
+    assert facets == [('meta-name-twitter:app:id:iphone', '300255638'),
                       ('twitter card', True),
-                      ('meta-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
-                      ('meta-twitter:app:name:ipad', 'ABC News'),
-                      ('meta-twitter:app:id:ipad', '306934135'),
+                      ('meta-name-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
+                      ('meta-name-twitter:app:name:ipad', 'ABC News'),
+                      ('meta-name-twitter:app:id:ipad', '306934135'),
+                      ('meta-property-twitter:card', 'summary_large_image'),
+                      ('meta-property-twitter:site', '@ABC'),
                       ('twitter:site', '@ABC'),
+                      ('meta-property-twitter:creator', '@brianross'),
                       ('twitter:creator', '@brianross')]
 
 
@@ -115,7 +125,12 @@ def test_applinks():  # fb + Parse
     <meta property="al:ios:app_name" content="App Links" />
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('applinks', True), ('applinks', True), ('applinks', True)]
+    assert facets == [('meta-property-al:ios:url', 'applinks://docs'),
+                      ('applinks', True),
+                      ('meta-property-al:ios:app_store_id', '12345'),
+                      ('applinks', True),
+                      ('meta-property-al:ios:app_name', 'App Links'),
+                      ('applinks', True)]
 
 
 def test_misc_meta_name():
@@ -123,7 +138,7 @@ def test_misc_meta_name():
     <meta name="parsely-title" content="Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising Effort">
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('meta-parsely-title',
+    assert facets == [('meta-name-parsely-title',
                        'Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising '
                        'Effort')]
 
@@ -156,8 +171,8 @@ def test_integrity():
     <link rel="amphtml" href="http://example.com/amp" />
     '''
     facets = facet.find_head_facets(t)
-    assert facets == [('opengraph', ('http://example.com', 'notype')),
-                      ('amphtml', ('http://example.com/amp', 'notype')),
+    assert facets == [('link-rel-opengraph', ('http://example.com', 'notype')),
+                      ('link-rel-amphtml', ('http://example.com/amp', 'notype')),
                       ('script integrity', 3)]
 
 
@@ -210,26 +225,6 @@ def test_facets_from_embeds():
     embeds = set((URL('http://example.com'), URL('http://cdn.ampproject.org')))
     facets = facet.facets_from_embeds(embeds)
     assert facets == [('google amp', True)]
-
-def test_facets_from_cookies_mysteries():
-    mysteries = {'0b2a2ea1719965db9784044304710a9c': 'cookie-mystery-1',
-                 'SESS0084bfbcced439ebac5f559df8dd21e0': 'cookie-mystery-2',
-                 'SN54bceb45e3fd0': 'cookie-mystery-3',
-                 'TS0103d65d': 'BIG-IP Application Security Manager (F5)',
-                 'wordpress_07dcfa44f6c1a509a602e92e749c7b6d': 'cookie-wordpress_'}
-    for m in mysteries:
-        f = facet.facets_from_cookies((('set-cookie', m+'=foo'),))
-        assert f[0][0] == mysteries[m]
-
-
-def test_facets_from_cookies_matches():
-    f = facet.facets_from_cookies((('set-cookie', 'PHPSESSID=foo'), ('set-cookie', '__cfduid=1')))
-    assert f == [('PHP', True), ('cloudflare', True)]
-
-
-def test_facets_from_cookies_prefixes():
-    f = facet.facets_from_cookies((('set-cookie', 'phpbb_2354=1'),))
-    assert f == [('PHPBB', True)]
 
 
 # ----------------------------------------------------------------------

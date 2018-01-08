@@ -17,7 +17,6 @@ import re
 from bs4 import BeautifulSoup
 
 from . import stats
-from . import facet_fingerprints as fingerprints
 
 meta_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
                          'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',
@@ -33,7 +32,7 @@ meta_property_prefix = (('al:', 'applinks'),
                         ('op:', 'fb instant'),
                         ('bt:', 'boomtrain'),)
 
-meta_link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
+link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
@@ -44,7 +43,6 @@ def compute_all(html, head, headers_list, embeds, url=None):
     facets.extend(facets_grep(head))
     facets.extend(facets_from_response_headers(headers_list))
     facets.extend(facets_from_embeds(embeds))
-    facets.extend(facets_from_cookies(headers_list))
 
     return facet_dedup(facets)
 
@@ -83,37 +81,45 @@ def find_head_facets(head, head_soup=None, url=None):
     meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
         n = m.get('name').lower()
+        content = m.get('content')
         #if n in meta_name_content:
-        #    facets.append((n, m.get('content')))
-        facets.append(('meta-'+n, m.get('content')))  # XXX get all of these for now
+        #    facets.append((n, content)
+        facets.append(('meta-name-'+n, content))  # XXX get all of these for now
         if n == 'generator':
-            g = m.get('content', '')
-            gl = g.lower()
+            cl = content.lower()
             for s in meta_name_generator_special:
-                if s in gl:
+                if s in cl:
                     facets.append((s, True))
         for pre in meta_name_prefix:
             prefix, title = pre
             if n.startswith(prefix):
                 facets.append((title, True))
+        # XXX remember the ones we didn't save
 
     meta = soup.find_all('meta', property=True)
     for m in meta:
         p = m.get('property').lower()
+        content = m.get('content')
+        facets.append(('meta-property-'+p, content))  # XXX get all of these for now
         if p in meta_property_content:
-            facets.append((p, m.get('content')))
+            facets.append((p, content))
         for pre in meta_property_prefix:
             prefix, title = pre
             if p.startswith(prefix):
                 facets.append((title, True))
+        # XXX remember the ones we didn't save
 
     # link rel is muli-valued attribute, hence, a list
     linkrel = soup.find_all('link', rel=True)
     for l in linkrel:
         for rel in l.get('rel'):
             r = rel.lower()
-            if r in meta_link_rel:
-                facets.append((r, (l.get('href', 'nohref'), l.get('type', 'notype'))))
+            if r in link_rel:
+                # type is useful if it's something like canonical + type=rss
+                facets.append(('link-rel-'+r, (l.get('href', 'nohref'), l.get('type', 'notype'))))
+            else:
+                # XXX remember the ones we didn't save
+                pass
 
     count = len(soup.find_all(integrity=True))
     if count:
@@ -149,15 +155,23 @@ def facets_grep(head):
         facets.append(('schema.org', True))
 
     # this can be in js or a cgi arg
-    pub_matches = re.findall(r'[\'"\-=]pub-\d{15,18}[\'"&]', head)  # actually 16 digits
+    pub_matches = re.findall(r'[\'"\-=]pub-\d{16}[\'"&]', head)
     if pub_matches:
         for p in pub_matches:
-            facets.append(('google publisher id', p.strip('\'"&-=')))
+            facets.append(('google publisher id', p.strip('\'"-=&')))
 
-    ga_matches = re.findall(r'[\'"]UA-\d{7,9}-\d{1,3}[\'"]', head)
+    # this can be in js or a cgi arg
+    ga_matches = re.findall(r'[\'"\-=]UA-\d{7,9}-\d{1,3}[\'"&]', head)
     if ga_matches:
         for g in ga_matches:
-            facets.append(('google analytics', g.strip('\'"')))
+            facets.append(('google analytics', g.strip('\'"-=&')))
+
+    # GTM-[A-Z0-9]{4,6} -- script text or id= cgi arg
+
+    # noscript: img src=https://www.facebook.com/tr?id=\d{16}&
+    # script: fbq('init', '\d{16}', and https://connect.facebook.net/en_US/fbevents.js
+
+    # in a script: //js.hs-analytics.net/analytics/ -- id is '/\d{6}\\.js'
 
     return facets
 
@@ -185,8 +199,8 @@ def facets_from_embeds(embeds):
         if 'cdn.ampproject.org' in u:
             facets.append(('google amp', True))
         if 'www.google-analytics.com' in u:
-            # frequently the above link doesn't actually appear as a link, it's hidden in the js snippet
-            # so the UA-NNNNN-N string detection code is better
+            # rare that it's used this way
+            # XXX parse the publisher id out of the cgi
             facets.append(('google analytics link', True))
         if 'googlesyndication.com' in u:
             facets.append(('google adsense', True))
@@ -208,152 +222,3 @@ def facets_from_embeds(embeds):
         '''
 
     return facets
-
-
-def facets_from_cookies(headers_list):
-    facets = []
-    for k, v in headers_list:
-        if k != 'set-cookie':
-            continue
-        key = v.partition('=')[0]
-        if key in fingerprints.cookie_matches:
-            facets.append((fingerprints.cookie_matches[key], True))
-            continue
-        for cp in fingerprints.cookie_prefixes:
-            # XXX super-inefficient
-            if key.startswith(cp):
-                facets.append((fingerprints.cookie_prefixes[cp], True))
-                break
-        else:
-            if ((len(key) == 32 and
-                 re.fullmatch(r'[0-9a-f]{32}', key))):
-                facets.append(('cookie-mystery-1', key))
-            elif (len(key) == 36 and key.startswith('SESS') and
-                  re.fullmatch(r'SESS[0-9a-f]{32}', key)):
-                facets.append(('cookie-mystery-2', key))
-            elif (len(key) == 15 and key.startswith('SN') and
-                  re.fullmatch(r'SN[0-9a-f]{13}', key)):
-                facets.append(('cookie-mystery-3', key))
-            elif (len(key) == 10 and key.startswith('TS') and
-                  re.fullmatch(r'TS[0-9a-f]{8}', key)):
-                facets.append(('BIG-IP Application Security Manager (F5)', key))
-            elif (len(key) == 42 and key.startswith('wordpress_') and
-                  re.fullmatch(r'wordpress_[0-9a-f]{32}', key)):
-                facets.append(('cookie-wordpress_', key))
-    return facets
-
-'''
-go through headers and save more headers (grep 'not saving')
- link
- p3p
- content-security-policy
- timing-allow-origin
- x-ua-compatible  # IE method of selecting which mode for rendering
- x-xss-protection
- x-pingback  # blog of some kind, not necessarily wordpress
- x-runtime  # generic header for timing info
- x-robots-tag
- x-served-by  # generic load-balancing header
- x-server  # generally a load-balancer, not that interesting ...
- x-host  # load balancing? not interesting
- servedby  # some kind of load-balancing header for a particular hosting company
- Tk  # DNT response, "Tk: N" means not tracking.
- x-frame-option  # values like sameorigin, deny, allow-from uri, blah blah
-
- x-aspnet-version  # asp.net
- x-aspnetmvc-version  # asp.net
- ms-author-via  # value might have "DAV" for WebDAV and/or "MS-FP" for Microsoft FrontPage protocol
- x-drupal-*  # drupal
- x-via  # value frequently mentions "Cdn Cache Server"
- x-mod-pagespeed  # likely Apache with mod_pagespeed
- x-page-speed  # likely nginx with mod_pagespeed
- x-cdn  # most commonly value="Incapsula"
- x-iinfo  # incapsula
- eagleid  # related to tengine?
- x-swift-savetime  # nginx swift proxy C++ module https://github.com/OSLL/nginx-swift
- x-swift-cachetime  # nginx swift proxy C++ module https://github.com/OSLL/nginx-swift
- x-turbo-charged-by  # value=LigitSpeed
- x-ua-device  # sent by Varnish to backend, appears to leak out?
- x-ah-environment  # Varnish and Acquia.com ?
- xkey  # Varnish xkey module
- via  # values like "1.1 varnish" which means http 1.1 and varnish is the software... little used except by varnish
- x-varnish-*  # Varnish cache
- x-hits  # Varnish
- x-powered-by-plesk  # Plesk WebOps platform
- x-timer  # fastly cached asset ?
- fastly-debug-digest  # fastly
- surrogate-key  # fastly
- surrogate-keys  # fastly
- x-akami-transformed  # Akami CDN
- x-rack-cache  # cache for Ruby Rack
- wp-super-cache  # WP Super Cache plugin for Wordpress
- x-powered-cms  # value=Bitrix Site Manager
- cf-railgun  # CloudFlare RailGun site
- x-info-cf-ray  # CloudFlare
- cf-cache-status  # CloudFlare
- cf-ray  # CloudFlare
- cf-cache-status  # CloudFlare
- x-amz-cf-id  # Amazon CloudFront
- x-amz-id-1  # Amazon AWS debugging info
- x-amz-id-2  # Amazon AWS debugging info
- x-amz-request-id  # Amazon S3
- x-amz-version-id  # Amazon S3 versioned object
- x-amz-delete-marker  # Amazon S3 tombstone (true/false)
- x-content-encoded-by  # {Joomla,Dimofinf Cms 3.0.0}
- x-content-powered-by  # value="K2 ... (by JoomlaWorks)"
- x-sucuri-id  # Sucuri website security
- x-px  # CDNetworks
- px-uncompress-origin
- x-litespeed-cache # LiteSpeed Cache WordPress plugin
- x-safe-firewall  # value contains 'webscan.360.cn' == 360webscan
- x-powered-by-360wzb  # 360wzb
- x-powered-by-anquanbao  # anquanbao
- powered-by-chinacache  # ChinaCache CDN
- x-instart-request-id  # Instart Logic Application Delivery Solution
- x-styx-version  # Pantheon Styx edge router, value=StyxGo
- x-styx-req-id  # Pantheon Styx edge router
- x-pantheon-styx-hostname
- x-pantheon-endpoint
- x-cloud-trace-context  # Google App Engine Stackdriver Trace
- x-pad  # old Apache server
- x-dynatrace-js-agent  # Dynatrace Application Performance Management
- x-dynatrace  # Dynatrace Application Performance Management
- dynatrace
- liferay-portal  # "Community Edition", "Enterprise Edition" Enterprise web platform
- x-framework # value="JP" or "Samurai" (PHP Full stack framework)
- cc-cache  # CC-Cache Wordpress plugin
- x-xrds-location  # Yadis service discovery
- x-atg-version  # Oracle ATG Web Commerce
- x-spip-cache  # SPIP CMS
- composed-by  # value contains SPIP, SPIP CMS
- x-hyper-cache  # Hyper Cache WordPress plugin
- x-clacks-overhead  # tribute to Terry Prachett
- x-do-esi  # Edge Side Includes, standard implemented by CDNs and caching proxies
- rtss  # IBM Tivoli runtime security services
- sprequestguid  # Microsoft SharePoint
- microsoftsharepointteamservices  # Microsoft SharePoint
- sprequestduration  # Microsoft SharePoint
- spiislatency  # Microsoft SharePoint
- x-sharepointhealthscore  # Microsoft SharePoint
- x-yottaa-*  # Yottaa eCommerce Acceleration
- commerce-server-software  # value=Microsoft Commerce Server
- tp-cache  # Travelport Cache ??
- tp-l2-cache  # ??
-
-# https://github.com/sqlmapproject/sqlmap/tree/master/waf -- web application firewall fingerprints
-
- referrer-policy  # rare so far
- retry-after  # goes with a 503, is HTTP-date | delta-seconds ... also 3XX
- tcn choice  # transparent content negotiation, eh?
-
- x-dw-request-base-id  # ???
-
- server: ECS == Edgecast CDN
- server: Windows-Azure-Blob == Azure CDN
- server: PWS == CDNetworks
-
-# https://github.com/EnableSecurity/wafw00f -- detects web application firewalls ... passive and active
-
-
-
-'''
