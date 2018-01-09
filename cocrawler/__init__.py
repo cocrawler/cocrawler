@@ -18,7 +18,6 @@ import logging
 import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
-import aiodns
 import psutil
 
 from . import scheduler
