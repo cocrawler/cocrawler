@@ -175,7 +175,7 @@ def split_head_body(html):
 
     # hueristic: if there's a <head> tag at all, it's early in the document
     top = html[:1000]
-    m = re.search(r'<head>', top, re.I)
+    m = re.search(r'<head[ >]', top, re.I)
     if not m:
         return '', html
 
