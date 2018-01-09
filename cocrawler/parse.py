@@ -59,7 +59,7 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     with stats.record_burn('facets', url=url):
         # XXX if we are using find_body_links_re we don't have any body embeds
         # in that case we might want to analyze body links instead?
-        facets = facet.compute_all(html, head, body, headers_list, embeds, head_soup=head_soup)
+        facets = facet.compute_all(html, head, body, headers_list, embeds, head_soup=head_soup, url=url)
 
     return links, embeds, sha1, facets
 
@@ -174,21 +174,24 @@ def split_head_body(html):
     '''
 
     # hueristic: if there's a <head> tag at all, it's early in the document
-    top = html[:1000]
-    m = re.search(r'<head[ >]', top, re.I)
+    m = re.search(r'<head[\s>]', html[:2000], re.I)
     if not m:
+        stats.stats_sum('parser split short fail', 1)
+        # well darn. try the same re as below, but with limited size
+        m = re.search(r'<(?:/head>|body[\s>])', html[:50000], re.I)
+        if not m:
+            return '', html
+        else:
+            stats.stats_sum('parser split short fail save', 1)
+            return html[:m.start()], html[m.end():]
+
+    # having seen <head>, we're willing to parse for a long time
+    m = re.search(r'<(?:/head>|body[\s>])', html[:1000000], re.I)
+    if not m:
+        stats.stats_sum('parser split long fail', 1)
         return '', html
 
-    # hueristic: the head is not overly-large
-    small = html
-    if len(html) > 100000:
-        small = small[:100000]
-
-    m = re.search(r'<(?:/head>|body[\s>])', small, re.I)
-    if not m:
-        return '', html
-
-    return html[:m.start()], html[m.end():]
+    return html[:m.start()], html[m.end():]  # matched text is not included in either
 
 
 '''
@@ -199,6 +202,7 @@ if the <head> of a webpage is abnormally large
 
 
 def regex_out_comments(html):
+    # I think whitespaace is allowed: < \s* !-- .* -- \s* > XXX
     return re.sub('<!--.*?-->', '', html, flags=re.S)
 
 
@@ -210,4 +214,4 @@ def regex_out_some_scripts(html):
 
 
 def regex_out_all_scripts(html):
-    return re.sub('<script[ >].*?</script>', '', html, flags=re.S)
+    return re.sub('<script[\s>].*?</script>', '', html, flags=re.S)

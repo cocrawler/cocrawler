@@ -53,12 +53,18 @@ save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-se
 
 
 def compute_all(html, head, body, headers_list, embeds, head_soup=None, url=None, condense=False, expensive=False):
-    facets = []
-    facets.extend(find_head_facets(head, url=url))
-    facets.extend(facets_grep(head, url=url, head=True))
-    facets.extend(facets_grep(body, url=url))
-    facets.extend(facets_from_response_headers(headers_list))
-    facets.extend(facets_from_embeds(embeds))
+    expensive = True
+    fhf = find_head_facets(head, url=url)
+    fgh = facets_grep(head, url=url)
+    if expensive:
+        fgb = facets_grep(body, url=url)
+        compare_head_body_grep(fgh, fgb, url)
+    else:
+        fgb = []
+    frh = facets_from_response_headers(headers_list)
+    fe = facets_from_embeds(embeds)
+
+    facets = (*fhf, *fgh, *fgb, *frh, *fe)
 
     return facet_dedup(facets)
 
@@ -163,13 +169,12 @@ def facet_dedup(facets):
     return ret
 
 
-def facets_grep(html, url=None, head=False):
+def facets_grep(html, url=None):
     facets = []
 
-    # if present, it's embedded in a <script> jsonl in the head
-    if head:
-        if 'http://schema.org' in html or 'https://schema.org' in html:
-            facets.append(('schema.org', True))
+    # if present, it's embedded in a <script> jsonl in the head or body
+    if 'http://schema.org' in html or 'https://schema.org' in html:
+        facets.append(('schema.org', True))
 
     # this can be in js or a cgi arg
     if 'pub-' in html:
@@ -178,16 +183,17 @@ def facets_grep(html, url=None, head=False):
             for p in pub_matches:
                 facets.append(('google publisher id', p.strip('\'"-=&')))
         else:
-            LOGGER.info('url %s had false positive for pub- facet', url)
+            LOGGER.info('url %s had false positive for pub- facet', url.url)
 
     # this can be in js or a cgi arg
     if 'UA-' in html:
-        ga_matches = re.findall(r'[\'"\-=]UA-\d{7,9}-\d{1,3}[\'"&]', html)
+        ga_matches = re.findall(r'[\'"\-=]UA-\d{6,9}-\d{1,3}[\'"&]', html)
         if ga_matches:
             for g in ga_matches:
                 facets.append(('google analytics', g.strip('\'"-=&')))
         else:
-            LOGGER.info('url %s had false positive for UA- facet', url)
+            # frequent false positive for meta http-equiv X-UA-Compatible, alas
+            pass
 
     # js or id= cgi arg
     if 'GTM-' in html:
@@ -196,7 +202,7 @@ def facets_grep(html, url=None, head=False):
             for g in gtm_matches:
                 facets.append(('google tag manager', g.strip('\'"-=&')))
         else:
-            LOGGER.info('url %s had false positive for GTM- facet', url)
+            LOGGER.info('url %s had false positive for GTM- facet', url.url)
 
     # script: fbq('init', '\d{16}', and https://connect.facebook.net/en_US/fbevents.js
     # this could be skipped if we analyze embeds first -- standard FB code has both
@@ -206,7 +212,7 @@ def facets_grep(html, url=None, head=False):
             for g in fbid_matches:
                 facets.append(('facebook events', g))
         else:
-            LOGGER.info('url %s had false positive for facebook events facet', url)
+            LOGGER.info('url %s had false positive for facebook events facet', url.url)
 
     return facets
 
@@ -259,3 +265,19 @@ def facets_from_embeds(embeds):
                     facets.append(('facebook events', c[3:]))
 
     return facets
+
+
+def compare_head_body_grep(fh, fb, url):
+    '''
+    We only occasionally run body greps, and there are unique ids
+    that only appear in the body.
+    '''
+    LOGGER.info('comparing head facets %r to body facets %r', fh, fb)
+    head = set(fh)
+    body = set(fb)
+    for kv in body:
+        k, v = kv
+        if kv not in head:
+            LOGGER.info('body grep discovered %s %s in url %s', k, v, url.url)
+        else:
+            LOGGER.info('both head and body grep discovered %s %s in url %s', k, v, url.url)
