@@ -61,7 +61,8 @@ def seed_some_urls(urls, crawler):
 
     for u in urls:
         ridealong = {'url': u, 'priority': priority, 'seed': True,
-                'skip_seen_url': True, 'retries_left': retries_left}
+                     'skip_seen_url': True, 'retries_left': retries_left,
+                     'original_url': u.url}
         if freeseedredirs:
             ridealong['free_redirs'] = freeseedredirs
         crawler.add_url(priority, ridealong)
@@ -116,10 +117,11 @@ def fail(ridealong, crawler):
     stats.stats_sum('seeds failed', 1)
 
     if POLICY == 'www-then-non-www':
-        # OK so url could have changed because of a redirect.
-        # I'm too lazy to fix this the right way, so let's do it wrong.
-        if url.hostname != url.hostname_without_www:
-            url = URL('http://' + url.netloc.replace('www.', '', 1) + '/')
-            LOGGER.info('seed url second chance %s', url.url)
-            stats.stats_sum('seeds second chances', 1)
-            seed_some_urls((url,), crawler)
+        # url could have changed because of a redirect, that's why we saved it
+        if 'original_url' not in ridealong:
+            LOGGER.info('should have seen original_url in this seed, but did not')
+            return
+        url = URL(ridealong['original_url'].replace('www.', '', 1))
+        LOGGER.info('seed url second chance %s', url.url)
+        stats.stats_sum('seeds second chances', 1)
+        seed_some_urls((url,), crawler)
