@@ -272,7 +272,6 @@ def compare_head_body_grep(fh, fb, url):
     We only occasionally run body greps, and there are unique ids
     that only appear in the body.
     '''
-    LOGGER.info('comparing head facets %r to body facets %r', fh, fb)
     head = set(fh)
     body = set(fb)
     for kv in body:
