@@ -94,7 +94,7 @@ class Crawler:
 
         local_addr = config.read('Fetcher', 'LocalAddr')
         if local_addr:
-            self.conn_kwargs['local_addr'] = local_addr
+            self.conn_kwargs['local_addr'] = (local_addr, 0)
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option -- this is ipv4 only
 
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
