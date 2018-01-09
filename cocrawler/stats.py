@@ -30,8 +30,14 @@ def stats_max(name, value):
     maxes[name] = max(maxes.get(name, value), value)
 
 
-def stats_sum(name, value):
+def stats_sum(name, value, url=None):
     sums[name] = sums.get(name, 0) + value
+
+    if url is not None:
+        # remember these urls per-host
+        # sum these sums per-host
+        pass
+
     return sums[name]
 
 
