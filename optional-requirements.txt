@@ -1,3 +1,4 @@
 # used by the mock webserver
 # optional because they have not updated to 3.7-dev yet
+# 1.3a1 is supposed to support 3.7
 gevent==1.2.2
