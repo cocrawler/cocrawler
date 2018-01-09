@@ -23,7 +23,6 @@ import urllib
 import asyncio
 import logging
 import aiohttp
-import aiodns
 
 from . import stats
 from . import config
@@ -101,48 +100,50 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         t0 = time.time()
         last_exception = None
         body_bytes = None
+        blocks = []
+        left = max_page_size
 
         with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
                 with aiohttp.Timeout(pagetimeout):
-                    response = None
                     response = await session.get(mock_url or url.url,
                                                  allow_redirects=allow_redirects,
                                                  max_redirects=max_redirects,
                                                  headers=headers)
                     t_first_byte = '{:.3f}'.format(time.time() - t0)
 
-                    # reddit.com is an example of a CDN-related SSL fail
-                    # XXX when we retry, if local_addr was a list, switch to a different source IP
-                    #   (change out the TCPConnector)
+                    while left > 0:
+                        block = await response.content.read(left)
+                        if not block:
+                            body_bytes = b''.join(blocks)
+                            break
+                        blocks.append(block)
+                        left -= len(block)
+                    else:
+                        body_bytes = b''.join(blocks)
 
-                    body_bytes = await response.content.read(max_page_size)
                     if not response.content.at_eof():
                         response.close()  # this does interrupt the network transfer
-                        is_truncated = 'length'  # XXX test WARc of this resopnse
+                        is_truncated = 'length'  # testme WARC
 
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
-        is_truncated = 'time'  # XXX test WARC of this response
+        is_truncated = 'time'  # testme WARC
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
+        body_bytes = b''.join(blocks)
+        stats.stats_sum('fetch timeout body bytes found', len(body_bytes))
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
-        # XXX deal with partial fetches and WARC them, is_truncated = 'disconnect'
+        is_truncated = 'disconnect'  # testme WARC
         stats.stats_sum('fetch ClientError', 1)
-        try:
-            if body_bytes is not None:
-                stats.stats_sum('fetcher received partial response before disconnect raise XXX', 1)
-            body_bytes += await response.content.read(max_page_size)
-            stats.stats_sum('fetcher received more partial response after disconnect raise XXX', 1)
-        except Exception:
-            pass
-        if body_bytes is not None:
-            LOGGER.info('I received %d bytes in the body', len(body_bytes))
         last_exception = repr(e)
+        body_bytes = b''.join(blocks)
+        stats.stats_sum('fetch ClientError body bytes found', len(body_bytes))
     except ssl.CertificateError as e:
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
+        # so this doesn't go off much
         stats.stats_sum('fetch SSL error', 1)
         last_exception = repr(e)
     #except (ValueError, AttributeError, RuntimeError) as e:
