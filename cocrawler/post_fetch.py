@@ -164,7 +164,7 @@ async def post_200(f, url, priority, json_log, crawler):
                     url=url)
             except ValueError as e:  # if it pukes, we get back 0 values
                 stats.stats_sum('parser raised', 1)
-                LOGGER.info('parser raised', repr(e))
+                LOGGER.info('parser raised %r', e)
                 # XXX jsonlog
                 return
         else:
