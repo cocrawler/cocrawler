@@ -47,6 +47,7 @@ def test_link_rel():
     <link rel="amphtml" href="http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092" />
     <link rel="alternate" type="application/rss+xml" title="App Links &raquo; FAQs Comments Feed" href="http://applinks.org/faqs/feed/" />
     <link rel="canonical" href="https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort">
+    <link rel="something" href="https://microformats.org/foo-bar" />
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('link-rel-amphtml',
@@ -55,7 +56,8 @@ def test_link_rel():
                       ('link-rel-alternate', ('http://applinks.org/faqs/feed/', 'application/rss+xml')),
                       ('link-rel-canonical',
                        ('https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort',
-                        'notype'))]
+                        'notype')),
+                      ('microformats.org', True)]
 
 
 def test_facebook():
@@ -184,17 +186,25 @@ def test_facets_grep():
     _gaq.push(['_setAccount', 'UA-1234567-6']);
 
     # adense embeds the external script name in inline js
-    google_ad_client = "pub-5692821333050410";
-    google_ad_client = "ca-pub-5692821333050411";
-    google_ad_client = "foo.com/?client=pub-5692821333050413&"
+    google_ad_client = "pub-5692821433050410";
+    google_ad_client = "ca-pub-5692821433050411";
+    google_ad_client = "foo.com/?client=pub-5692821433050413&"
+
+    window, document, 'script', 'dataLayer', 'GTM-XXXZQ5');</script>
+
+    parentNode.insertBefore(t,s)}(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1234567890123456');
+
     '''
     facets = facet.facets_grep(t)
-    assert facets == [('google publisher id', 'pub-5692821333050410'),
-                      ('google publisher id', 'pub-5692821333050411'),
-                      ('google publisher id', 'pub-5692821333050413'),
+    assert facets == [('google publisher id', 'pub-5692821433050410'),
+                      ('google publisher id', 'pub-5692821433050411'),
+                      ('google publisher id', 'pub-5692821433050413'),
                       ('google analytics', 'UA-63787687-1'),
                       ('google analytics', 'UA-8162380-2'),
-                      ('google analytics', 'UA-1234567-6')]
+                      ('google analytics', 'UA-1234567-6'),
+                      ('google tag manager', 'GTM-XXXZQ5'),
+                      ('facebook events', '1234567890123456')]
 
 
 def test_misc():
@@ -222,9 +232,14 @@ def test_response_header_facets():
 
 
 def test_facets_from_embeds():
-    embeds = set((URL('http://example.com'), URL('http://cdn.ampproject.org')))
+    embeds = (URL('http://example.com'),
+              URL('http://cdn.ampproject.org'),
+              URL('googletagmanager.com?asdf&id=GTM-ZZZXXX&fdsa'),
+              URL('https://www.facebook.com/tr?foo&id=1234567890123456'))
     facets = facet.facets_from_embeds(embeds)
-    assert facets == [('google amp', True)]
+    assert facets == [('google amp', True),
+                      ('google tag manager', 'GTM-ZZZXXX'),
+                      ('facebook events', '1234567890123456')]
 
 
 # ----------------------------------------------------------------------

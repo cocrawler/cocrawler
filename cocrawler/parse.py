@@ -26,6 +26,9 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     with stats.record_burn('split_head_body', url=url):
         head, body = split_head_body(html)
 
+    '''
+    beautiful soup + lxml2 parses only about 4-16 MB/s
+    '''
     stats.stats_sum('head soup bytes', len(head))
     with stats.record_burn('head soup', url=url):
         try:
@@ -54,9 +57,9 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
         sha1 = 'sha1:' + hashlib.sha1(html_bytes).hexdigest()
 
     with stats.record_burn('facets', url=url):
-        # find_html_links doesn't actually produce embeds,
-        # so we're going to parse links for now XXX config
-        facets = facet.compute_all(html, head, headers_list, links)
+        # XXX if we are using find_body_links_re we don't have any body embeds
+        # in that case we might want to analyze body links instead?
+        facets = facet.compute_all(html, head, body, headers_list, embeds, head_soup=head_soup)
 
     return links, embeds, sha1, facets
 

@@ -1,6 +1,13 @@
 '''
 Code related to generating webpage facets.
 
+Two storage sizes:
+   big -- all headers
+   small -- summary only
+Two speeds:
+   fast - avoid expensive greps
+   slow - grep everything
+
 For normal crawling, we only parse facets we think might be useful
 for crawling and ranking: STS, twitter cards, facebook opengraph.
 
@@ -13,10 +20,18 @@ figure out what technologies are used in a website.
 '''
 
 import re
+import logging
 
 from bs4 import BeautifulSoup
 
 from . import stats
+
+LOGGER = logging.getLogger(__name__)
+
+save_x_headers = set(('x-powered-by', 'cf-ray', 'x-generator'))
+
+special_image = set(('og:image', 'twitter:image'))
+
 
 meta_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
                          'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',
@@ -37,10 +52,11 @@ link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
 
-def compute_all(html, head, headers_list, embeds, url=None):
+def compute_all(html, head, body, headers_list, embeds, head_soup=None, url=None, condense=False, expensive=False):
     facets = []
     facets.extend(find_head_facets(head, url=url))
-    facets.extend(facets_grep(head))
+    facets.extend(facets_grep(head, url=url, head=True))
+    facets.extend(facets_grep(body, url=url))
     facets.extend(facets_from_response_headers(headers_list))
     facets.extend(facets_from_embeds(embeds))
 
@@ -48,12 +64,6 @@ def compute_all(html, head, headers_list, embeds, url=None):
 
 
 def find_head_facets(head, head_soup=None, url=None):
-    '''
-    We use html parsing, because the head is smallish and friends don't let
-    friends parse html with regexes.
-
-    beautiful soup + lxml2 parses only about 4-16 MB/s
-    '''
     facets = []
 
     if head_soup is None:
@@ -120,6 +130,11 @@ def find_head_facets(head, head_soup=None, url=None):
             else:
                 # XXX remember the ones we didn't save
                 pass
+            href = l.get('href')
+            if href is not None:
+                if (('http://microformats.org/' in href or
+                     'https://microformats.org/')) in href:
+                    facets.append(('microformats.org', True))
 
     count = len(soup.find_all(integrity=True))
     if count:
@@ -148,30 +163,50 @@ def facet_dedup(facets):
     return ret
 
 
-def facets_grep(head):
+def facets_grep(html, url=None, head=False):
     facets = []
-    # look for this one as a grep, because if present, it's embedded in a <script> jsonl
-    if 'http://schema.org' in head or 'https://schema.org' in head:
-        facets.append(('schema.org', True))
+
+    # if present, it's embedded in a <script> jsonl in the head
+    if head:
+        if 'http://schema.org' in html or 'https://schema.org' in html:
+            facets.append(('schema.org', True))
 
     # this can be in js or a cgi arg
-    pub_matches = re.findall(r'[\'"\-=]pub-\d{16}[\'"&]', head)
-    if pub_matches:
-        for p in pub_matches:
-            facets.append(('google publisher id', p.strip('\'"-=&')))
+    if 'pub-' in html:
+        pub_matches = re.findall(r'[\'"\-=]pub-\d{16}[\'"&]', html)
+        if pub_matches:
+            for p in pub_matches:
+                facets.append(('google publisher id', p.strip('\'"-=&')))
+        else:
+            LOGGER.info('url %s had false positive for pub- facet', url)
 
     # this can be in js or a cgi arg
-    ga_matches = re.findall(r'[\'"\-=]UA-\d{7,9}-\d{1,3}[\'"&]', head)
-    if ga_matches:
-        for g in ga_matches:
-            facets.append(('google analytics', g.strip('\'"-=&')))
+    if 'UA-' in html:
+        ga_matches = re.findall(r'[\'"\-=]UA-\d{7,9}-\d{1,3}[\'"&]', html)
+        if ga_matches:
+            for g in ga_matches:
+                facets.append(('google analytics', g.strip('\'"-=&')))
+        else:
+            LOGGER.info('url %s had false positive for UA- facet', url)
 
-    # GTM-[A-Z0-9]{4,6} -- script text or id= cgi arg
+    # js or id= cgi arg
+    if 'GTM-' in html:
+        gtm_matches = re.findall(r'[\'"\-=]GTM-[A-Z0-9]{4,6}[\'"&]', html)
+        if gtm_matches:
+            for g in gtm_matches:
+                facets.append(('google tag manager', g.strip('\'"-=&')))
+        else:
+            LOGGER.info('url %s had false positive for GTM- facet', url)
 
-    # noscript: img src=https://www.facebook.com/tr?id=\d{16}&
     # script: fbq('init', '\d{16}', and https://connect.facebook.net/en_US/fbevents.js
-
-    # in a script: //js.hs-analytics.net/analytics/ -- id is '/\d{6}\\.js'
+    # this could be skipped if we analyze embeds first -- standard FB code has both
+    if 'fbq(' in html:
+        fbid_matches = re.findall(r'fbq\( \s? [\'"] init [\'"] , \s? [\'"] (\d{16}) [\'"]', html, re.X)
+        if fbid_matches:
+            for g in fbid_matches:
+                facets.append(('facebook events', g))
+        else:
+            LOGGER.info('url %s had false positive for facebook events facet', url)
 
     return facets
 
@@ -207,18 +242,20 @@ def facets_from_embeds(embeds):
         if 'google.com/adsense/domains' in u:
             facets.append(('google adsense for domains', True))
         if 'googletagmanager.com' in u:
-            facets.append(('google tag manager', True))
             cgi = url.urlsplit.query
+            print('query', cgi)
             cgi_list = cgi.split('&')
             for c in cgi_list:
+                print('c', c)
                 if c.startswith('id=GTM-'):
-                    facets.append(('google tag manager id', c[3:]))
-        '''
-        <script src="//cdn.optimizely.com/js/860020523.js"></script>
-        <link rel="shortcut icon" href="//d5y6wgst0yi78.cloudfront.net/images/favicon.ico" />
-        <link rel="stylesheet" href="//s3-us-west-1.amazonaws.com/nwusa-cloudfront/font-awesome/css/font-awesome.min.css" />
-        <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
-        major cdns: Akami, Amazon CloudFront, MaxCDN, EdgeCast, Amazon S3, CloudFlare, Fastly, Highwinds, KeyCDN, Limelight Networks
-        '''
+                    facets.append(('google tag manager', c[3:]))
+        if 'https://www.facebook.com/tr?' in u:  # img src
+            cgi = url.urlsplit.query
+            print('query', cgi)
+            cgi_list = cgi.split('&')
+            for c in cgi_list:
+                print('c', c)
+                if c.startswith('id='):
+                    facets.append(('facebook events', c[3:]))
 
     return facets
