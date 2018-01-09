@@ -180,10 +180,12 @@ def config(configfile, configlist, confighome=True):
                 temp = combined
                 for x in xpath:
                     temp = combined[x]
-                temp[key] = rhs
             except KeyError:
                 LOGGER.error('invalid config of %s', c)
                 continue
+            else:
+                # What type should this be? Maybe not a string.
+                temp[key] = type_fixup(rhs)
 
     global __global_config
     __global_config = combined
@@ -226,3 +228,9 @@ def set_config(c):
     '''
     global __global_config
     __global_config = c
+
+
+def type_fixup(rhs):
+    if rhs.startswith('[') and rhs.endswith(']'):
+        return rhs[1:len(rhs)-1].split(',')
+    return rhs

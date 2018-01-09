@@ -13,3 +13,12 @@ def test_merge_dicts():
     c = config.merge_dicts(a, b)
 
     assert c == {'a': {'a': 1}, 'b': {'b': 2, 'c': 3}}
+
+
+def test_type_fixup():
+    tests = (('a', 'a'),
+             ('a,b,c', 'a,b,c'),
+             ('[a,b,c]', ['a', 'b', 'c']))
+
+    for arg, result in tests:
+        assert config.type_fixup(arg) == result
