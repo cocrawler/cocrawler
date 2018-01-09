@@ -146,11 +146,11 @@ def test_split_head_body():
     assert head == ''
     assert len(body) == 100007
     head, body = parse.split_head_body('x' + '</HeAd>' + 'x'*100000)
-    assert head == ''
-    assert len(body) == 100008
+    assert head == 'x'
+    assert len(body) == 100000
     head, body = parse.split_head_body('x' + '<BoDy>' + 'x'*100000)
-    assert head == ''
-    assert len(body) == 100007
+    assert head == 'x'
+    assert len(body) == 100000
     head, body = parse.split_head_body('x' + '<heAd><boDy>' + 'x'*100000)
     assert head == 'x<heAd>'
     assert len(body) == 100000
