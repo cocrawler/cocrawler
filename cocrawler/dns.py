@@ -34,7 +34,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
     A caching dns wrapper that lets us subvert aiohttp's built-in dns policies
 
     Use a LRU cache which respects TTL and is bounded in size.
-    Refetch dns (once!) when the TTL is 9/10ths expired.
+    Refetch dns (once!) when the TTL is 3/4ths expired.
 
     TODO: Warc the answer
     '''
@@ -50,15 +50,16 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         t = time.time()
         if host in self._cache:
             stats.stats_sum(stats_prefix+'DNS cache hit', 1)
-            (addrs, expires, refresh) = self._cache[host]
+            addrs, expires, refresh, geoip = self._cache[host]
             if expires < t:
                 stats.stats_sum(stats_prefix+'DNS cache hit expired entry', 1)
-                # TODO: if I expire one, examine the next hundred entries so I don't accumulate stale entries
                 del self._cache[host]
+                expire_some(t, self._cache, 100, stats_prefix=stats_prefix)
             elif refresh < t and host not in self._refresh_in_progress:
                 stats.stats_sum(stats_prefix+'DNS cache hit entry refresh', 1)
                 # TODO: spawn a thread to await this while I continue on
                 self._refresh_in_progress.add(host)
+                stats.stats_sum(stats_prefix+'DNS refresh lookup', 1)
                 self._cache[host] = await self.actual_async_lookup(host)
                 self._refresh_in_progress.remove(host)
 
@@ -93,13 +94,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
             except ValueError:
                 continue
             if not self._crawllocalhost and ip.is_loopback:
-                stats.stats_sum('DNS lookup removed loopback', 1)
+                stats.stats_sum('DNS filter removed loopback', 1)
                 continue
             if not self._crawlprivate and ip.is_private:
-                stats.stats_sum('DNS lookup removed private', 1)
+                stats.stats_sum('DNS filter removed private', 1)
                 continue
             if ip.is_multicast:
-                stats.stats_sum('DNS lookup removed multicast', 1)
+                stats.stats_sum('DNS filter removed multicast', 1)
                 continue
             ret.append(a)
             if 'ttl' in a:
@@ -115,8 +116,21 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         t = time.time()
         expires = t + ttl
         refresh = t + (ttl * 0.75)
+        geoip = {}
 
-        return ret, expires, refresh
+        return ret, expires, refresh, geoip
+
+
+def expire_some(t, lru, some, stats_prefix=''):
+    # examine a few of the oldest entries to see if they're expired
+    # this keeps deadwood from building up in the cache
+    for i in range(some):
+        host, entry = lru.popitem()
+        if entry[1] > t:
+            LOGGER.debug('expire_some expired %d entries', i)
+            stats.stats_sum(stats_prefix+'DNS cache expire_some', i)
+            lru[host] = entry
+            break
 
 
 def get_resolver(**kwargs):

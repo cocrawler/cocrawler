@@ -112,13 +112,8 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
 
 
 async def post_200(f, url, priority, json_log, crawler):
-    # XXX add code to deal with f.is_truncated
-    # add WARC-Truncated: length -- to explain why
-    # make sure WARC Content-Length is the truncated size
-    # presumably the content-length http header is going to be the whole thing
-    # XXX testme
 
-    if crawler.warcwriter is not None:
+    if crawler.warcwriter is not None:  # needs to use the same algo as post_dns for choosing what to warc
         # XXX insert the digest we already computed, instead of computing it again?
         crawler.warcwriter.write_request_response_pair(url.url, f.req_headers,
                                                        f.response.raw_headers, f.is_truncated, f.body_bytes)
@@ -204,3 +199,10 @@ async def post_200(f, url, priority, json_log, crawler):
 
         # XXX plugin for links and new links - post to Kafka, etc
         # neah stick that in add_url!
+
+
+async def post_dns(dns, url, crawler):
+    if crawler.warcwriter is not None:  # needs to use the same algo as post_200 for choosing what to warc
+        crawler.warcwriter.write_dns(url.url, dns)  # XXX
+
+    # generate DNS-related facets -- ip, geoip

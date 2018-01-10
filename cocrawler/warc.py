@@ -154,26 +154,20 @@ class CCWARCWriter:
             self.f.close()
             self.writer = None
 
-    def write_dns(self, host, kind, result):
-        #  response record, content-type 'text/dns', contents as defined by rfcs 2540 and 1035
-        #  uri = dns:www.example.com
-        # example payload:
-        #  20130522085319
-        #  fue-l.onb1.ac.at.3600	IN	A	172.16.14.151
-        # dns responses can surprise you -- pycares doesn't do this right now but might in the future
-        # ;; ANSWER SECTION:
-        # blog.greglindahl.com.	299	IN	CNAME	ghs.google.com.
-        # ghs.google.com.	86399	IN	CNAME	ghs.l.google.com.
-        # ghs.l.google.com.	299	IN	A	172.217.5.115
-
+    def write_dns(self, host, dns):
         # write it out even if empty
+        # TODO: we filter the addresses early, should we warc the unfiltered dns repsonse?
+
+        # the response object doesn't contain the query type 'A' or 'AAAA'
+        # but it has family=2 AF_INET (ipv4) and flags=4 AI_NUMERICHOST -- that's 'A'
+        kind = 'A'
 
         if self.writer is None:
             self.open()
 
         payload = timestamp_now() + '\r\n'
 
-        for r in result:
+        for r in dns:
             try:
                 payload += host + '.\t' + str(r.ttl) + '\tIN\t' + kind + '\t' + r.host + '\r\n'
             except Exception as e:

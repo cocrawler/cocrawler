@@ -53,7 +53,7 @@ fake_dns_result = [FakeDNSResponse('172.217.6.78', 10),
                    FakeDNSResponse('172.217.6.78', 10),
                    FakeDNSResponse('172.217.6.78', 10)]
 
-main.write_dns('google.com', 'A', fake_dns_result)
+main.write_dns('google.com', fake_dns_result)
 
 fake_url = 'https://www.google.com/'
 fake_req_headers = [('Host', 'www.google.com')]
