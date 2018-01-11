@@ -72,6 +72,7 @@ def main():
         if LOGGER.getEffectiveLevel() > logging.WARNING:
             LOGGER.setLevel(logging.WARNING)
             LOGGER.warning('Lowered logging level to WARNING because PYTHONASYNCIODEBUG env var is set')
+        LOGGER.warning('Configured logging system to show ResourceWarning because PYTHONASYNCIODEBUG env var is set')
 
     kwargs = {}
     if args.load:

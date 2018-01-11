@@ -68,6 +68,8 @@ class Robots:
     def __del__(self):
         if self.magic is not None:
             self.magic.close()
+        if self.robotslogfd:
+            self.robotslogfd.close()
 
     async def check(self, url, headers=None, proxy=None, mock_robots=None):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc

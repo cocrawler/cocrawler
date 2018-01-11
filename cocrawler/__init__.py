@@ -232,6 +232,10 @@ class Crawler:
         self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
+        if self.rejectedaddurlfd:
+            self.rejectedaddurlfd.close()
+        if self.facetlogfd:
+            self.facetlogfd.close()
         if self.scheduler.qsize():
             LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
 
