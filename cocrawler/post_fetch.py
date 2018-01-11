@@ -157,7 +157,8 @@ async def post_200(f, url, priority, json_log, host_geoip, crawler):
             stats.stats_sum('parse in burner thread', 1)
             try:
                 links, embeds, sha1, facets = await crawler.burner.burn(
-                    partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
+                    partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list,
+                            burn_prefix='burner ', url=url),
                     url=url)
             except ValueError as e:  # if it pukes, we get back no values
                 stats.stats_sum('parser raised', 1)
@@ -167,9 +168,9 @@ async def post_200(f, url, priority, json_log, host_geoip, crawler):
         else:
             stats.stats_sum('parse in main thread', 1)
             try:
-                with stats.coroutine_state('await main thread parser'):
-                    links, embeds, sha1, facets = parse.do_burner_work_html(
-                        body, f.body_bytes, resp_headers_list, url=url)
+                # no coroutine state because this is a burn, not an await
+                links, embeds, sha1, facets = parse.do_burner_work_html(
+                    body, f.body_bytes, resp_headers_list, burn_prefix='main ', url=url)
             except ValueError:  # if it pukes, ..
                 stats.stats_sum('parser raised', 1)
                 # XXX jsonlog

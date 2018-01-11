@@ -15,7 +15,7 @@ from . import facet
 LOGGER = logging.getLogger(__name__)
 
 
-def do_burner_work_html(html, html_bytes, headers_list, url=None):
+def do_burner_work_html(html, html_bytes, headers_list, burn_prefix='', url=None):
     stats.stats_sum('parser html bytes', len(html_bytes))
 
     # This embodies a minimal parsing policy; it needs to be made pluggable/configurable
@@ -23,14 +23,14 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     #  soup the head so we can accurately get base and facets
     #  regex the body for links and embeds, for speed
 
-    with stats.record_burn('split_head_body', url=url):
-        head, body = split_head_body(html)
+    with stats.record_burn(burn_prefix+'split_head_body', url=url):
+        head, body = split_head_body(html, url=url)
 
     '''
     beautiful soup + lxml2 parses only about 4-16 MB/s
     '''
     stats.stats_sum('head soup bytes', len(head))
-    with stats.record_burn('head soup', url=url):
+    with stats.record_burn(burn_prefix+'head soup', url=url):
         try:
             head_soup = BeautifulSoup(head, 'lxml')
         except Exception as e:
@@ -41,25 +41,25 @@ def do_burner_work_html(html, html_bytes, headers_list, url=None):
     base = head_soup.find('base') or {}
     base = base.get('href')
 
-    with stats.record_burn('find_head_links_soup', url=url):
+    with stats.record_burn(burn_prefix+'find_head_links_soup', url=url):
         links, embeds = find_head_links_soup(head_soup)
 
-    with stats.record_burn('find_body_links_re', url=url):
+    with stats.record_burn(burn_prefix+'find_body_links_re', url=url):
         lbody, ebody = find_body_links_re(body)
         links.update(lbody)
         embeds.update(ebody)
 
-    with stats.record_burn('url_clean_join', url=url):
+    with stats.record_burn(burn_prefix+'url_clean_join', url=url):
         links = url_clean_join(links, url=base or url)
         embeds = url_clean_join(embeds, url=base or url)
 
-    with stats.record_burn('sha1 html', url=url):
+    with stats.record_burn(burn_prefix+'sha1 html', url=url):
         sha1 = 'sha1:' + hashlib.sha1(html_bytes).hexdigest()
 
-    with stats.record_burn('facets', url=url):
+    with stats.record_burn(burn_prefix+'facets', url=url):
         # XXX if we are using find_body_links_re we don't have any body embeds
         # in that case we might want to analyze body links instead?
-        facets = facet.compute_all(html, head, body, headers_list, embeds, head_soup=head_soup, url=url)
+        facets = facet.compute_all(html, head, body, headers_list, links, embeds, head_soup=head_soup, url=url)
 
     return links, embeds, sha1, facets
 
@@ -161,7 +161,7 @@ def report():
         LOGGER.info('  Burner thread cleaned %.1f kilo-urls/cpu-second', c / t / 1000)
 
 
-def split_head_body(html):
+def split_head_body(html, url=None):
     '''
     Efficiently split the head from the body, so we can use different
     parsers on each.  There's no point doing this split if it's
