@@ -265,6 +265,8 @@ class Crawler:
         stats.stats_set('priority', priority+min(rand, 0.99))
 
         ridealong = self.scheduler.get_ridealong(surt)
+        if 'url' not in ridealong:
+            raise ValueError('missing ridealong for surt '+surt)
         url = ridealong['url']
 
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
