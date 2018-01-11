@@ -139,7 +139,7 @@ def find_head_facets(head, head_soup=None, url=None):
             href = l.get('href')
             if href is not None:
                 if (('http://microformats.org/' in href or
-                     'https://microformats.org/')) in href:
+                     'https://microformats.org/' in href)):
                     facets.append(('microformats.org', True))
 
     count = len(soup.find_all(integrity=True))
