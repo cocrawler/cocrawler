@@ -46,7 +46,6 @@ fast_stats = [
     # XXX emit a json Graphite config for the coroutine state graph
     {'name': 'awaiting work'},
     {'name': 'await burner thread parser'},
-    {'name': 'await main thread parser'},
     {'name': 'fetcher fetching'},
     {'name': 'robots fetcher fetching'},
     {'name': 'robots collision sleep'},
