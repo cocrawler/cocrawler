@@ -101,7 +101,7 @@ def find_head_facets(head, head_soup=None, url=None):
         #if n in meta_name_content:
         #    facets.append((n, content)
         facets.append(('meta-name-'+n, content))  # XXX get all of these for now
-        if n == 'generator':
+        if n == 'generator' and content is not None:
             cl = content.lower()
             for s in meta_name_generator_special:
                 if s in cl:
