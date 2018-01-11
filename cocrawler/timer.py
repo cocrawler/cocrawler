@@ -36,7 +36,7 @@ fast_stats = [
     # derived stats
     # XXX these need to be udpated, some names have changed?
     # XXX emit a json Graphite config for the qps graph
-    {'name': 'DNS prefetches', 'kind': 'delta', 'qps_total': True},  # qps_total True belongs in qps graph
+    {'name': 'DNS external queries', 'kind': 'delta', 'qps_total': True},  # qps_total True belongs in qps graph
     {'name': 'fetch URLs', 'kind': 'delta', 'qps_total': True},
     {'name': 'robots fetched', 'kind': 'delta', 'qps_total': True},
     {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},  # has its own bandwidth graph
@@ -50,7 +50,7 @@ fast_stats = [
     {'name': 'fetcher fetching'},
     {'name': 'robots fetcher fetching'},
     {'name': 'robots collision sleep'},
-    {'name': 'fetcher DNS lookup'},
+    {'name': 'DNS prefetch'},
 ]
 
 slow_prefix = 'cocrawler.slow'

@@ -21,6 +21,7 @@ async def prefetch(url, resolver):
     LOGGER.info('prefetch %s', url.hostname)
     with stats.coroutine_state('DNS prefetch'):
         with stats.record_latency('DNS prefetch', url=url.hostname):
+            stats.stats_sum('DNS external queries', 1)
             try:
                 await resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
             except OSError:  # mapped to aiodns.error.DNSError if it was a .get
