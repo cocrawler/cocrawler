@@ -110,6 +110,9 @@ Testing:
 #    fetch URLs: 1000
 #    max urls found on a page: 3
 
+System:
+  RLIMIT_AS_gigabytes: 0  # 0=do not set
+
 '''
 
 

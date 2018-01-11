@@ -18,6 +18,8 @@ import cocrawler.stats as stats
 import cocrawler.timer as timer
 import cocrawler.webserver as webserver
 
+LOGGER = logging.getLogger(__name__)
+
 faulthandler.enable()
 
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
@@ -32,10 +34,18 @@ ARGS.add_argument('--load', action='store')
 
 def limit_resources():
     _, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))  # XXX compare to max threads etc.
+    # XXX warn if too few compared to max_wokers?
+    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 
     _, hard = resource.getrlimit(resource.RLIMIT_AS)  # RLIMIT_VMEM does not exist?!
-    resource.setrlimit(resource.RLIMIT_AS, (16 * 1024 * 1024 * 1024, hard))  # XXX config
+    rlimit_as = int(config.read('System', 'RLIMIT_AS_gigabytes'))
+    rlimit_as *= 1024 * 1024 * 1024
+    if rlimit_as == 0:
+        return
+    if rlimit_as > hard:
+        LOGGER.error('RLIMIT_AS limited to %d bytes by system limit', hard)
+        rlimit_as = hard
+    resource.setrlimit(resource.RLIMIT_AS, (rlimit_as, hard))
 
 
 def main():
