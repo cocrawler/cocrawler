@@ -86,6 +86,11 @@ def lookup(ip):
                 if ipobj in network:
                     ret['ip-special'] = name
 
+    for k, v in list(ret.items()):
+        if v is None:
+            LOGGER.info('surprised that ip %s had a %s of None', ip, k)
+            del ret[k]
+
     return ret
 
 
