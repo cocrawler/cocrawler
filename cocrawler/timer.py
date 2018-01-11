@@ -173,7 +173,7 @@ class CarbonTimer:
                 self.elapsed_timebin.point(t, elapsed)
                 carbon_tuples += self.elapsed_timebin.gettuples(self.prefix+'.elapsed')
 
-                ru = resource.getrusage(resource.RUSAGE_SELF)
+                ru = resource.getrusage(resource.RUSAGE_BOTH)
                 vmem = (ru[2])/1000000.
                 # TODO: swapouts in 8, blocks out in 10
                 self.vmem_timebin.point(t, vmem)
