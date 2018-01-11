@@ -123,6 +123,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                         body_bytes = b''.join(blocks)
 
                     if not response.content.at_eof():
+                        stats.stats_sum('fetch truncated length', 1)
                         response.close()  # this does interrupt the network transfer
                         is_truncated = 'length'  # testme WARC
 
@@ -132,7 +133,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
         body_bytes = b''.join(blocks)
-        stats.stats_sum('fetch timeout body bytes found', len(body_bytes))
+        stats.stats_sum('fetch timeout body bytes found', 1)
+        stats.stats_sum('fetch timeout body bytes found bytes', len(body_bytes))
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
@@ -141,7 +143,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         stats.stats_sum('fetch ClientError', 1)
         last_exception = repr(e)
         body_bytes = b''.join(blocks)
-        stats.stats_sum('fetch ClientError body bytes found', len(body_bytes))
+        stats.stats_sum('fetch ClientError body bytes found', 1)
+        stats.stats_sum('fetch ClientError body bytes found bytes', len(body_bytes))
     except ssl.CertificateError as e:
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
         # so this doesn't go off much
@@ -155,6 +158,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # AttributeError: ?
         # RuntimeError: ?
     except ValueError as e:
+        # no A records found -- raised by my dns code
         stats.stats_sum('fetch other error - ValueError', 1)
         last_exception = repr(e)
     except AttributeError as e:
