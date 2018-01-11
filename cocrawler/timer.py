@@ -144,6 +144,9 @@ class CarbonTimer:
             await asyncio.sleep(deadline - time.time())
             t = time.time()
             elapsed = t - self.last_t
+            if elapsed > self.dt*2:
+                # this indicates that there's too many workers and too much cpu burn going on
+                LOGGER.warn('tried to sleep for %f, but actually slept for %f', self.dt, elapsed)
 
             new = {}
             for s in self.stats_list:
