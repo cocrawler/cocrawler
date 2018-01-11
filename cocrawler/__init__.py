@@ -35,6 +35,7 @@ from . import post_fetch
 from . import config
 from . import warc
 from . import dns
+from . import geoip
 
 LOGGER = logging.getLogger(__name__)
 __title__ = 'cocrawler'
@@ -84,6 +85,8 @@ class Crawler:
         self.robotname, self.ua = useragent.useragent(self.version)
 
         self.resolver = dns.get_resolver()
+
+        geoip.init()
 
         proxy = config.read('Fetcher', 'ProxyAll')
         if proxy:
@@ -266,11 +269,17 @@ class Crawler:
 
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
 
+        host_geoip = {}
         if not mock_url:
-            if not await dns.prefetch(url, self.resolver):
+            entry = await dns.prefetch(url, self.resolver)
+            if not entry:
                 # fail out, we don't want to do DNS in the robots or page fetch
                 self._retry_if_able(work, ridealong)
                 return
+            addrs, _, _, host_geoip = entry
+            if not host_geoip:
+                with stats.record_burn('geoip lookup'):
+                    geoip.lookup_all(addrs, host_geoip)
 
         r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
@@ -301,7 +310,7 @@ class Crawler:
             post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self)
 
         if f.response.status == 200:
-            await post_fetch.post_200(f, url, priority, json_log, self)
+            await post_fetch.post_200(f, url, priority, json_log, host_geoip, self)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
         stats.stats_set('queue size', self.scheduler.qsize())

@@ -18,6 +18,7 @@ from . import parse
 from . import stats
 from . import config
 from . import seeds
+from . import geoip
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     # after we return, json_log will get logged
 
 
-async def post_200(f, url, priority, json_log, crawler):
+async def post_200(f, url, priority, json_log, host_geoip, crawler):
 
     if crawler.warcwriter is not None:  # needs to use the same algo as post_dns for choosing what to warc
         # XXX insert the digest we already computed, instead of computing it again?
@@ -144,9 +145,10 @@ async def post_200(f, url, priority, json_log, crawler):
             # XXX if encoding was in header, maybe I should use it here?
             body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
-        # headers is a funky object that's allergic to getting pickled.
+        # headers is a case-blind dict that's allergic to getting pickled.
         # let's make something more boring
-        # XXX get rid of this for the one in warc?
+        # XXX check that this is still a problem?
+        # XXX use the one from warcio?
         resp_headers_list = []
         for k, v in resp_headers.items():
             resp_headers_list.append((k.lower(), v))
@@ -157,7 +159,7 @@ async def post_200(f, url, priority, json_log, crawler):
                 links, embeds, sha1, facets = await crawler.burner.burn(
                     partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list, url=url),
                     url=url)
-            except ValueError as e:  # if it pukes, we get back 0 values
+            except ValueError as e:  # if it pukes, we get back no values
                 stats.stats_sum('parser raised', 1)
                 LOGGER.info('parser raised %r', e)
                 # XXX jsonlog
@@ -173,6 +175,8 @@ async def post_200(f, url, priority, json_log, crawler):
                 # XXX jsonlog
                 return
         json_log['checksum'] = sha1
+
+        geoip.add_facets(facets, host_geoip)
 
         if crawler.facetlogfd:
             print(json.dumps({'url': url.url, 'facets': facets}, sort_keys=True), file=crawler.facetlogfd)

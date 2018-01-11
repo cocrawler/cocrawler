@@ -67,6 +67,9 @@ Fetcher:
   CrawlPrivate: False  # crawl ips that resolve to private networks (e.g. 10.*/8)
   DNSCacheMaxSize: 1000000
 
+GeoIP:
+  DataDir: None
+
 #CarbonStats:
 #  Server: localhost
 #  Port: 2004

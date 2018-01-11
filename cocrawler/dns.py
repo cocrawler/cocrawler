@@ -25,8 +25,8 @@ async def prefetch(url, resolver):
                 await resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
             except OSError:  # mapped to aiodns.error.DNSError if it was a .get
                 stats.stats_sum('prefetch DNS error', 1)
-                return False
-    return True
+                return None
+    return resolver.get_cache_entry(url.hostname)
 
 
 class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
@@ -50,7 +50,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         t = time.time()
         if host in self._cache:
             stats.stats_sum(stats_prefix+'DNS cache hit', 1)
-            addrs, expires, refresh, geoip = self._cache[host]
+            addrs, expires, refresh, host_geoip = self._cache[host]
             if expires < t:
                 stats.stats_sum(stats_prefix+'DNS cache hit expired entry', 1)
                 del self._cache[host]
@@ -68,7 +68,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
             self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss success', 1)
 
-        (addrs, _, _) = self._cache[host]
+        addrs = self._cache[host][0]
         # if the cached entry was made with a different port, lie about it
         for a in addrs:
             if 'port' in a:
@@ -116,9 +116,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         t = time.time()
         expires = t + ttl
         refresh = t + (ttl * 0.75)
-        geoip = {}
+        host_geoip = {}
 
-        return ret, expires, refresh, geoip
+        return ret, expires, refresh, host_geoip
+
+    def get_cache_entry(self, host):
+        if host in self._cache:
+            return self._cache[host]
 
 
 def expire_some(t, lru, some, stats_prefix=''):
