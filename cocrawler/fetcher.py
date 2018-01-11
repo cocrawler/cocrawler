@@ -136,6 +136,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
+        # ClientConnectorCertificateError for an SSL cert that doesn't match hostname
         is_truncated = 'disconnect'  # testme WARC
         stats.stats_sum('fetch ClientError', 1)
         last_exception = repr(e)
