@@ -249,18 +249,14 @@ def facets_from_embeds(embeds):
             facets.append(('google adsense for domains', True))
         if 'googletagmanager.com' in u:
             cgi = url.urlsplit.query
-            print('query', cgi)
             cgi_list = cgi.split('&')
             for c in cgi_list:
-                print('c', c)
                 if c.startswith('id=GTM-'):
                     facets.append(('google tag manager', c[3:]))
         if 'https://www.facebook.com/tr?' in u:  # img src
             cgi = url.urlsplit.query
-            print('query', cgi)
             cgi_list = cgi.split('&')
             for c in cgi_list:
-                print('c', c)
                 if c.startswith('id='):
                     facets.append(('facebook events', c[3:]))
 
