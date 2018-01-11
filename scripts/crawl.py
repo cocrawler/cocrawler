@@ -11,6 +11,7 @@ import faulthandler
 import argparse
 import asyncio
 import logging
+import warnings
 
 import cocrawler
 import cocrawler.config as config
@@ -28,7 +29,7 @@ ARGS.add_argument('--configfile', action='store')
 ARGS.add_argument('--no-confighome', action='store_true')
 ARGS.add_argument('--no-test', action='store_true')
 ARGS.add_argument('--printdefault', action='store_true')
-ARGS.add_argument('--loglevel', action='store', type=int, default=2)
+ARGS.add_argument('--loglevel', action='store', default='INFO')
 ARGS.add_argument('--load', action='store')
 
 
@@ -54,20 +55,23 @@ def main():
     '''
 
     args = ARGS.parse_args()
-    try:
-        loglevel = int(os.getenv('COCRAWLER_LOGLEVEL'))
-    except (ValueError, TypeError):
-        loglevel = args.loglevel
 
     if args.printdefault:
         config.print_default()
         sys.exit(1)
 
-    levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
-    logging.basicConfig(level=levels[min(loglevel, len(levels)-1)])
+    loglevel = os.getenv('COCRAWLER_LOGLEVEL') or args.loglevel
+    logging.basicConfig(level=loglevel)
 
     config.config(args.configfile, args.config, confighome=not args.no_confighome)
     limit_resources()
+
+    if os.getenv('PYTHONASYNCIODEBUG') is not None:
+        logging.captureWarnings(True)
+        warnings.simplefilter('default', category=ResourceWarning)
+        if LOGGER.getEffectiveLevel() > logging.WARNING:
+            LOGGER.setLevel(logging.WARNING)
+            LOGGER.warning('Lowered logging level to WARNING because PYTHONASYNCIODEBUG env var is set')
 
     kwargs = {}
     if args.load:

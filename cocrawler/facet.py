@@ -52,8 +52,9 @@ link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
 
-def compute_all(html, head, body, headers_list, embeds, head_soup=None, url=None, condense=False, expensive=False):
-    expensive = True
+def compute_all(html, head, body, headers_list, links, embeds, head_soup=None, url=None, condense=False, expensive=False):
+    expensive = True  # XXX
+
     fhf = find_head_facets(head, url=url)
     fgh = facets_grep(head, url=url)
     if expensive:
@@ -64,7 +65,12 @@ def compute_all(html, head, body, headers_list, embeds, head_soup=None, url=None
     frh = facets_from_response_headers(headers_list)
     fe = facets_from_embeds(embeds)
 
-    facets = (*fhf, *fgh, *fgb, *frh, *fe)
+    facets = [*fhf, *fgh, *fgb, *frh, *fe]
+
+    for l in links:
+        facets.append(('link', l.url))
+    for e in embeds:
+        facets.append(('embed', e.url))
 
     return facet_dedup(facets)
 
@@ -276,3 +282,13 @@ def compare_head_body_grep(fh, fb, url):
             LOGGER.info('body grep discovered %s %s in url %s', k, v, url.url)
         else:
             LOGGER.info('both head and body grep discovered %s %s in url %s', k, v, url.url)
+
+
+def condense_facets(facets):
+    # turn foo:bar into foo:<count>
+    #   meta name, meta property
+    # ditch traditionally long things: meta-name-{description,keywords}
+    count_colons('meta-property-', facets)
+    count_colons('meta-name-', facets)
+
+    return
