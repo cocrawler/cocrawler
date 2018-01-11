@@ -36,6 +36,7 @@ def expand_seeds_config(crawler):
         if not isinstance(seed_files, list):
             seed_files = [seed_files]
         for name in seed_files:
+            name = str(name)  # yaml leaves filenames like '1000' as ints
             LOGGER.info('Loading seeds from file %s', name)
             with open(name, 'r') as f:
                 for line in f:
