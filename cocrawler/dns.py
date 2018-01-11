@@ -47,7 +47,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         self._cache = cachetools.LRUCache(int(self._cachemaxsize))
         self._refresh_in_progress = set()
 
-    async def resolve(self, host, port, stats_prefix='', **kwargs):
+    async def resolve(self, host, port, stats_prefix='fetch ', **kwargs):
         t = time.time()
         if host in self._cache:
             stats.stats_sum(stats_prefix+'DNS cache hit', 1)
