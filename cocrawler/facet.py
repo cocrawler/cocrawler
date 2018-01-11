@@ -203,7 +203,7 @@ def facets_grep(html, url=None):
 
     # js or id= cgi arg
     if 'GTM-' in html:
-        gtm_matches = re.findall(r'[\'"\-=]GTM-[A-Z0-9]{4,6}[\'"&]', html)
+        gtm_matches = re.findall(r'[\'"\-=]GTM-[A-Z0-9]{4,7}[\'"&]', html)
         if gtm_matches:
             for g in gtm_matches:
                 facets.append(('google tag manager', g.strip('\'"-=&')))
