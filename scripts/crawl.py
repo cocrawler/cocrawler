@@ -82,6 +82,10 @@ def main():
 
     crawler = cocrawler.Crawler(**kwargs)
     loop = asyncio.get_event_loop()
+    slow_callback_duration = os.getenv('ASYNCIO_SLOW_CALLBACK_DURATION')
+    if slow_callback_duration:
+        loop.slow_callback_duration = float(slow_callback_duration)
+        LOGGER.warning('set slow_callback_duration to %f', slow_callback_duration)
 
     if config.read('CarbonStats'):
         timer.start_carbon()
