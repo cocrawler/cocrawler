@@ -7,8 +7,8 @@
     "width": "586",
     "_salt": "1477084298.08",
     "target": [
-      "cocrawler.fast.qps_sum",
-      "cocrawler.fast.priority"
+      "alias(cocrawler.fast.qps_sum,\"qps_sum\")",
+      "alias(cocrawler.fast.priority,\"priority\")"
     ]
   },
   {
@@ -16,13 +16,13 @@
     "drawNullAsZero": "true",
     "title": "qps",
     "height": "305",
-    "width": "586",
+    "width": "386",
     "_salt": "1477088320.952",
     "target": [
-      "cocrawler.fast.robots_fetched",
-      "cocrawler.fast.fetch_URLs",
-      "cocrawler.fast.DNS_external_queries",
-      "cocrawler.fast.qps_total"
+      "alias(cocrawler.fast.robots_fetched,\"robots_fetched\")",
+      "alias(cocrawler.fast.fetch_URLs,\"fetch_URLs\")",
+      "alias(cocrawler.fast.DNS_external_queries,\"DNS_external_queries\")",
+      "alias(cocrawler.fast.qps_total,\"qps_total\")"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "width": "586",
     "_salt": "1477195917.721",
     "target": [
-      "cocrawler.slow.main_thread_cpu_time",
-      "cocrawler.slow.parser_cpu_time"
+      "alias(cocrawler.slow.main_thread_cpu_time,\"main_thread_cpu\")",
+      "alias(cocrawler.slow.parser_cpu_time,\"parser_cpu\")"
     ]
   },
   {
@@ -53,16 +53,16 @@
     "drawNullAsZero": "true",
     "title": "coroutine states",
     "height": "305",
-    "width": "786",
+    "width": "386",
     "_salt": "1477357929.201",
     "target": [
-      "cocrawler.fast.fetcher_fetching",
-      "cocrawler.fast.robots_fetcher_fetching",
-      "cocrawler.fast.fetcher_retry_sleep",
-      "cocrawler.fast.robots_collision_sleep",
-      "cocrawler.fast.await_burner_thread_parser",
-      "cocrawler.fast.awaiting_work",
-      "cocrawler.fast.DNS_prefetch"
+      "alias(cocrawler.fast.fetcher_retry_sleep,\"fetcher_retry_sleep\")",
+      "alias(cocrawler.fast.robots_collision_sleep,\"robots_collision_sleep\")",
+      "alias(acocrawler.fast.await_burner_thread_parser,\"await_burner_thread_parser\")",
+      "alias(cocrawler.fast.awaiting_work,\"awaiting_work\")",
+      "alias(cocrawler.fast.DNS_prefetch,\"DNS_prefetch\")",
+      "alias(cocrawler.fast.fetcher_fetching,\"fetcher_fetching\")",
+      "alias(cocrawler.fast.robots_fetcher_fetching,\"robots_fetcher_fetching\")"
     ]
   },
   {
@@ -72,9 +72,9 @@
     "width": "386",
     "_salt": "1478825758.984",
     "target": [
-      "cocrawler.slow.added_urls",
-      "cocrawler.slow.fetch_URLs",
-      "cocrawler.slow.queue_size"
+      "alias(cocrawler.slow.added_urls,\"added_urls\")",
+      "alias(cocrawler.slow.fetch_URLs,\"fetch_URLs\")",
+      "alias(cocrawler.slow.queue_size,\"queue_size\")"
     ]
   },
   {
