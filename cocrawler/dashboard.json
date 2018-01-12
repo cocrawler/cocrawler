@@ -58,7 +58,7 @@
     "target": [
       "alias(cocrawler.fast.fetcher_retry_sleep,\"fetcher_retry_sleep\")",
       "alias(cocrawler.fast.robots_collision_sleep,\"robots_collision_sleep\")",
-      "alias(acocrawler.fast.await_burner_thread_parser,\"await_burner_thread_parser\")",
+      "alias(cocrawler.fast.await_burner_thread_parser,\"await_burner_thread_parser\")",
       "alias(cocrawler.fast.awaiting_work,\"awaiting_work\")",
       "alias(cocrawler.fast.DNS_prefetch,\"DNS_prefetch\")",
       "alias(cocrawler.fast.fetcher_fetching,\"fetcher_fetching\")",
