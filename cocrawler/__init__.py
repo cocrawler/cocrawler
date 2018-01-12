@@ -93,7 +93,7 @@ class Crawler:
             raise ValueError('proxies not yet supported')
 
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver, 'limit': 0}
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver, 'limit': 0}  # XXX experiment limit=500 run-c
 
         local_addr = config.read('Fetcher', 'LocalAddr')
         if local_addr:
@@ -395,6 +395,7 @@ class Crawler:
         '''
         if time.time() > self.next_minute:
             self.next_minute = time.time() + 60
+            stats.stats_set('DNS cache size', self.resolver.size())
             stats.report()
             stats.coroutine_report()
 

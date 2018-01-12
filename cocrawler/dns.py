@@ -125,6 +125,9 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         if host in self._cache:
             return self._cache[host]
 
+    def size(self):
+        return len(self._cache)
+
 
 def expire_some(t, lru, some, stats_prefix=''):
     # examine a few of the oldest entries to see if they're expired
