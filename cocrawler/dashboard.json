@@ -1,6 +1,6 @@
 [
   {
-    "lineMode": "staircase",
+    "lineMode": "connected",
     "drawNullAsZero": "true",
     "title": "depth from seed",
     "height": "305",
@@ -12,7 +12,7 @@
     ]
   },
   {
-    "lineMode": "staircase",
+    "lineMode": "connected",
     "drawNullAsZero": "true",
     "title": "qps",
     "height": "305",
@@ -21,12 +21,12 @@
     "target": [
       "cocrawler.fast.robots_fetched",
       "cocrawler.fast.fetch_URLs",
-      "cocrawler.fast.DNS_prefetches",
+      "cocrawler.fast.DNS_external_queries",
       "cocrawler.fast.qps_total"
     ]
   },
   {
-    "lineMode": "staircase",
+    "lineMode": "connected",
     "drawNullAsZero": "true",
     "title": "bandwidth",
     "height": "305",
@@ -49,40 +49,37 @@
     ]
   },
   {
-    "target": [
-      "cocrawler.slow.added_urls",
-      "cocrawler.slow.fetch_URL",
-      "cocrawler.slow.max_queue_size",
-      "cocrawler.slow.queue_size"
-    ],
-    "title": "URL Stats",
-    "height": "305",
-    "width": "586",
-    "_salt": "1477196227.692"
-  },
-  {
-    "target": [
-      "cocrawler.fast.vmem"
-    ],
-    "title": "Resident memory",
-    "height": "305",
-    "width": "586",
-    "_salt": "1477341206.655"
-  },
-  {
-    "width": "586",
-    "height": "305",
-    "_salt": "1477357929.201",
+    "lineMode": "connected",
     "drawNullAsZero": "true",
-    "lineMode": "staircase",
     "title": "coroutine states",
+    "height": "305",
+    "width": "786",
+    "_salt": "1477357929.201",
     "target": [
       "cocrawler.fast.fetcher_fetching",
+      "cocrawler.fast.robots_fetcher_fetching",
       "cocrawler.fast.fetcher_retry_sleep",
       "cocrawler.fast.robots_collision_sleep",
       "cocrawler.fast.await_burner_thread_parser",
       "cocrawler.fast.awaiting_work",
-      "cocrawler.fast.await_main_thread_parser"
+      "cocrawler.fast.DNS_prefetch"
+    ]
+  },
+  {
+    "drawNullAsZero": "true",
+    "title": "URL Stats",
+    "height": "305",
+    "width": "386",
+    "_salt": "1478825758.984",
+    "target": [
+      "cocrawler.slow.added_urls",
+      "cocrawler.slow.fetch_URLs",
+      "cocrawler.slow.queue_size"
+    ]
+  },
+  {
+    "target": [
+      "cocrawler.fast.elapsed"
     ]
   }
 ]
