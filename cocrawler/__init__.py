@@ -93,7 +93,7 @@ class Crawler:
             raise ValueError('proxies not yet supported')
 
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver, 'limit': 0,  # XXX experiment limit=500 run-c
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver, 'limit': self.max_workers//2,
                             'enable_cleanup_closed': True}
         local_addr = config.read('Fetcher', 'LocalAddr')
         if local_addr:
@@ -223,6 +223,9 @@ class Crawler:
         for w in self.workers:
             if not w.done():
                 w.cancel()
+        cw = self.control_limit_worker
+        if cw and not cw.done():
+            cw.cancel()
 
     def close(self):
         stats.report()
@@ -356,6 +359,42 @@ class Crawler:
         except asyncio.CancelledError:
             pass
 
+    async def control_limit(self):
+        '''
+        Worker dedicated to managing how busy we let the network get
+        '''
+        last = time.time()
+        asyncio.sleep(1.0)
+        limit = self.max_workers//2
+        dominos = 0
+        while True:
+            await asyncio.sleep(1.0)
+            t = time.time()
+            elapsed = t - last
+            old_limit = limit
+
+            if elapsed < 1.03:
+                dominos += 1
+                if dominos > 2:  # one action per 3 seconds of stability
+                    limit += 1
+                    dominos = 0
+            else:
+                dominos = 0
+                if elapsed > 5.0:
+                    limit -= max((limit * 5) // 100, 1)
+                elif elapsed > 1.1:
+                    limit -= max(limit // 100, 1)
+
+            self.connector._limit = limit  # private instance variable
+            stats.stats_set('network limit', limit)
+            last = t
+
+            if limit != old_limit:
+                LOGGER.info('control_limit: elapsed = %f, adjusting limit by %+d to %d',
+                            elapsed, limit - old_limit, limit)
+            else:
+                LOGGER.info('control_limit: elapsed = %f', elapsed)
+
     def summarize(self):
         self.scheduler.summarize()
 
@@ -391,7 +430,7 @@ class Crawler:
 
     def minute(self):
         '''
-        print interesting stuf, once a minute
+        print interesting stuff, once a minute
         '''
         if time.time() > self.next_minute:
             self.next_minute = time.time() + 60
@@ -407,6 +446,7 @@ class Crawler:
         '''
         Run the crawler until it's out of work
         '''
+        self.control_limit_worker = asyncio.Task(self.control_limit())
         self.workers = [asyncio.Task(self.work()) for _ in range(self.max_workers)]
 
         # this is now the 'main' coroutine

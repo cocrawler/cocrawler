@@ -39,8 +39,10 @@ fast_stats = [
     {'name': 'DNS external queries', 'kind': 'delta', 'qps_total': True},  # qps_total True belongs in qps graph
     {'name': 'fetch URLs', 'kind': 'delta', 'qps_total': True},
     {'name': 'robots fetched', 'kind': 'delta', 'qps_total': True},
+
     {'name': 'fetch bytes', 'kind': 'delta', 'normalize': 8/1000000000.},  # has its own bandwidth graph
     {'name': 'priority'},  # has its own priority graph, called 'depth from seed'
+    {'name': 'network limit'},
 
     # coroutine state - XXX these should autoconfigure
     # XXX emit a json Graphite config for the coroutine state graph
