@@ -53,7 +53,7 @@ def expand_seeds_config(crawler):
     return seed_some_urls(urls, crawler)
 
 
-def seed_some_urls(urls, crawler):
+def seed_some_urls(urls, crawler, second_chance=True):
     freeseedredirs = config.read('Seeds', 'FreeSeedRedirs')
     retries_left = config.read('Seeds', 'SeedRetries') or config.read('Crawl', 'MaxTries')
     priority = 1
@@ -63,7 +63,7 @@ def seed_some_urls(urls, crawler):
     for u in urls:
         ridealong = {'url': u, 'priority': priority, 'seed': True,
                      'skip_seen_url': True, 'retries_left': retries_left,
-                     'original_url': u.url}
+                     'original_url': u.url, 'second_chance': second_chance}
         if freeseedredirs:
             ridealong['free_redirs'] = freeseedredirs
         crawler.add_url(priority, ridealong)
@@ -99,9 +99,6 @@ def special_seed_handling(url):
     return url
 
 
-previous_fails = set()
-
-
 def fail(ridealong, crawler):
     '''
     Called for all final failures
@@ -110,9 +107,11 @@ def fail(ridealong, crawler):
         return
 
     url = ridealong['url']
-    if url.url in previous_fails:
+    print('fail for url', url.url, 'and ridealong is', repr(ridealong))
+
+    if not ridealong.get('second_chance', False):
         return
-    previous_fails.add(url.url)
+    del ridealong['second_chance']
 
     LOGGER.info('Received a final failure for seed url %s', url.url)
     stats.stats_sum('seeds failed', 1)
@@ -125,4 +124,4 @@ def fail(ridealong, crawler):
         url = URL(ridealong['original_url'].replace('www.', '', 1))
         LOGGER.info('seed url second chance %s', url.url)
         stats.stats_sum('seeds second chances', 1)
-        seed_some_urls((url,), crawler)
+        seed_some_urls((url,), crawler, second_chance=False)
