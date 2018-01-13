@@ -364,7 +364,7 @@ class Crawler:
         Worker dedicated to managing how busy we let the network get
         '''
         last = time.time()
-        asyncio.sleep(1.0)
+        await asyncio.sleep(1.0)
         limit = self.max_workers//2
         dominos = 0
         while True:
