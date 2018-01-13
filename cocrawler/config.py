@@ -23,7 +23,7 @@ Seeds:
 #  Files:
 #  - seed_list.txt
   FreeSeedRedirs: 3  # many seeds do lots of redirs
-  SeedRetries: 1  # multiplies with normal crawl retries
+  SeedRetries: 4  # overwrites the standard crawl retry
 #  Policy: www-then-non-www
   Policy: None
 
