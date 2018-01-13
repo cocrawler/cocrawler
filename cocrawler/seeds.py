@@ -107,7 +107,6 @@ def fail(ridealong, crawler):
         return
 
     url = ridealong['url']
-    print('fail for url', url.url, 'and ridealong is', repr(ridealong))
 
     if not ridealong.get('second_chance', False):
         return
