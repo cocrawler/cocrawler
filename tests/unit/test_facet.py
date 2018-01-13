@@ -21,7 +21,8 @@ def test_double_entries():
                       ('meta-name-referrer', 'unsafe-url'),
                       ('meta-name-referrer', 'always'),
                       ('meta-name-format-detection', 'telephone=no'),
-                      ('meta-name-format-detection', 'email=no')]
+                      ('meta-name-format-detection', 'email=no'),
+                      ('content-type', 'text/html; charset=utf-8')]
 
 
 def test_generator():

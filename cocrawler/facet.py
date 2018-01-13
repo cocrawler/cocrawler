@@ -106,7 +106,10 @@ def find_head_facets(head, head_soup=None, url=None):
         content = m.get('content')
         #if n in meta_name_content:
         #    facets.append((n, content)
-        facets.append(('meta-name-'+n, content))  # XXX get all of these for now
+        if n is not '':
+            if len(content) > 100:
+                content = content[:100]
+            facets.append(('meta-name-'+n, content))  # XXX get all of these for now
         if n == 'generator' and content is not None:
             cl = content.lower()
             for s in meta_name_generator_special:
@@ -122,7 +125,10 @@ def find_head_facets(head, head_soup=None, url=None):
     for m in meta:
         p = m.get('property').lower()
         content = m.get('content')
-        facets.append(('meta-property-'+p, content))  # XXX get all of these for now
+        if len(content) > 100:
+            content = content[:100]
+        if p is not '':
+            facets.append(('meta-property-'+p, content))  # XXX get all of these for now
         if p in meta_property_content:
             facets.append((p, content))
         for pre in meta_property_prefix:
@@ -130,6 +136,14 @@ def find_head_facets(head, head_soup=None, url=None):
             if p.startswith(prefix):
                 facets.append((title, True))
         # XXX remember the ones we didn't save
+
+    meta = soup.find_all('meta', attrs={'http-equiv': True})  # has a dash, so use dict
+    for m in meta:
+        p = m.get('http-equiv').lower()
+        content = m.get('content')
+        if len(content) > 100:
+            content = content[:100]
+        facets.append((p, content))  # XXX get all of these for now... robots, refresh etc
 
     # link rel is muli-valued attribute, hence, a list
     linkrel = soup.find_all('link', rel=True)
