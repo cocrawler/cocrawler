@@ -367,6 +367,7 @@ class Crawler:
         await asyncio.sleep(1.0)
         limit = self.max_workers//2
         dominos = 0
+        undominos = 0
         while True:
             await asyncio.sleep(1.0)
             t = time.time()
@@ -375,15 +376,22 @@ class Crawler:
 
             if elapsed < 1.03:
                 dominos += 1
+                undominos = 0
                 if dominos > 2:  # one action per 3 seconds of stability
                     limit += 1
                     dominos = 0
             else:
                 dominos = 0
-                if elapsed > 5.0:
-                    limit -= max((limit * 5) // 100, 1)
+                if elapsed > 5.0:  # always act on tall spikes
+                    limit -= max((limit * 5) // 100, 1)  # 5%
+                    undominos = 0
                 elif elapsed > 1.1:
-                    limit -= max(limit // 100, 1)
+                    undominos += 1
+                    if undominos > 1:  # only act if the medium spike is wider than 1 cycle
+                        limit -= max(limit // 100, 1)  # 1%
+                        undominos = 0
+                else:
+                    undominos = 0
 
             self.connector._limit = limit  # private instance variable
             stats.stats_set('network limit', limit)
