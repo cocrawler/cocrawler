@@ -55,7 +55,7 @@ save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-se
 def compute_all(html, head, body, headers_list, links, embeds, head_soup=None, url=None, condense=False, expensive=False):
     expensive = True  # XXX
 
-    fhf = find_head_facets(head, url=url)
+    fhf = find_head_facets(head, head_soup=head_soup, url=url)
     fgh = facets_grep(head, url=url)
     if expensive:
         fgb = facets_grep(body, url=url)
@@ -82,25 +82,25 @@ def find_head_facets(head, head_soup=None, url=None):
         stats.stats_sum('beautiful soup head bytes', len(head))
         with stats.record_burn('beautiful soup head', url=url):
             try:
-                soup = BeautifulSoup(head, 'lxml')
+                head_soup = BeautifulSoup(head, 'lxml')
             except Exception as e:
                 facets.append(('BeautifulSoupException', repr(e)))
                 return facets
 
-    html = soup.find('html')
+    html = head_soup.find('html')
     if html:
         if html.get('lang'):
             facets.append(('html lang', html.get('lang')))
         if html.get('xml:lang'):
             facets.append(('html xml:lang', html.get('xml:lang')))
 
-    base = soup.find('base')
+    base = head_soup.find('base')
     if base:
         if base.get('href'):
             facets.append(('base', base.get('href')))
             # can also have target= but we don't care
 
-    meta = soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
+    meta = head_soup.find_all('meta', attrs={'name': True})  # 'name' collides, so use dict
     for m in meta:
         n = m.get('name').lower()
         content = m.get('content')
@@ -121,7 +121,7 @@ def find_head_facets(head, head_soup=None, url=None):
                 facets.append((title, True))
         # XXX remember the ones we didn't save
 
-    meta = soup.find_all('meta', property=True)
+    meta = head_soup.find_all('meta', property=True)
     for m in meta:
         p = m.get('property').lower()
         content = m.get('content')
@@ -137,7 +137,7 @@ def find_head_facets(head, head_soup=None, url=None):
                 facets.append((title, True))
         # XXX remember the ones we didn't save
 
-    meta = soup.find_all('meta', attrs={'http-equiv': True})  # has a dash, so use dict
+    meta = head_soup.find_all('meta', attrs={'http-equiv': True})  # has a dash, so use dict
     for m in meta:
         p = m.get('http-equiv').lower()
         content = m.get('content')
@@ -146,7 +146,7 @@ def find_head_facets(head, head_soup=None, url=None):
         facets.append((p, content))  # XXX get all of these for now... robots, refresh etc
 
     # link rel is muli-valued attribute, hence, a list
-    linkrel = soup.find_all('link', rel=True)
+    linkrel = head_soup.find_all('link', rel=True)
     for l in linkrel:
         for rel in l.get('rel'):
             r = rel.lower()
@@ -162,7 +162,7 @@ def find_head_facets(head, head_soup=None, url=None):
                      'https://microformats.org/' in href)):
                     facets.append(('microformats.org', True))
 
-    count = len(soup.find_all(integrity=True))
+    count = len(head_soup.find_all(integrity=True))
     if count:
         facets.append(('script integrity', count))
 
