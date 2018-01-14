@@ -392,6 +392,7 @@ class Crawler:
                         undominos = 0
                 else:
                     undominos = 0
+            limit = min(limit, self.max_workers)
 
             self.connector._limit = limit  # private instance variable
             stats.stats_set('network limit', limit)
