@@ -43,7 +43,7 @@ def limit_resources():
     rlimit_as *= 1024 * 1024 * 1024
     if rlimit_as == 0:
         return
-    if rlimit_as > hard:
+    if hard > 0 and rlimit_as > hard:
         LOGGER.error('RLIMIT_AS limited to %d bytes by system limit', hard)
         rlimit_as = hard
     resource.setrlimit(resource.RLIMIT_AS, (rlimit_as, hard))

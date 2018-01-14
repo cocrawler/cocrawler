@@ -39,3 +39,6 @@ Testing:
     warc r/r (prefix Testing): 1000
     parse in burner thread: 1000
     parse in main thread: 0
+
+System:
+  RLIMIT_AS_gigabytes: 8
