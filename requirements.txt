@@ -3,6 +3,7 @@
 # used by the cocrawler system
 uvloop==0.9.1
 aiohttp==2.3.7
+yarl==0.17.0
 aiodns==1.1.1
 pyyaml==3.12
 cchardet==2.1.1
