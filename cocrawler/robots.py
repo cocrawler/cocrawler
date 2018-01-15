@@ -110,12 +110,12 @@ class Robots:
 
         LOGGER.debug('robots denied for %s%s', schemenetloc, pathplus)
 
-        jsonlog = {'url': pathplus, 'action': 'deny'}
+        json_log = {'url': pathplus, 'action': 'deny'}
         if google_check:
-            jsonlog['google-action'] = 'allow'
+            json_log['google-action'] = 'allow'
         if generic_check:
-            jsonlog['generic-action'] = 'allow'
-        self.jsonlog(schemenetloc, jsonlog)
+            json_log['generic-action'] = 'allow'
+        self.jsonlog(schemenetloc, json_log)
         stats.stats_sum('robots denied', 1)
         if google_check:
             stats.stats_sum('robots denied - but googlebot allowed', 1)
@@ -178,10 +178,10 @@ class Robots:
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, max_redirects=5, stats_prefix='robots ')
 
-        jsonlog = {'action': 'fetch'}
+        json_log = {'action': 'fetch'}
         if f.last_exception:
-            jsonlog['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
-            self.jsonlog(schemenetloc, jsonlog)
+            json_log['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
+            self.jsonlog(schemenetloc, json_log)
             self.in_progress.discard(schemenetloc)
             return None
 
@@ -197,8 +197,8 @@ class Robots:
                 final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc
 
         status = f.response.status
-        jsonlog['status'] = status
-        jsonlog['t_first_byte'] = f.t_first_byte
+        json_log['status'] = status
+        json_log['t_first_byte'] = f.t_first_byte
 
         # if the final status is a redirect, we exceeded max redirects -- treat as a 404, same as googlebot
         # Googlebot treats all 4xx as an empty robots.txt
@@ -207,14 +207,14 @@ class Robots:
                 error = 'got a 4xx, treating as empty robots'
             else:
                 error = 'got too many redirects, treating as empty robots'
-            jsonlog['error'] = error
-            self.jsonlog(schemenetloc, jsonlog)
+            json_log['error'] = error
+            self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
         # Googlebot treats all 5xx as deny, unless they think the host returns 5xx instead of 404:
         if str(status).startswith('5'):
-            jsonlog['error'] = 'got a 5xx, treating as deny'
-            self.jsonlog(schemenetloc, jsonlog)
+            json_log['error'] = 'got a 5xx, treating as deny'
+            self.jsonlog(schemenetloc, json_log)
             self.in_progress.discard(schemenetloc)
             return None
 
@@ -222,16 +222,16 @@ class Robots:
 
         with stats.record_burn('robots sha1'):
             sha1 = 'sha1:' + hashlib.sha1(body_bytes).hexdigest()
-        jsonlog['checksum'] = sha1
+        json_log['checksum'] = sha1
 
         body_bytes = strip_bom(body_bytes)
 
         plausible, message = self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte)
         if not plausible:
             # policy: treat as empty
-            jsonlog['error'] = 'saw an implausible robots.txt, treating as empty'
-            jsonlog['implausible'] = message
-            self.jsonlog(schemenetloc, jsonlog)
+            json_log['error'] = 'saw an implausible robots.txt, treating as empty'
+            json_log['implausible'] = message
+            self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
         # go from bytes to a string, despite bogus utf8
@@ -245,13 +245,13 @@ class Robots:
             raise
         except Exception as e:
             # log as surprising, also treat like a fetch error
-            jsonlog['error'] = 'robots body decode threw a surprising exception: ' + repr(e)
-            self.jsonlog(schemenetloc, jsonlog)
+            json_log['error'] = 'robots body decode threw a surprising exception: ' + repr(e)
+            self.jsonlog(schemenetloc, json_log)
             self.in_progress.discard(schemenetloc)
             return None
 
         if self.robotname in body:
-            jsonlog['mentions-us'] = True
+            json_log['mentions-us'] = True
 
         with stats.record_burn('robots parse', url=schemenetloc):
             parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
@@ -262,9 +262,9 @@ class Robots:
             # we did not set this but we'll discard it anyway
             self.in_progress.discard(final_schemenetloc)
         if parsed.sitemaps:
-            jsonlog['has-sitemaps'] = True
+            json_log['has-sitemaps'] = True
 
-        self.jsonlog(schemenetloc, jsonlog)
+        self.jsonlog(schemenetloc, json_log)
         return parsed
 
     def is_plausible_robots(self, schemenetloc, body_bytes, t_first_byte):
