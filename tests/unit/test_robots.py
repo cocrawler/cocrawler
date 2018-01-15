@@ -47,17 +47,24 @@ def test_robots():
     r = robots.Robots('foo', None, None)
 
     robots_txt = b'<'
-    assert not r.is_plausible_robots('example.com', robots_txt, 1.0)
+    plausible, message = r.is_plausible_robots('example.com', robots_txt, 1.0)
+    assert not plausible
+    assert len(message)
 
     robots_txt = b''  # application/x-empty
-    assert r.is_plausible_robots('example.com', robots_txt, 1.0)
+    plausible, message = r.is_plausible_robots('example.com', robots_txt, 1.0)
+    assert plausible
+    assert not len(message)
 
     robots_txt = b'x'*1000001
-    assert not r.is_plausible_robots('example.com', robots_txt, 1.0)
+    plausible, message = r.is_plausible_robots('example.com', robots_txt, 1.0)
+    assert not plausible
+    assert len(message)
 
     robots_txt = b'foo'
-    assert r.is_plausible_robots('example.com', robots_txt, 1.0)
-
+    plausible, message = r.is_plausible_robots('example.com', robots_txt, 1.0)
+    assert plausible
+    assert not len(message)
 
 @pytest.mark.xfail
 def test_magic():

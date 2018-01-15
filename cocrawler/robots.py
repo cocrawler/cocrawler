@@ -9,6 +9,7 @@ import random
 import json
 import logging
 import urllib.parse
+import hashlib
 
 import robotexclusionrulesparser
 import magic
@@ -176,9 +177,11 @@ class Robots:
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_robots_page_size,
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, max_redirects=5, stats_prefix='robots ')
+
+        jsonlog = {'action': 'fetch'}
         if f.last_exception:
-            self.jsonlog(schemenetloc, {'error': 'max tries exceeded, final exception is: ' + f.last_exception,
-                                        'action': 'fetch'})
+            jsonlog['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
+            self.jsonlog(schemenetloc, jsonlog)
             self.in_progress.discard(schemenetloc)
             return None
 
@@ -194,6 +197,8 @@ class Robots:
                 final_schemenetloc = final_parts.scheme + '://' + final_parts.netloc
 
         status = f.response.status
+        jsonlog['status'] = status
+        jsonlog['t_first_byte'] = f.t_first_byte
 
         # if the final status is a redirect, we exceeded max redirects -- treat as a 404, same as googlebot
         # Googlebot treats all 4xx as an empty robots.txt
@@ -202,29 +207,35 @@ class Robots:
                 error = 'got a 4xx, treating as empty robots'
             else:
                 error = 'got too many redirects, treating as empty robots'
-            self.jsonlog(schemenetloc, {'error': error, 'code': status,
-                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
+            jsonlog['error'] = error
+            self.jsonlog(schemenetloc, jsonlog)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
         # Googlebot treats all 5xx as deny, unless they think the host returns 5xx instead of 404:
         if str(status).startswith('5'):
-            self.jsonlog(schemenetloc,
-                         {'error': 'got a 5xx, treating as deny', 'code': status,
-                          'action': 'fetch', 't_first_byte': f.t_first_byte})
+            jsonlog['error'] = 'got a 5xx, treating as deny'
+            self.jsonlog(schemenetloc, jsonlog)
             self.in_progress.discard(schemenetloc)
             return None
 
         body_bytes = f.body_bytes
+
+        with stats.record_burn('robots sha1'):
+            sha1 = 'sha1:' + hashlib.sha1(body_bytes).hexdigest()
+        jsonlog['checksum'] = sha1
+
         body_bytes = strip_bom(body_bytes)
 
-        if not self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte):
+        plausible, message = self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte)
+        if not plausible:
             # policy: treat as empty
-            self.jsonlog(schemenetloc,
-                         {'warning': 'saw an implausible robots.txt, treating as empty',
-                          'action': 'fetch', 't_first_byte': f.t_first_byte})
+            jsonlog['error'] = 'saw an implausible robots.txt, treating as empty'
+            jsonlog['implausible'] = message
+            self.jsonlog(schemenetloc, jsonlog)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
         # go from bytes to a string, despite bogus utf8
+        # XXX what about non-utf8?
         try:
             body = f.body_bytes.decode(encoding='utf8')
         except UnicodeError:  # pragma: no cover
@@ -234,12 +245,11 @@ class Robots:
             raise
         except Exception as e:
             # log as surprising, also treat like a fetch error
-            self.jsonlog(schemenetloc, {'error': 'robots body decode threw a surprising exception: ' + repr(e),
-                                        'action': 'fetch', 't_first_byte': f.t_first_byte})
+            jsonlog['error'] = 'robots body decode threw a surprising exception: ' + repr(e)
+            self.jsonlog(schemenetloc, jsonlog)
             self.in_progress.discard(schemenetloc)
             return None
 
-        jsonlog = {'action': 'fetch', 'code': status, 't_first_byte': f.t_first_byte}
         if self.robotname in body:
             jsonlog['mentions-us'] = True
 
@@ -263,25 +273,18 @@ class Robots:
         '''
         # Not OK: html or xml or something else bad
         if body_bytes.startswith(b'<'):  # pragma: no cover
-            self.jsonlog(schemenetloc, {'error': 'robots appears to be html or xml, ignoring',
-                                        'action': 'fetch', 't_first_byte': t_first_byte})
-            return False
+            return False, 'robots appears to be html or xml'
 
-        # OK: file magic mimetype is 'text' or similar -- too expensive, 3ms per call
+        # file magic mimetype is 'text' or similar -- too expensive, 3ms per call
         # mime_type = self.magic.id_buffer(body_bytes)
         # if not (mime_type.startswith('text') or mime_type == 'application/x-empty'):
-        #    self.jsonlog(schemenetloc, {'error':
-        #                                'robots has unexpected mimetype {}, ignoring'.format(mime_type),
-        #                                'action':'fetch', 't_first_byte':t_first_byte})
-        #    return False
+        #    return False, 'robots has unexpected mimetype {}, ignoring'.format(mime_type)
 
         # not OK: too big
         if len(body_bytes) > 1000000:  # pragma: no cover
-            self.jsonlog(schemenetloc, {'error': 'robots is too big, ignoring',
-                                        'action': 'fetch', 't_first_byte': t_first_byte})
-            return False
+            return False, 'robots is too big'
 
-        return True
+        return True, ''
 
     def jsonlog(self, schemenetloc, d):
         if self.robotslogfd:
