@@ -14,6 +14,7 @@ LOGGER = logging.getLogger(__name__)
 geoip_country = None
 geoip_as = None
 special_by_asn = None
+special_orgs = None
 
 
 def init():
@@ -51,6 +52,17 @@ def init():
 
         LOGGER.info('Loaded special-ip file')
 
+    special_org_file = os.path.join(datadir, 'special-orgs.json')
+    if os.path.exists(special_org_file):
+        with open(special_org_file, 'r') as f:
+            global special_orgs
+            special_orgs = json.load(f)
+        for org in special_orgs:
+            if 'grep' in special_orgs[org]:
+                special_orgs[org]['grep'].append(org)
+            else:
+                special_orgs[org]['grep'] = (org)
+
 
 def lookup(ip):
     ret = {}
@@ -85,6 +97,14 @@ def lookup(ip):
             for name, network in special_by_asn[asn]:
                 if ipobj in network:
                     ret['ip-special'] = name
+
+    if special_orgs:
+        if 'ip-asn-org' in ret:
+            asn_org = ret['ip-asn-org']
+            for org, value in special_orgs.items():
+                for grep in value['grep']:
+                    if grep in asn_org:
+                        ret['ip-special'] = org
 
     for k, v in list(ret.items()):
         if v is None:
