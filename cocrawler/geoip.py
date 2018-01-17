@@ -61,7 +61,7 @@ def init():
             if 'grep' in special_orgs[org]:
                 special_orgs[org]['grep'].append(org)
             else:
-                special_orgs[org]['grep'] = (org)
+                special_orgs[org]['grep'] = (org,)
 
 
 def lookup(ip):
