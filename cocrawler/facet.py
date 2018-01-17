@@ -34,7 +34,7 @@ special_image = set(('og:image', 'twitter:image'))
 
 
 meta_name_content = set(('twitter:site', 'twitter:site:id', 'twitter:creator', 'twitter:creator:id',
-                         'robots', 'charset', 'http-equiv', 'referrer', 'format-detection', 'generator',
+                         'robots', 'charset', 'referrer', 'format-detection', 'generator',
                          'parsely-title', 'apple-itunes-app', 'google-play-app'))
 meta_name_generator_special = ('wordpress', 'movable type', 'drupal')
 meta_name_prefix = (('twitter:', 'twitter card'),)
