@@ -317,6 +317,7 @@ class Crawler:
 
         if post_fetch.is_redirect(f.response):
             post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self)
+            # meta-http-equiv-redirect will be dealt with in post_fetch
 
         if f.response.status == 200:
             await post_fetch.post_200(f, url, priority, json_log, host_geoip, self)

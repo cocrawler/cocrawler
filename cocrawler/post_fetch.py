@@ -202,8 +202,12 @@ async def post_200(f, url, priority, json_log, host_geoip, crawler):
         if new_links:
             json_log['found_new_links'] = new_links
 
+        # XXX process meta-http-equiv-refresh
+
         # XXX plugin for links and new links - post to Kafka, etc
         # neah stick that in add_url!
+
+        # actual jsonlog is emitted after the return
 
 
 async def post_dns(dns, url, crawler):
