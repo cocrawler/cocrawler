@@ -210,8 +210,6 @@ async def post_200(f, url, priority, json_log, host_geoip, crawler):
         # actual jsonlog is emitted after the return
 
 
-async def post_dns(dns, url, crawler):
+def post_dns(dns, expires, url, crawler):
     if crawler.warcwriter is not None:  # needs to use the same algo as post_200 for choosing what to warc
-        crawler.warcwriter.write_dns(url.url, dns)  # XXX
-
-    # generate DNS-related facets -- ip, geoip
+        crawler.warcwriter.write_dns(dns, expires, url)

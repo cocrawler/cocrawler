@@ -25,6 +25,7 @@ import hashlib
 from collections import namedtuple
 
 from cocrawler.warc import CCWARCWriter
+from cocrawler.urls import URL
 
 serials = {}
 
@@ -47,13 +48,17 @@ sub.create_default_info('1.0', '127.0.0.1')
 
 #main.write_robots('cocrawler.com/robots.txt', 'UserAgent: *\n'
 
-FakeDNSResponse = namedtuple('FakeDNSResponse', ['host', 'ttl'])
+#FakeDNSResponse = namedtuple('FakeDNSResponse', ['host', 'ttl'])
 
-fake_dns_result = [FakeDNSResponse('172.217.6.78', 10),
-                   FakeDNSResponse('172.217.6.78', 10),
-                   FakeDNSResponse('172.217.6.78', 10)]
+#fake_dns_result = [FakeDNSResponse('172.217.6.78', 10),
+#                   FakeDNSResponse('172.217.6.78', 10),
+#                   FakeDNSResponse('172.217.6.78', 10)]
 
-main.write_dns('google.com', fake_dns_result)
+fake_dns_result = [{'host': '172.217.6.78'},
+                   {'host': '172.217.6.78'},
+                   {'host': '172.217.6.78'}]
+
+main.write_dns(fake_dns_result, 10, URL('http://google.com'))
 
 fake_url = 'https://www.google.com/'
 fake_req_headers = [('Host', 'www.google.com')]

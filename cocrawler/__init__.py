@@ -285,10 +285,11 @@ class Crawler:
                 # fail out, we don't want to do DNS in the robots or page fetch
                 self._retry_if_able(work, ridealong)
                 return
-            addrs, _, _, host_geoip = entry
+            addrs, expires, _, host_geoip = entry
             if not host_geoip:
                 with stats.record_burn('geoip lookup'):
                     geoip.lookup_all(addrs, host_geoip)
+                post_fetch.post_dns(addrs, expires, url, self)
 
         r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:

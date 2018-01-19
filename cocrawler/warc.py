@@ -13,6 +13,7 @@ import socket
 import logging
 from collections import OrderedDict
 from io import BytesIO
+import time
 
 import six
 
@@ -154,13 +155,16 @@ class CCWARCWriter:
             self.f.close()
             self.writer = None
 
-    def write_dns(self, host, dns):
+    def write_dns(self, dns, expires, url):
         # write it out even if empty
         # TODO: we filter the addresses early, should we warc the unfiltered dns repsonse?
 
         # the response object doesn't contain the query type 'A' or 'AAAA'
         # but it has family=2 AF_INET (ipv4) and flags=4 AI_NUMERICHOST -- that's 'A'
-        kind = 'A'
+        kind = 'A'  # fixme IPV6
+
+        ttl = int(expires - time.time())
+        host = url.hostname
 
         if self.writer is None:
             self.open()
@@ -169,9 +173,9 @@ class CCWARCWriter:
 
         for r in dns:
             try:
-                payload += host + '.\t' + str(r.ttl) + '\tIN\t' + kind + '\t' + r.host + '\r\n'
+                payload += host + '.\t' + str(ttl) + '\tIN\t' + kind + '\t' + r['host'] + '\r\n'
             except Exception as e:
-                LOGGER.info('problem converting dns reply for warcing', r, e)
+                LOGGER.info('problem converting dns reply for warcing', host, r, e)
                 pass
         payload = payload.encode('utf-8')
 
