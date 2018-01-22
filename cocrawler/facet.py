@@ -104,46 +104,47 @@ def find_head_facets(head, head_soup=None, url=None):
     for m in meta:
         n = m.get('name').lower()
         content = m.get('content')
-        #if n in meta_name_content:
-        #    facets.append((n, content)
-        if n is not '':
+        if n and content:
             if len(content) > 100:
                 content = content[:100]
+            #if n in meta_name_content:
+            #    facets.append((n, content)
             facets.append(('meta-name-'+n, content))  # XXX get all of these for now
-        if n == 'generator' and content is not None:
-            cl = content.lower()
-            for s in meta_name_generator_special:
-                if s in cl:
-                    facets.append((s, True))
-        for pre in meta_name_prefix:
-            prefix, title = pre
-            if n.startswith(prefix):
-                facets.append((title, True))
+            if n == 'generator':
+                cl = content.lower()
+                for s in meta_name_generator_special:
+                    if s in cl:
+                        facets.append((s, True))
+            for pre in meta_name_prefix:
+                prefix, title = pre
+                if n.startswith(prefix):
+                    facets.append((title, True))
         # XXX remember the ones we didn't save
 
     meta = head_soup.find_all('meta', property=True)
     for m in meta:
         p = m.get('property').lower()
         content = m.get('content')
-        if len(content) > 100:
-            content = content[:100]
-        if p is not '':
+        if p and content:
+            if len(content) > 100:
+                content = content[:100]
             facets.append(('meta-property-'+p, content))  # XXX get all of these for now
-        if p in meta_property_content:
-            facets.append((p, content))
-        for pre in meta_property_prefix:
-            prefix, title = pre
-            if p.startswith(prefix):
-                facets.append((title, True))
+            if p in meta_property_content:
+                facets.append((p, content))
+            for pre in meta_property_prefix:
+                prefix, title = pre
+                if p.startswith(prefix):
+                    facets.append((title, True))
         # XXX remember the ones we didn't save
 
     meta = head_soup.find_all('meta', attrs={'http-equiv': True})  # has a dash, so use dict
     for m in meta:
         p = m.get('http-equiv').lower()
         content = m.get('content')
-        if len(content) > 100:
-            content = content[:100]
-        facets.append(('meta-http-equiv-'+p, content))  # XXX get all of these for now... robots, refresh etc
+        if p and content:
+            if len(content) > 100:
+                content = content[:100]
+            facets.append(('meta-http-equiv-'+p, content))  # XXX get all of these for now... robots, refresh etc
 
     # link rel is muli-valued attribute, hence, a list
     linkrel = head_soup.find_all('link', rel=True)
@@ -157,7 +158,7 @@ def find_head_facets(head, head_soup=None, url=None):
                 # XXX remember the ones we didn't save
                 pass
             href = l.get('href')
-            if href is not None:
+            if href:
                 if (('http://microformats.org/' in href or
                      'https://microformats.org/' in href)):
                     facets.append(('microformats.org', True))
