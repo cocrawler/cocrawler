@@ -84,7 +84,7 @@ def find_head_facets(head, head_soup=None, url=None):
             try:
                 head_soup = BeautifulSoup(head, 'lxml')
             except Exception as e:
-                facets.append(('BeautifulSoupException', repr(e)))
+                facets.append(('BeautifulSoupHeadException', repr(e)))
                 return facets
 
     html = head_soup.find('html')
@@ -108,17 +108,17 @@ def find_head_facets(head, head_soup=None, url=None):
             if len(content) > 100:
                 content = content[:100]
             #if n in meta_name_content:
-            #    facets.append((n, content)
+            #    facets.append(('meta-name-'+n, content)
             facets.append(('meta-name-'+n, content))  # XXX get all of these for now
-            if n == 'generator':
-                cl = content.lower()
-                for s in meta_name_generator_special:
-                    if s in cl:
-                        facets.append((s, True))
-            for pre in meta_name_prefix:
-                prefix, title = pre
-                if n.startswith(prefix):
-                    facets.append((title, True))
+            #if n == 'generator':
+            #    cl = content.lower()
+            #    for s in meta_name_generator_special:
+            #        if s in cl:
+            #            facets.append((s, True))
+            #for pre in meta_name_prefix:
+            #    prefix, title = pre
+            #    if n.startswith(prefix):
+            #        facets.append((title, True))
         # XXX remember the ones we didn't save
 
     meta = head_soup.find_all('meta', property=True)
@@ -129,12 +129,12 @@ def find_head_facets(head, head_soup=None, url=None):
             if len(content) > 100:
                 content = content[:100]
             facets.append(('meta-property-'+p, content))  # XXX get all of these for now
-            if p in meta_property_content:
-                facets.append((p, content))
-            for pre in meta_property_prefix:
-                prefix, title = pre
-                if p.startswith(prefix):
-                    facets.append((title, True))
+            #if p in meta_property_content:
+            #    facets.append((p, content))
+            #for pre in meta_property_prefix:
+            #    prefix, title = pre
+            #    if p.startswith(prefix):
+            #        facets.append((title, True))
         # XXX remember the ones we didn't save
 
     meta = head_soup.find_all('meta', attrs={'http-equiv': True})  # has a dash, so use dict
@@ -161,11 +161,11 @@ def find_head_facets(head, head_soup=None, url=None):
             if href:
                 if (('http://microformats.org/' in href or
                      'https://microformats.org/' in href)):
-                    facets.append(('microformats.org', True))
+                    facets.append(('thing-microformats.org', True))
 
     count = len(head_soup.find_all(integrity=True))
     if count:
-        facets.append(('script integrity', count))
+        facets.append(('thing-script integrity', count))
 
     return facets
 
@@ -195,14 +195,14 @@ def facets_grep(html, url=None):
 
     # if present, it's embedded in a <script> jsonl in the head or body
     if 'http://schema.org' in html or 'https://schema.org' in html:
-        facets.append(('schema.org', True))
+        facets.append(('thing-schema.org', True))
 
     # this can be in js or a cgi arg
     if 'pub-' in html:
         pub_matches = re.findall(r'[\'"\-=]pub-\d{16}[\'"&]', html)
         if pub_matches:
             for p in pub_matches:
-                facets.append(('google publisher id', p.strip('\'"-=&')))
+                facets.append(('thing-google publisher id', p.strip('\'"-=&')))
         else:
             LOGGER.info('url %s had false positive for pub- facet', url.url)
 
@@ -211,7 +211,7 @@ def facets_grep(html, url=None):
         ga_matches = re.findall(r'[\'"\-=]UA-\d{6,9}-\d{1,3}[\'"&]', html)
         if ga_matches:
             for g in ga_matches:
-                facets.append(('google analytics', g.strip('\'"-=&')))
+                facets.append(('thing-google analytics', g.strip('\'"-=&')))
         else:
             # frequent false positive for meta http-equiv X-UA-Compatible, alas
             pass
@@ -221,7 +221,7 @@ def facets_grep(html, url=None):
         gtm_matches = re.findall(r'[\'"\-=]GTM-[A-Z0-9]{4,7}[\'"&]', html)
         if gtm_matches:
             for g in gtm_matches:
-                facets.append(('google tag manager', g.strip('\'"-=&')))
+                facets.append(('thing-google tag manager', g.strip('\'"-=&')))
         else:
             LOGGER.info('url %s had false positive for GTM- facet', url.url)
 
@@ -231,7 +231,7 @@ def facets_grep(html, url=None):
         fbid_matches = re.findall(r'fbq\( \s? [\'"] init [\'"] , \s? [\'"] (\d{16}) [\'"]', html, re.X)
         if fbid_matches:
             for g in fbid_matches:
-                facets.append(('facebook events', g))
+                facets.append(('thing-facebook events', g))
         else:
             LOGGER.info('url %s had false positive for facebook events facet', url.url)
 
@@ -259,27 +259,27 @@ def facets_from_embeds(embeds):
     for url in embeds:  # this is both href and src embeds, but whatever
         u = url.url
         if 'cdn.ampproject.org' in u:
-            facets.append(('google amp', True))
+            facets.append(('thing-google amp', True))
         if 'www.google-analytics.com' in u:
             # rare that it's used this way
             # XXX parse the publisher id out of the cgi
-            facets.append(('google analytics link', True))
+            facets.append(('thing-google analytics link', True))
         if 'googlesyndication.com' in u:
-            facets.append(('google adsense', True))
+            facets.append(('thing-google adsense', True))
         if 'google.com/adsense/domains' in u:
-            facets.append(('google adsense for domains', True))
+            facets.append(('thing-google adsense for domains', True))
         if 'googletagmanager.com' in u:
             cgi = url.urlsplit.query
             cgi_list = cgi.split('&')
             for c in cgi_list:
                 if c.startswith('id=GTM-'):
-                    facets.append(('google tag manager', c[3:]))
+                    facets.append(('thing-google tag manager', c[3:]))
         if 'https://www.facebook.com/tr?' in u:  # img src
             cgi = url.urlsplit.query
             cgi_list = cgi.split('&')
             for c in cgi_list:
                 if c.startswith('id='):
-                    facets.append(('facebook events', c[3:]))
+                    facets.append(('thing-facebook events', c[3:]))
 
     return facets
 

@@ -34,13 +34,9 @@ def test_generator():
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('meta-name-generator', 'WordPress 2.5.1'),
-                      ('wordpress', True),
                       ('meta-name-generator', 'Movable Type 3.33'),
-                      ('movable type', True),
                       ('meta-name-generator', 'Movable Type Publishing Platform 4.01'),
-                      ('movable type', True),
-                      ('meta-name-generator', 'Drupal 7 (http://drupal.org)'),
-                      ('drupal', True)]
+                      ('meta-name-generator', 'Drupal 7 (http://drupal.org)')]
 
 
 def test_link_rel():
@@ -58,7 +54,7 @@ def test_link_rel():
                       ('link-rel-canonical',
                        ('https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort',
                         'notype')),
-                      ('microformats.org', True)]
+                      ('thing-microformats.org', True)]
 
 
 def test_facebook():
@@ -72,13 +68,9 @@ def test_facebook():
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('meta-property-fb:admins', '704409894'),
-                      ('fb:admins', '704409894'),
                       ('meta-property-fb:app_id', '4942312939'),
-                      ('fb:app_id', '4942312939'),
                       ('meta-property-og:site_name', 'ABC News'),
-                      ('opengraph', True),
                       ('meta-property-op:markup_version', 'v1.0'),
-                      ('fb instant', True),
                       ('link-rel-opengraph', ('...', 'notype')),
                       ('link-rel-origin', ('...', 'notype'))]
 
@@ -95,30 +87,21 @@ def test_twitter():
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('meta-name-twitter:app:id:iphone', '300255638'),
-                      ('twitter card', True),
                       ('meta-name-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
-                      ('twitter card', True),
                       ('meta-name-twitter:app:name:ipad', 'ABC News'),
-                      ('twitter card', True),
                       ('meta-name-twitter:app:id:ipad', '306934135'),
-                      ('twitter card', True),
                       ('meta-property-twitter:card', 'summary_large_image'),
                       ('meta-property-twitter:site', '@ABC'),
-                      ('twitter:site', '@ABC'),
-                      ('meta-property-twitter:creator', '@brianross'),
-                      ('twitter:creator', '@brianross')]
+                      ('meta-property-twitter:creator', '@brianross')]
 
     facets = facet.facet_dedup(facets)
     assert facets == [('meta-name-twitter:app:id:iphone', '300255638'),
-                      ('twitter card', True),
                       ('meta-name-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
                       ('meta-name-twitter:app:name:ipad', 'ABC News'),
                       ('meta-name-twitter:app:id:ipad', '306934135'),
                       ('meta-property-twitter:card', 'summary_large_image'),
                       ('meta-property-twitter:site', '@ABC'),
-                      ('twitter:site', '@ABC'),
-                      ('meta-property-twitter:creator', '@brianross'),
-                      ('twitter:creator', '@brianross')]
+                      ('meta-property-twitter:creator', '@brianross')]
 
 
 def test_applinks():  # fb + Parse
@@ -129,11 +112,8 @@ def test_applinks():  # fb + Parse
     '''
     facets = facet.find_head_facets(t)
     assert facets == [('meta-property-al:ios:url', 'applinks://docs'),
-                      ('applinks', True),
                       ('meta-property-al:ios:app_store_id', '12345'),
-                      ('applinks', True),
-                      ('meta-property-al:ios:app_name', 'App Links'),
-                      ('applinks', True)]
+                      ('meta-property-al:ios:app_name', 'App Links')]
 
 
 def test_misc_meta_name():
@@ -176,7 +156,7 @@ def test_integrity():
     facets = facet.find_head_facets(t)
     assert facets == [('link-rel-opengraph', ('http://example.com', 'notype')),
                       ('link-rel-amphtml', ('http://example.com/amp', 'notype')),
-                      ('script integrity', 3)]
+                      ('thing-script integrity', 3)]
 
 
 def test_facets_grep():
@@ -198,14 +178,14 @@ def test_facets_grep():
 
     '''
     facets = facet.facets_grep(t)
-    assert facets == [('google publisher id', 'pub-5692821433050410'),
-                      ('google publisher id', 'pub-5692821433050411'),
-                      ('google publisher id', 'pub-5692821433050413'),
-                      ('google analytics', 'UA-63787687-1'),
-                      ('google analytics', 'UA-8162380-2'),
-                      ('google analytics', 'UA-1234567-6'),
-                      ('google tag manager', 'GTM-XXXZQ5'),
-                      ('facebook events', '1234567890123456')]
+    assert facets == [('thing-google publisher id', 'pub-5692821433050410'),
+                      ('thing-google publisher id', 'pub-5692821433050411'),
+                      ('thing-google publisher id', 'pub-5692821433050413'),
+                      ('thing-google analytics', 'UA-63787687-1'),
+                      ('thing-google analytics', 'UA-8162380-2'),
+                      ('thing-google analytics', 'UA-1234567-6'),
+                      ('thing-google tag manager', 'GTM-XXXZQ5'),
+                      ('thing-facebook events', '1234567890123456')]
 
 
 def test_misc():
@@ -238,9 +218,9 @@ def test_facets_from_embeds():
               URL('googletagmanager.com?asdf&id=GTM-ZZZXXX&fdsa'),
               URL('https://www.facebook.com/tr?foo&id=1234567890123456'))
     facets = facet.facets_from_embeds(embeds)
-    assert facets == [('google amp', True),
-                      ('google tag manager', 'GTM-ZZZXXX'),
-                      ('facebook events', '1234567890123456')]
+    assert facets == [('thing-google amp', True),
+                      ('thing-google tag manager', 'GTM-ZZZXXX'),
+                      ('thing-facebook events', '1234567890123456')]
 
 
 # ----------------------------------------------------------------------
