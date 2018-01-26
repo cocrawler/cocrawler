@@ -18,6 +18,7 @@ from .urls import URL
 from . import stats
 from . import fetcher
 from . import config
+from . import post_fetch
 
 LOGGER = logging.getLogger(__name__)
 
@@ -72,17 +73,16 @@ class Robots:
         if self.robotslogfd:
             self.robotslogfd.close()
 
-    async def check(self, url, headers=None, proxy=None, mock_robots=None):
+    async def check(self, url, host_geoip, crawler, headers=None, proxy=None, mock_robots=None):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
-            robots = await self.fetch_robots(schemenetloc, mock_robots,
+            robots = await self.fetch_robots(schemenetloc, mock_robots, host_geoip, crawler,
                                              headers=headers, proxy=proxy)
 
-        # XXX I don't know why I'm building this up, shouldn't I use url.url?
         if url.urlsplit.path:
             pathplus = url.urlsplit.path
         else:
@@ -132,7 +132,7 @@ class Robots:
         self.in_progress.discard(schemenetloc)
         return parsed
 
-    async def fetch_robots(self, schemenetloc, mock_url, headers=None, proxy=None):
+    async def fetch_robots(self, schemenetloc, mock_url, host_geoip, crawler, headers=None, proxy=None):
         '''
         robotexclusionrules fetcher is not async, so fetch the file ourselves
 
@@ -165,9 +165,9 @@ class Robots:
             if robots is not None:
                 return robots
 
-            # ok, so it's not in the cache -- and the other guy's
-            # fetch failed. if we just fell through there would be a
-            # big race. treat this as a failure.
+            # ok, so it's not in the cache -- and the other guy's fetch failed.
+            # if we just fell through, there would be a big race.
+            # treat this as a failure.
             # XXX note that we have no negative caching
             LOGGER.debug('some other fetch of robots has failed.')  # XXX make this a stat
             return None
@@ -187,9 +187,9 @@ class Robots:
 
         stats.stats_sum('robots fetched', 1)
 
-        # If the url was redirected to a different host/robots.txt, let's cache that too
+        # If the url was redirected to a different host/robots.txt, let's cache that host too
         # XXX use f.response.history to get them all
-        final_url = str(f.response.url)  # this is a yarl.URL object now -- str() or url.human_repr()? XXX
+        final_url = str(f.response.url)  # YARL object
         final_schemenetloc = None
         if final_url != url.url:
             final_parts = urllib.parse.urlsplit(final_url)
@@ -212,11 +212,21 @@ class Robots:
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
         # Googlebot treats all 5xx as deny, unless they think the host returns 5xx instead of 404:
+        # XXX implement googlebot strategy
         if str(status).startswith('5'):
             json_log['error'] = 'got a 5xx, treating as deny'
             self.jsonlog(schemenetloc, json_log)
             self.in_progress.discard(schemenetloc)
             return None
+
+        # we got a 2xx, so let's use the final headers to facet the final server
+        # XXX will drop host_geoip unnecessarily for http -> https etc
+        if final_schemenetloc:
+            robots_url = final_schemenetloc + '/robots.txt'
+            host_geoip = {}  # the passed-in one is for the initial server
+        else:
+            robots_url = url
+        post_fetch.post_robots_txt(f, robots_url, host_geoip, crawler)
 
         body_bytes = f.body_bytes
 
@@ -262,7 +272,7 @@ class Robots:
             # we did not set this but we'll discard it anyway
             self.in_progress.discard(final_schemenetloc)
         if parsed.sitemaps:
-            json_log['has-sitemaps'] = True
+            json_log['has-sitemaps'] = len(parsed.sitemaps)
 
         self.jsonlog(schemenetloc, json_log)
         return parsed

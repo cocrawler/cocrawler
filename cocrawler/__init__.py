@@ -291,7 +291,7 @@ class Crawler:
                     geoip.lookup_all(addrs, host_geoip)
                 post_fetch.post_dns(addrs, expires, url, self)
 
-        r = await self.robots.check(url, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
+        r = await self.robots.check(url, host_geoip, self, headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
             # really, we shouldn't retry a robots.txt rule failure
             # but we do want to retry robots.txt failed to fetch
@@ -317,11 +317,11 @@ class Crawler:
         json_log['status'] = f.response.status
 
         if post_fetch.is_redirect(f.response):
-            post_fetch.handle_redirect(f, url, ridealong, priority, json_log, self)
+            post_fetch.handle_redirect(f, url, ridealong, priority, host_geoip, json_log, self)
             # meta-http-equiv-redirect will be dealt with in post_fetch
 
         if f.response.status == 200:
-            await post_fetch.post_200(f, url, priority, json_log, host_geoip, self)
+            await post_fetch.post_200(f, url, priority, host_geoip, json_log, self)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
         stats.stats_set('queue size', self.scheduler.qsize())

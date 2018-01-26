@@ -18,6 +18,7 @@ from . import parse
 from . import stats
 from . import config
 from . import seeds
+from . import facet
 from . import geoip
 
 LOGGER = logging.getLogger(__name__)
@@ -26,6 +27,27 @@ LOGGER = logging.getLogger(__name__)
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
     return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
+
+
+def minimal_facet_me(resp_headers, url, host_geoip, kind, crawler):
+    if not crawler.facetlogfd:
+        return
+    facets = facet.compute_all('', '', '', resp_headers, [], [], url=url)
+    geoip.add_facets(facets, host_geoip)
+    if not isinstance(url, str):
+        url = url.url
+    print(json.dumps({'url': url, 'facets': facets, 'kind': kind}, sort_keys=True), file=crawler.facetlogfd)
+
+
+'''
+If we're robots blocked, the only 200 we're ever going to get is
+for robots.txt. So, facet it.
+'''
+
+
+def post_robots_txt(f, url, host_geoip, crawler):
+    resp_headers = f.response.headers
+    minimal_facet_me(resp_headers, url, host_geoip, 'robots.txt', crawler)
 
 
 '''
@@ -40,11 +62,12 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, ridealong, priority, json_log, crawler):
+def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler):
     resp_headers = f.response.headers
+    minimal_facet_me(resp_headers, url, host_geoip, 'redir', crawler)
+
     location = resp_headers.get('location')
     if location is None:
-        # XXX the ridealong is never nuked in this case
         seeds.fail(ridealong, crawler)
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
@@ -52,34 +75,32 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
     ridealong['url'] = next_url
 
     kind = urls.special_redirect(url, next_url)
-    samesurt = True if url.surt == next_url.surt else False
-    LOGGER.debug('samesurt %r before %s after %s', samesurt, url.surt, next_url.surt)
+    samesurt = url.surt == next_url.surt
 
+    if 'seed' in ridealong:
+        prefix = 'redirect seed'
+    else:
+        prefix = 'redirect'
     if kind is not None:
-        if 'seed' in ridealong:
-            prefix = 'redirect seed'
-        else:
-            prefix = 'redirect'
         stats.stats_sum(prefix+' '+kind, 1)
     else:
-        stats.stats_sum('redirect non-special', 1)
+        stats.stats_sum(prefix+' non-special', 1)
+
+    queue_next = True
 
     if kind is None:
         if samesurt:
-            LOGGER.info('Whoops, redirect is samesurt but not a special_redirect: %s to %s, location %s',
-                        url.url, next_url.url, location)
+            LOGGER.info('Whoops, %s is samesurt but not a special_redirect: %s to %s, location %s',
+                        prefix, url.url, next_url.url, location)
     elif kind == 'same':
         LOGGER.info('attempted redirect to myself: %s to %s, location was %s', url.url, next_url.url, location)
         if 'Set-Cookie' not in resp_headers:
-            LOGGER.info('redirect to myself and had no cookies.')
-            stats.stats_sum('redirect same with set-cookie', 1)
-            # XXX try swapping www/not-www? or use a non-crawler UA.
-            # looks like some hosts have extra defenses on their redir servers!
+            LOGGER.info(prefix+' to myself and had no cookies.')
+            stats.stats_sum(prefix+' same with set-cookie', 1)
         else:
-            # XXX we should use a cookie jar with this host
-            stats.stats_sum('redirect same without set-cookie', 1)
+            stats.stats_sum(prefix+' same without set-cookie', 1)
         seeds.fail(ridealong, crawler)
-        # fall through, will fail samesurt test
+        queue_next = False
     else:
         LOGGER.info('special redirect of type %s for url %s', kind, url.url)
         # XXX push this info onto a last-k for the host
@@ -87,11 +108,8 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
 
     priority += 1
 
-    if samesurt:
-        if kind == 'same':
-            pass  # fall through to fail in seen_url
-        else:
-            ridealong['skip_seen_url'] = True
+    if samesurt and kind != 'same':
+        ridealong['skip_seen_url'] = True
 
     if 'freeredirs' in ridealong:
         priority -= 1
@@ -101,18 +119,22 @@ def handle_redirect(f, url, ridealong, priority, json_log, crawler):
             del ridealong['freeredirs']
     ridealong['priority'] = priority
 
-    LOGGER.debug('about to add url on redir, ridealong is %r', ridealong)
-    crawler.add_url(priority, ridealong)
+    if queue_next:
+        crawler.add_url(priority, ridealong)
 
     json_log['redirect'] = next_url.url
     json_log['location'] = location
     if kind is not None:
         json_log['kind'] = kind
-    json_log['found_new_links'] = 1
+    if queue_next:
+        json_log['found_new_links'] = 1
+    else:
+        json_log['found_new_links'] = 0
+
     # after we return, json_log will get logged
 
 
-async def post_200(f, url, priority, json_log, host_geoip, crawler):
+async def post_200(f, url, priority, host_geoip, json_log, crawler):
 
     if crawler.warcwriter is not None:  # needs to use the same algo as post_dns for choosing what to warc
         # XXX insert the digest we already computed, instead of computing it again?
@@ -180,7 +202,7 @@ async def post_200(f, url, priority, json_log, host_geoip, crawler):
         geoip.add_facets(facets, host_geoip)
 
         if crawler.facetlogfd:
-            print(json.dumps({'url': url.url, 'facets': facets}, sort_keys=True), file=crawler.facetlogfd)
+            print(json.dumps({'url': url.url, 'facets': facets, 'kind': 'get'}, sort_keys=True), file=crawler.facetlogfd)
 
         LOGGER.debug('parsing content of url %r returned %d links, %d embeds, %d facets',
                      url.url, len(links), len(embeds), len(facets))
