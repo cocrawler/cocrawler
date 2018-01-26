@@ -5,22 +5,16 @@ Two storage sizes:
    big -- all headers
    small -- summary only
 Two speeds:
-   fast - avoid expensive greps
-   slow - grep everything
-
-For normal crawling, we only parse facets we think might be useful
-for crawling and ranking: STS, twitter cards, facebook opengraph.
+   fast - avoid expensive greps and parsing
+   slow - grep everything, use expensive parsing if needed
 
 TODO: find rss feeds (both link alternate and plain href to .xml or maybe .rss)
 TODO: probe with DNT:1 and see who replies TK: N
-
-This module also contains code to post-facto process headers to
-figure out what technologies are used in a website.
-
 '''
 
 import re
 import logging
+from collections.abc import Mapping
 
 from bs4 import BeautifulSoup
 
@@ -59,7 +53,7 @@ def compute_all(html, head, body, headers_list, links, embeds, head_soup=None, u
     fgh = facets_grep(head, url=url)
     if expensive:
         fgb = facets_grep(body, url=url)
-        compare_head_body_grep(fgh, fgb, url)
+        #compare_head_body_grep(fgh, fgb, url)  # ~ 10% of the facets discovered in the body are also in the head
     else:
         fgb = []
     frh = facets_from_response_headers(headers_list)
@@ -203,6 +197,10 @@ def facets_grep(html, url=None):
         if pub_matches:
             for p in pub_matches:
                 facets.append(('thing-google publisher id', p.strip('\'"-=&')))
+            try_extra = re.findall(r'\bpub-\d{16}\b', html)
+            for t in try_extra:
+                if t not in pub_matches:
+                    LOGGER.info('GREG: url %s had an extra facebook pub match of %s', url, t)
         else:
             LOGGER.info('url %s had false positive for pub- facet', url.url)
 
@@ -212,6 +210,10 @@ def facets_grep(html, url=None):
         if ga_matches:
             for g in ga_matches:
                 facets.append(('thing-google analytics', g.strip('\'"-=&')))
+            try_extra = re.findall(r'\bUA-\d{6,9}-\d{1,3}\b', html)
+            for t in try_extra:
+                if t not in ga_matches:
+                    LOGGER.info('GREG: url %s had an extra UA match of %s', url, t)
         else:
             # frequent false positive for meta http-equiv X-UA-Compatible, alas
             pass
@@ -222,6 +224,10 @@ def facets_grep(html, url=None):
         if gtm_matches:
             for g in gtm_matches:
                 facets.append(('thing-google tag manager', g.strip('\'"-=&')))
+            try_extra = re.findall(r'\bGTM-[A-Z0-9]{4,7}\b', html)
+            for t in try_extra:
+                if t not in gtm_matches:
+                    LOGGER.info('GREG: url %s had an extra UA match of %s', url, t)
         else:
             LOGGER.info('url %s had false positive for GTM- facet', url.url)
 
