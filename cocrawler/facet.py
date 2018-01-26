@@ -243,6 +243,8 @@ def facets_from_response_headers(headers_list):
     Extract facets from headers. All are useful for site software fingerprinting but
     for now we'll default to grabbing the most search-enginey ones
     '''
+    if isinstance(headers_list, Mapping):
+        headers_list = [[k.lower(), v] for k, v in headers_list.items()]
     facets = []
     for h in headers_list:
         k, v = h
