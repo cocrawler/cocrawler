@@ -269,6 +269,7 @@ class Robots:
         self.datalayer.cache_robots(schemenetloc, parsed)
         self.in_progress.discard(schemenetloc)
         if final_schemenetloc:
+            self.datalayer.cache_robots(final_schemenetloc, parsed)
             # we did not set this but we'll discard it anyway
             self.in_progress.discard(final_schemenetloc)
         if parsed.sitemaps:
