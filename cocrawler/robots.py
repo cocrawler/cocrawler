@@ -73,14 +73,14 @@ class Robots:
         if self.robotslogfd:
             self.robotslogfd.close()
 
-    async def check(self, url, host_geoip, crawler, headers=None, proxy=None, mock_robots=None):
+    async def check(self, url, host_geoip, seed_host, crawler, headers=None, proxy=None, mock_robots=None):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
-            robots = await self.fetch_robots(schemenetloc, mock_robots, host_geoip, crawler,
+            robots = await self.fetch_robots(schemenetloc, mock_robots, host_geoip, seed_host, crawler,
                                              headers=headers, proxy=proxy)
 
         if url.urlsplit.path:
@@ -131,7 +131,7 @@ class Robots:
         self.in_progress.discard(schemenetloc)
         return parsed
 
-    async def fetch_robots(self, schemenetloc, mock_url, host_geoip, crawler, headers=None, proxy=None):
+    async def fetch_robots(self, schemenetloc, mock_url, host_geoip, seed_host, crawler, headers=None, proxy=None):
         '''
         robotexclusionrules fetcher is not async, so fetch the file ourselves
 
@@ -231,7 +231,7 @@ class Robots:
             host_geoip = {}  # the passed-in one is for the initial server
         else:
             robots_url = url
-        post_fetch.post_robots_txt(f, robots_url, host_geoip, crawler)
+        post_fetch.post_robots_txt(f, robots_url, host_geoip, seed_host, crawler)
 
         body_bytes = f.body_bytes
 

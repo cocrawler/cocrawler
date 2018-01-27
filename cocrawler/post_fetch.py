@@ -29,14 +29,17 @@ def is_redirect(response):
     return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
 
 
-def minimal_facet_me(resp_headers, url, host_geoip, kind, crawler):
+def minimal_facet_me(resp_headers, url, host_geoip, seed_host, kind, crawler):
     if not crawler.facetlogfd:
         return
     facets = facet.compute_all('', '', '', resp_headers, [], [], url=url)
     geoip.add_facets(facets, host_geoip)
     if not isinstance(url, str):
         url = url.url
-    print(json.dumps({'url': url, 'facets': facets, 'kind': kind}, sort_keys=True), file=crawler.facetlogfd)
+    facet_log = {'url': url, 'facets': facets, 'kind': kind}
+    if seed_host:
+        facet_log['seed_host'] = seed_host
+    print(json.dumps(facet_log, sort_keys=True), file=crawler.facetlogfd)
 
 
 '''
@@ -45,9 +48,9 @@ for robots.txt. So, facet it.
 '''
 
 
-def post_robots_txt(f, url, host_geoip, crawler):
+def post_robots_txt(f, url, host_geoip, seed_host, crawler):
     resp_headers = f.response.headers
-    minimal_facet_me(resp_headers, url, host_geoip, 'robots.txt', crawler)
+    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'robots.txt', crawler)
 
 
 '''
@@ -62,9 +65,9 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler):
+def handle_redirect(f, url, ridealong, priority, host_geoip, seed_host, json_log, crawler):
     resp_headers = f.response.headers
-    minimal_facet_me(resp_headers, url, host_geoip, 'redir', crawler)
+    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'redir', crawler)
 
     location = resp_headers.get('location')
     if location is None:
@@ -134,7 +137,7 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler):
     # after we return, json_log will get logged
 
 
-async def post_200(f, url, priority, host_geoip, json_log, crawler):
+async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
 
     if crawler.warcwriter is not None:  # needs to use the same algo as post_dns for choosing what to warc
         # XXX insert the digest we already computed, instead of computing it again?
@@ -201,8 +204,12 @@ async def post_200(f, url, priority, host_geoip, json_log, crawler):
 
         geoip.add_facets(facets, host_geoip)
 
+        facet_log = {'url': url.url, 'facets': facets, 'kind': 'get'}
+        if seed_host:
+            facet_log['seed_host'] = seed_host
+
         if crawler.facetlogfd:
-            print(json.dumps({'url': url.url, 'facets': facets, 'kind': 'get'}, sort_keys=True), file=crawler.facetlogfd)
+            print(json.dumps(facet_log, sort_keys=True), file=crawler.facetlogfd)
 
         LOGGER.debug('parsing content of url %r returned %d links, %d embeds, %d facets',
                      url.url, len(links), len(embeds), len(facets))
