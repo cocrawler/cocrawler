@@ -113,14 +113,13 @@ class Robots:
         json_log = {'url': pathplus, 'action': 'deny'}
         if google_check:
             json_log['google-action'] = 'allow'
-        if generic_check:
-            json_log['generic-action'] = 'allow'
-        self.jsonlog(schemenetloc, json_log)
-        stats.stats_sum('robots denied', 1)
-        if google_check:
             stats.stats_sum('robots denied - but googlebot allowed', 1)
         if generic_check:
+            json_log['generic-action'] = 'allow'
             stats.stats_sum('robots denied - but * allowed', 1)
+        stats.stats_sum('robots denied', 1)
+
+        self.jsonlog(schemenetloc, json_log)
         return False
 
     def _cache_empty_robots(self, schemenetloc, final_schemenetloc):
@@ -179,6 +178,12 @@ class Robots:
                                 allow_redirects=True, max_redirects=5, stats_prefix='robots ')
 
         json_log = {'action': 'fetch'}
+
+        if f.response.history:
+            redir_history = [str(h.url) for h in f.response.history]
+            redir_history.append(str(f.response.url))
+            json_log['redir_history'] = redir_history
+
         if f.last_exception:
             json_log['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
             self.jsonlog(schemenetloc, json_log)
@@ -188,7 +193,7 @@ class Robots:
         stats.stats_sum('robots fetched', 1)
 
         # If the url was redirected to a different host/robots.txt, let's cache that host too
-        # XXX use f.response.history to get them all
+        # XXX use redir_history list to get them all?
         final_url = str(f.response.url)  # YARL object
         final_schemenetloc = None
         if final_url != url.url:
