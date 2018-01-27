@@ -42,9 +42,10 @@ def expand_seeds_config(crawler):
                 for line in f:
                     if '#' in line:
                         line, _ = line.split('#', 1)
-                    if line.strip() == '':
+                    line = line.strip()
+                    if line == '':
                         continue
-                    u = special_seed_handling(line.strip())
+                    u = special_seed_handling(line)
                     urls.append(u)
 
     # sitemaps are a little tedious, so I'll implement later.
@@ -81,19 +82,24 @@ def special_seed_handling(url):
     We don't expect seed-lists to be very clean: no scheme, etc.
     '''
     parts = urllib.parse.urlsplit(url)
+    had_scheme = True
     if parts.scheme == '':
+        had_scheme = False
         if url.startswith('//'):
             url = 'http:' + url
         else:
             url = 'http://' + url
 
     global POLICY
-    if POLICY == 'www-then-non-www':
+    if POLICY == 'www-then-non-www' and not had_scheme:
         # does hostname already have www? use URL() to find out
         temp = URL(url)
         if temp.hostname == temp.hostname_without_www:
             LOGGER.debug('adding a www to %s', url)
-            url = url.replace('http://', 'http://www.')
+            if url.startswith('http://'):
+                url = url.replace('http://', 'http://www.', 1)
+            else:
+                url = url.replace('https://', 'https://www.', 1)
 
     url = URL(url)
     return url
@@ -120,7 +126,17 @@ def fail(ridealong, crawler):
         if 'original_url' not in ridealong:
             LOGGER.info('should have seen original_url in this seed, but did not')
             return
-        url = URL(ridealong['original_url'].replace('www.', '', 1))
-        LOGGER.info('seed url second chance %s', url.url)
+
+        original_url = ridealong['original_url']
+        if 'www.' not in original_url:
+            LOGGER.info('original url did not contain www, adding it')
+            if original_url.startswith('https://'):
+                url = URL(original_url.replace('https://', 'https://www.', 1))
+            if original_url.startswith('http://'):
+                url = URL(original_url.replace('http://', 'http://www.', 1))
+        else:
+            url = URL(original_url.replace('www.', '', 1))
+
+        LOGGER.info('seed url second chance: %s to %s', original_url, url.url)
         stats.stats_sum('seeds second chances', 1)
         seed_some_urls((url,), crawler, second_chance=False)
