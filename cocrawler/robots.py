@@ -179,16 +179,16 @@ class Robots:
 
         json_log = {'action': 'fetch'}
 
-        if f.response.history:
-            redir_history = [str(h.url) for h in f.response.history]
-            redir_history.append(str(f.response.url))
-            json_log['redir_history'] = redir_history
-
         if f.last_exception:
             json_log['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
             self.jsonlog(schemenetloc, json_log)
             self.in_progress.discard(schemenetloc)
             return None
+
+        if f.response.history:
+            redir_history = [str(h.url) for h in f.response.history]
+            redir_history.append(str(f.response.url))
+            json_log['redir_history'] = redir_history
 
         stats.stats_sum('robots fetched', 1)
 
