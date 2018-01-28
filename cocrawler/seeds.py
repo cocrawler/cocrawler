@@ -63,7 +63,9 @@ def expand_seeds_config(crawler):
             else:
                 second = u.replace('://www.', '://', 1)
                 if second == u:
-                    raise ValueError('invalid seed 2: '+seed_host+' '+u)
+                    #raise ValueError('invalid seed 2: '+seed_host+' '+u)
+                    print('invalid seed 2: '+seed_host+' '+u)  # example: http://www3.nhk.or.jp
+                    second = ''
         else:
             second = ''
         final_urls.append((seed_host, url, second))
