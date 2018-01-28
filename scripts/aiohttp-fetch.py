@@ -42,6 +42,9 @@ async def main(urls):
                 print('    ', rec.get('host'))
 
         print('')
+        if str(response.url) != url:
+            print('final url:', str(response.url))
+            print('')
 
         print('final request headers:')
         for k, v in response.request_info.headers.items():
@@ -49,10 +52,17 @@ async def main(urls):
         print('')
 
         if response.history:
-            print('response history:')
+            print('response history: response and headers:')
             for h in response.history:
-                print('  ', h)
+                print('  ', repr(h))
             print('')
+
+            print('response history urls:')
+            response_urls = [str(h.url) for h in response.history]
+            response_urls.append(str(response.url))
+            if response_urls:
+                print('  ', '\n   '.join(response_urls))
+                print('')
 
         print('response headers:')
         for k, v in response.raw_headers:
@@ -61,7 +71,7 @@ async def main(urls):
         print('')
 
         try:
-            print(await response.text(errors='ignore'))
+            #print(await response.text(errors='ignore'))
             pass
         except Exception as e:
             print_exc()
