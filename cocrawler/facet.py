@@ -195,12 +195,14 @@ def facets_grep(html, url=None):
     if 'pub-' in html:
         pub_matches = re.findall(r'[\'"\-=]pub-\d{16}[\'"&]', html)
         if pub_matches:
+            dedup = set()
             for p in pub_matches:
                 facets.append(('thing-google publisher id', p.strip('\'"-=&')))
+                dedup.add(p.strip('\'"-=&'))
             try_extra = re.findall(r'\bpub-\d{16}\b', html)
             for t in try_extra:
-                if t not in pub_matches:
-                    LOGGER.info('GREG: url %s had an extra facebook pub match of %s', url, t)
+                if t not in dedup:
+                    LOGGER.info('GREG: url %s had an extra google pub match of %s', url, t)
         else:
             LOGGER.info('url %s had false positive for pub- facet', url.url)
 
@@ -208,11 +210,13 @@ def facets_grep(html, url=None):
     if 'UA-' in html:
         ga_matches = re.findall(r'[\'"\-=]UA-\d{6,9}-\d{1,3}[\'"&]', html)
         if ga_matches:
+            dedup = set()
             for g in ga_matches:
                 facets.append(('thing-google analytics', g.strip('\'"-=&')))
+                dedup.add(g.strip('\'"-=&'))
             try_extra = re.findall(r'\bUA-\d{6,9}-\d{1,3}\b', html)
             for t in try_extra:
-                if t not in ga_matches:
+                if t not in dedup:
                     LOGGER.info('GREG: url %s had an extra UA match of %s', url, t)
         else:
             # frequent false positive for meta http-equiv X-UA-Compatible, alas
@@ -222,11 +226,13 @@ def facets_grep(html, url=None):
     if 'GTM-' in html:
         gtm_matches = re.findall(r'[\'"\-=]GTM-[A-Z0-9]{4,7}[\'"&]', html)
         if gtm_matches:
+            dedup = set()
             for g in gtm_matches:
                 facets.append(('thing-google tag manager', g.strip('\'"-=&')))
+                dedup.add(g.strip('\'"-=&'))
             try_extra = re.findall(r'\bGTM-[A-Z0-9]{4,7}\b', html)
             for t in try_extra:
-                if t not in gtm_matches:
+                if t not in dedup:
                     LOGGER.info('GREG: url %s had an extra UA match of %s', url, t)
         else:
             LOGGER.info('url %s had false positive for GTM- facet', url.url)
