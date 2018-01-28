@@ -225,12 +225,14 @@ class Robots:
             return None
 
         # we got a 2xx, so let's use the final headers to facet the final server
-        # XXX will drop host_geoip unnecessarily for http -> https etc
         if final_schemenetloc:
             robots_url = final_schemenetloc + '/robots.txt'
-            host_geoip = {}  # the passed-in one is for the initial server
+            # if the hostname is the same and only the scheme is different, that's ok
+            if ((robots_url.replace('https://', 'http://', 1) != url.url and
+                 robots_url.replace('http://', 'https://', 1) != url.url)):
+                host_geoip = {}  # the passed-in one is for the initial server
         else:
-            robots_url = url
+            robots_url = url.url
         post_fetch.post_robots_txt(f, robots_url, host_geoip, seed_host, crawler)
 
         body_bytes = f.body_bytes
