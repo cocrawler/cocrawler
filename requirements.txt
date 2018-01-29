@@ -3,7 +3,7 @@
 # used by the cocrawler system
 uvloop==0.9.1
 aiohttp==2.3.9
-yarl==1.0.0
+yarl==1.1.0
 aiodns==1.1.1
 pyyaml==3.12
 cchardet==2.1.1
@@ -31,7 +31,7 @@ bottle==0.12.13
 
 # used by Makefile
 coverage==4.4.2
-pylint==1.8.1
+pylint==1.8.2
 flake8==3.5.0
 pytest==3.3.2
 pytest-cov==2.5.1
