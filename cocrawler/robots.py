@@ -246,7 +246,7 @@ class Robots:
 
         body_bytes = strip_bom(body_bytes)
 
-        plausible, message = self.is_plausible_robots(schemenetloc, f.body_bytes, f.t_first_byte)
+        plausible, message = self.is_plausible_robots(schemenetloc, body_bytes, f.t_first_byte)
         if not plausible:
             # policy: treat as empty
             json_log['error'] = 'saw an implausible robots.txt, treating as empty'
@@ -257,10 +257,10 @@ class Robots:
         # go from bytes to a string, despite bogus utf8
         # XXX what about non-utf8?
         try:
-            body = f.body_bytes.decode(encoding='utf8')
+            body = body_bytes.decode(encoding='utf8')
         except UnicodeError:  # pragma: no cover
             # try again assuming utf8 and ignoring errors
-            body = f.body_bytes.decode(encoding='utf8', errors='replace')
+            body = body_bytes.decode(encoding='utf8', errors='replace')
         except asyncio.CancelledError:
             raise
         except Exception as e:
