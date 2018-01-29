@@ -25,19 +25,22 @@ LOGGER = logging.getLogger(__name__)
 
 def strip_bom(b):
     if b[:3] == b'\xef\xbb\xbf':  # utf-8, e.g. microsoft.com's sitemaps
-        return b[3:].strip()
+        return b[3:].lstrip()
     elif b[:2] in (b'\xfe\xff', b'\xff\xfe'):  # utf-16 BE and LE, respectively
-        return b[2:].strip()
+        return b[2:].lstrip()
     else:
-        return b.strip()
+        return b.lstrip()
 
 
 def preprocess_robots(text):
     '''
-    robotsexclusionrulesparser does not follow the de-factor robots.txt standard.
+    robotsexclusionrulesparser does not follow the de-facto robots.txt standard.
     1) blank lines should not reset user-agent to *
     2) longest match
+    3) user agent rules should not regex
+       i.e. foo-cocrawler should not match rules for User-Agent: crawl or User-Agent: -
     This code preprocesses robots.txt to mitigate (1)
+    TODO: Mitigate (3)
     TODO: make wrap robotsexclusionrulesparser in another class?
 
     Note: Python's built-in urllib.robotparser definitely breaks (1)
