@@ -162,6 +162,17 @@ def test_split_head_body():
     assert len(body) == 100006
 
 
+def test_parse_refresh():
+    test = ((('0;foo'), ('0', 'foo')),
+            ((';'), (None, None)),
+            (('1.1.1.1; bar'), ('1', 'bar')),
+            (('2.2, urbaz'), ('2', 'urbaz')),
+            (('3; url=barf'), ('3', 'barf')),
+            (('3; url="barf"asdf'), ('3', 'barf')),
+            (('3; UrL='), ('3', '')))
+    for t in test:
+        assert parse.parse_refresh(t[0]) == t[1]
+
 
 def test_regex_out_comments():
     t = 'Hello <!-- foo --> world!'

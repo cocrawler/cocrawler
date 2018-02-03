@@ -194,6 +194,34 @@ def split_head_body(html, url=None):
     return html[:m.start()], html[m.end():]  # matched text is not included in either
 
 
+def parse_refresh(s):
+    '''
+    https://www.w3.org/TR/html5/document-metadata.html#statedef-http-equiv-refresh
+
+    See in real life and not standard-conforming, in order of popularity:
+      whitespace after t before the ';'
+      starting with a decimal point
+      starting with a minus sign
+      empty time, starts with ';'
+      url= but missing the ';'
+    None of these actually work in modern FF, Chrome, or Safari
+    '''
+    t = None
+    refresh = r'\s* (\d+) (?:\.[\d\.]*)? [;,] \s* ([Uu][Rr][Ll] \s* = \s* ["\']?)? (.*)'
+    m = re.match(refresh, s, re.X)
+    if m:
+        t, sep, url = m.groups()
+        if sep and sep.endswith('"') and '"' in url:
+            url = url[:url.index('"')]
+        if sep and sep.endswith("'") and "'" in url:
+            url = url[:url.index("'")]
+    else:
+        if s.isdigit():
+            t = int(s)
+        url = None
+    return t, url
+
+
 '''
 Helpers to minimize how many bytes we have to html parse.
 Of course, these are all dangerous, but they might be useful
