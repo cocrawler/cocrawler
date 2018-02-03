@@ -136,7 +136,13 @@ def find_head_facets(head, head_soup=None, url=None):
         if p and content:
             if len(content) > 100:
                 content = content[:100]
-            facets.append(('meta-http-equiv-'+p, content))  # XXX get all of these for now... robots, refresh etc
+            extra = ''
+            if p == 'refresh':
+                for enclosing in m.parents:
+                    if enclosing and enclosing.name == 'noscript':
+                        extra = '-noscript'
+                        break
+            facets.append(('meta-http-equiv-'+p+extra, content))  # XXX get all of these for now... robots, refresh etc
 
     # link rel is muli-valued attribute, hence, a list
     linkrel = head_soup.find_all('link', rel=True)

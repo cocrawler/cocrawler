@@ -223,6 +223,16 @@ def test_facets_from_embeds():
                       ('thing-facebook events', '1234567890123456')]
 
 
+def test_refresh_noscript():
+    t = '<meta http-equiv="refresh" content="0; url=http://www.ExampleOnly.com/"/>'
+    tno = '<noscript>' + t + '</noscript>'
+
+    facets = facet.find_head_facets(t)
+    assert facets == [('meta-http-equiv-refresh', '0; url=http://www.ExampleOnly.com/')]
+    facets = facet.find_head_facets(tno)
+    assert facets == [('meta-http-equiv-refresh-noscript', '0; url=http://www.ExampleOnly.com/')]
+
+
 # ----------------------------------------------------------------------
 # A collection of stuff I may get to later
 # ----------------------------------------------------------------------
@@ -242,10 +252,6 @@ def test_facets_from_embeds():
 var appId = "1610172482603249";
 '''
 
-# a kind of redir
-'''
-<meta http-equiv="refresh" content="0; url=http://www.ExampleOnly.com/"/>
-'''
 
 # some M$-specific pin-to-taskbar thing
 '''
