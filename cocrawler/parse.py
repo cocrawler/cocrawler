@@ -40,6 +40,7 @@ def do_burner_work_html(html, html_bytes, headers_list, burn_prefix='', url=None
 
     base = head_soup.find('base') or {}
     base = base.get('href')
+    base_or_url = base or url
 
     with stats.record_burn(burn_prefix+'find_head_links_soup', url=url):
         links, embeds = find_head_links_soup(head_soup)
@@ -50,8 +51,8 @@ def do_burner_work_html(html, html_bytes, headers_list, burn_prefix='', url=None
         embeds.update(ebody)
 
     with stats.record_burn(burn_prefix+'url_clean_join', url=url):
-        links = url_clean_join(links, url=base or url)
-        embeds = url_clean_join(embeds, url=base or url)
+        links = url_clean_join(links, url=base_or_url)
+        embeds = url_clean_join(embeds, url=base_or_url)
 
     with stats.record_burn(burn_prefix+'sha1 html', url=url):
         sha1 = 'sha1:' + hashlib.sha1(html_bytes).hexdigest()
