@@ -58,10 +58,10 @@ def init():
             global special_orgs
             special_orgs = json.load(f)
         for org in special_orgs:
-            if 'grep' in special_orgs[org]:
-                special_orgs[org]['grep'].append(org)
+            if 'greps' in special_orgs[org]:
+                special_orgs[org]['greps'].append(org)
             else:
-                special_orgs[org]['grep'] = (org,)
+                special_orgs[org]['greps'] = (org,)
 
 
 def lookup(ip):
@@ -102,7 +102,7 @@ def lookup(ip):
         if 'ip-asn-org' in ret:
             asn_org = ret['ip-asn-org']
             for org, value in special_orgs.items():
-                for grep in value['grep']:
+                for grep in value['greps']:
                     if grep in asn_org:
                         ret['ip-special'] = org
 
