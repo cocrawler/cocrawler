@@ -197,54 +197,35 @@ def facets_grep(html, url=None):
 
     # this can be in js or a cgi arg
     if 'pub-' in html:
-        pub_matches = re.findall(r'[\'"\-=]pub-\d{16}[\'"&]', html)
+        pub_matches = re.findall(r'\bpub-\d{16}\b', html)
         if pub_matches:
-            dedup = set()
             for p in pub_matches:
-                facets.append(('thing-google publisher id', p.strip('\'"-=&')))
-                dedup.add(p.strip('\'"-=&'))
-            try_extra = re.findall(r'\bpub-\d{16}\b', html)
-            for t in try_extra:
-                if t not in dedup:
-                    LOGGER.info('GREG: url %s had an extra google pub match of %s', url, t)
+                facets.append(('thing-google publisher id', p))
         else:
             LOGGER.info('url %s had false positive for pub- facet', url.url)
 
     # this can be in js or a cgi arg
     if 'UA-' in html:
-        ga_matches = re.findall(r'[\'"\-=]UA-\d{6,9}-\d{1,3}[\'"&]', html)
+        ga_matches = re.findall(r'\bUA-\d{6,9}-\d{1,3}\b', html)
         if ga_matches:
-            dedup = set()
             for g in ga_matches:
-                facets.append(('thing-google analytics', g.strip('\'"-=&')))
-                dedup.add(g.strip('\'"-=&'))
-            try_extra = re.findall(r'\bUA-\d{6,9}-\d{1,3}\b', html)
-            for t in try_extra:
-                if t not in dedup:
-                    LOGGER.info('GREG: url %s had an extra UA match of %s', url, t)
+                facets.append(('thing-google analytics', g))
         else:
             # frequent false positive for meta http-equiv X-UA-Compatible, alas
             pass
 
     # js or id= cgi arg
     if 'GTM-' in html:
-        gtm_matches = re.findall(r'[\'"\-=]GTM-[A-Z0-9]{4,7}[\'"&]', html)
+        gtm_matches = re.findall(r'\bGTM-[A-Z0-9]{4,7}\b', html)
         if gtm_matches:
-            dedup = set()
             for g in gtm_matches:
-                facets.append(('thing-google tag manager', g.strip('\'"-=&')))
-                dedup.add(g.strip('\'"-=&'))
-            try_extra = re.findall(r'\bGTM-[A-Z0-9]{4,7}\b', html)
-            for t in try_extra:
-                if t not in dedup:
-                    LOGGER.info('GREG: url %s had an extra UA match of %s', url, t)
+                facets.append(('thing-google tag manager', g))
         else:
             LOGGER.info('url %s had false positive for GTM- facet', url.url)
 
-    # script: fbq('init', '\d{16}', and https://connect.facebook.net/en_US/fbevents.js
-    # this could be skipped if we analyze embeds first -- standard FB code has both
+    # standard FB code has both this and embed facebook.com/tr?id=... also a CSP
     if 'fbq(' in html:
-        fbid_matches = re.findall(r'fbq\( \s? [\'"] init [\'"] , \s? [\'"] (\d{16}) [\'"]', html, re.X)
+        fbid_matches = re.findall(r'fbq\( \s? [\'"] init [\'"] , \s? [\'"] (\d{15,16}) [\'"]', html, re.X)
         if fbid_matches:
             for g in fbid_matches:
                 facets.append(('thing-facebook events', g))
