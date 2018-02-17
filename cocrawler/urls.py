@@ -184,10 +184,14 @@ subdelims.update(set('%02X' % i for i in range(0x26, 0x2d)))  # &'()*+,
 unquote_in_path = subdelims.copy()
 unquote_in_path.update(set(('3A', '40')))  # ok: :@
 
+quote_in_path = {' ': '%20'}
+
 unquote_in_query = subdelims.copy()
 unquote_in_query.update(set(('3A', '2F', '3F', '40')))  # ok: :/?@
 unquote_in_query.remove('26')  # not ok: &=
 unquote_in_query.remove('3D')
+
+quote_in_query = {' ': '+'}
 
 unquote_in_frag = unquote_in_query.copy()
 
@@ -208,6 +212,15 @@ def unquote(text, safe):
         else:
             text += '%' + quote + rest
     return text
+
+
+def quote(text, quoteme):
+    ret = ''
+    for c in text:
+        if c in quoteme:
+            c = quoteme[c]
+        ret += c
+    return ret
 
 
 def safe_url_canonicalization(url):
@@ -240,8 +253,10 @@ def safe_url_canonicalization(url):
         raise
     path = path.replace('\\', '/')  # might not be 100% safe but is needed for Windows buffoons
     path = unquote(path, unquote_in_path)
+    path = quote(path, quote_in_path)
 
     query = unquote(query, unquote_in_query)
+    query = quote(query, quote_in_query)
 
     if fragment is not '':
         fragment = '#' + unquote(fragment, unquote_in_frag)

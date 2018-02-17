@@ -114,10 +114,12 @@ def test_safe_url_canonicalization():
     assert suc('http://example.com/%21%24%3b%3d%3a%40') == ('http://example.com/!$;=:@', '')
     assert suc('http://example.com/?%21%24%3b%3d%3a%40') == ('http://example.com/?!$;%3D:@', '')
     assert suc('http://example.com/#%21%24%3b%3d%3a%40') == ('http://example.com/', '#!$;%3D:@')
+    assert suc('http://example.com/foo bar') == ('http://example.com/foo%20bar', '')
 
     # query/fragment
     assert suc('http://example.com/%3a%40%2f%3f%40') == ('http://example.com/:@%2F%3F@', '')
     assert suc('http://example.com/?%3a%40%2f%3f%40') == ('http://example.com/?:@/?@', '')
+    assert suc('http://example.com/?foo bar') == ('http://example.com/?foo+bar', '')
     assert suc('http://example.com/#%3a%40%2f%3f%40') == ('http://example.com/', '#:@/?@')
 
     # Bug report from Stbastian Nagel of CC to IA:
