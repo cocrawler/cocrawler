@@ -106,6 +106,11 @@ class Robots:
                 google_check = robots.is_allowed('googlebot', pathplus)
                 generic_check = robots.is_allowed('*', pathplus)
 
+        # fixup robotsexclusionrulesparser
+        # if generic_check is True and robots doesn't mention us, then it's an overmatch
+        # e.g. 'UserAgent: -' matching 'foo-cocrawler'
+        # XXX
+
         if check:
             LOGGER.debug('robots allowed for %s%s', schemenetloc, pathplus)
             stats.stats_sum('robots allowed', 1)
@@ -150,7 +155,6 @@ class Robots:
             raise ValueError('not yet implemented')
 
         # We might enter this routine multiple times, so, sleep if we aren't the first
-        # XXX this is frequently racy, according to the logfiles!
         if schemenetloc in self.in_progress:
             while schemenetloc in self.in_progress:
                 LOGGER.debug('sleeping because someone beat me to the robots punch')
@@ -169,8 +173,7 @@ class Robots:
 
             # ok, so it's not in the cache -- and the other guy's fetch failed.
             # if we just fell through, there would be a big race.
-            # treat this as a failure.
-            # XXX note that we have no negative caching
+            # treat this as a "no data" failure.
             LOGGER.debug('some other fetch of robots has failed.')  # XXX make this a stat
             return None
 
@@ -195,8 +198,7 @@ class Robots:
 
         stats.stats_sum('robots fetched', 1)
 
-        # If the url was redirected to a different host/robots.txt, let's cache that host too
-        # XXX use redir_history list to get them all?
+        # If the url was redirected to a different host/robots.txt, let's cache that final host too
         final_url = str(f.response.url)  # YARL object
         final_schemenetloc = None
         if final_url != url.url:
@@ -271,6 +273,8 @@ class Robots:
             return None
 
         if self.robotname in body:
+            # XXX this should be a case-blind check
+            # XXX need to record this in the cache to fix a robotsexclusionrulesparser bug
             json_log['mentions-us'] = True
 
         with stats.record_burn('robots parse', url=schemenetloc):
