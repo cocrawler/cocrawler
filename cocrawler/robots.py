@@ -261,7 +261,7 @@ class Robots:
         try:
             body = body_bytes.decode(encoding='utf8')
         except UnicodeError:  # pragma: no cover
-            # try again assuming utf8 and ignoring errors
+            # try again assuming utf8 and ignoring errors -- likely won't raise
             body = body_bytes.decode(encoding='utf8', errors='replace')
         except asyncio.CancelledError:
             raise
