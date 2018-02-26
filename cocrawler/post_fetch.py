@@ -205,6 +205,8 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         geoip.add_facets(facets, host_geoip)
 
         facet_log = {'url': url.url, 'facets': facets, 'kind': 'get'}
+        facet_log['checksum'] = sha1
+        facet_log['time'] = json_log['time']
         if seed_host:
             facet_log['seed_host'] = seed_host
 
