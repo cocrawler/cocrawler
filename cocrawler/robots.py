@@ -318,6 +318,8 @@ class Robots:
             check = robots.is_allowed('*', '/')
             if not check:
                 json_log['generic-deny-slash'] = True
+                check = robots.is_allowed('googlebot', '/')
+                json_log['google-deny-slash'] = not check
 
         self.datalayer.cache_robots(schemenetloc, (robots, mentions_us))
         self.in_progress.discard(schemenetloc)
