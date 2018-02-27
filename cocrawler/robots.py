@@ -277,7 +277,7 @@ class Robots:
                 host_geoip = {}  # the passed-in one is for the initial server
         else:
             robots_url = url.url
-        post_fetch.post_robots_txt(f, robots_url, host_geoip, seed_host, crawler)
+        post_fetch.post_robots_txt(f, robots_url, host_geoip, seed_host, json_log['time'], crawler)
 
         body_bytes = f.body_bytes
 

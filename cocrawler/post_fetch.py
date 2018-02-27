@@ -29,14 +29,14 @@ def is_redirect(response):
     return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
 
 
-def minimal_facet_me(resp_headers, url, host_geoip, seed_host, kind, crawler):
+def minimal_facet_me(resp_headers, url, host_geoip, seed_host, kind, t, crawler):
     if not crawler.facetlogfd:
         return
     facets = facet.compute_all('', '', '', resp_headers, [], [], url=url)
     geoip.add_facets(facets, host_geoip)
     if not isinstance(url, str):
         url = url.url
-    facet_log = {'url': url, 'facets': facets, 'kind': kind}
+    facet_log = {'url': url, 'facets': facets, 'kind': kind, 'time': t}
     if seed_host:
         facet_log['seed_host'] = seed_host
     print(json.dumps(facet_log, sort_keys=True), file=crawler.facetlogfd)
@@ -48,9 +48,9 @@ for robots.txt. So, facet it.
 '''
 
 
-def post_robots_txt(f, url, host_geoip, seed_host, crawler):
+def post_robots_txt(f, url, host_geoip, seed_host, t, crawler):
     resp_headers = f.response.headers
-    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'robots.txt', crawler)
+    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'robots.txt', t, crawler)
 
 
 '''
@@ -67,7 +67,7 @@ the url shortener to go out of business.
 
 def handle_redirect(f, url, ridealong, priority, host_geoip, seed_host, json_log, crawler):
     resp_headers = f.response.headers
-    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'redir', crawler)
+    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'redir', json_log['time'], crawler)
 
     location = resp_headers.get('location')
     if location is None:
