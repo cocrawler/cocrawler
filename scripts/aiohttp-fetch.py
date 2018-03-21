@@ -35,11 +35,11 @@ async def main(urls):
             print('')
             continue
 
-        print('dns:')
-        for k, v in connector.cached_hosts.items():
-            print('  ', k)  # or k[0]?
-            for rec in v:
-                print('    ', rec.get('host'))
+        #print('dns:')
+        #for k, v in connector.cached_hosts.items():
+        #    print('  ', k)  # or k[0]?
+        #    for rec in v:
+        #        print('    ', rec.get('host'))
 
         print('')
         if str(response.url) != url:

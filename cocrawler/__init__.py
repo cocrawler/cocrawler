@@ -227,12 +227,11 @@ class Crawler:
         if cw and not cw.done():
             cw.cancel()
 
-    def close(self):
+    async def close(self):
         stats.report()
         parse.report()
         stats.check(no_test=self.no_test)
         stats.check_collisions()
-        self.session.close()
         if self.crawllogfd:
             self.crawllogfd.close()
         if self.rejectedaddurlfd:
@@ -241,6 +240,7 @@ class Crawler:
             self.facetlogfd.close()
         if self.scheduler.qsize():
             LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
+        await self.session.close()
 
     def _retry_if_able(self, work, ridealong):
         priority, rand, surt = work

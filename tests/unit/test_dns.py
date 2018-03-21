@@ -20,6 +20,7 @@ ns = ['8.8.8.8', '8.8.4.4']  # google
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason="This is testing dead code, needs to test the live code")
 async def test_prefetch_dns():
     url = URL('http://google.com/')
     mock_url = None
@@ -35,6 +36,7 @@ async def test_prefetch_dns():
     session.close()
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason="This is testing dead code, needs to test the live code")
 async def test_resolver():
     dns.setup_resolver(ns)
 

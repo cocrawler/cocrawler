@@ -2,7 +2,9 @@ dist: xenial # 16.04 LTS
 
 language: python
 python:
+  - 3.5.3
   - 3.5
+  - 3.6.0
   - 3.6
   - 3.7-dev
   - nightly
@@ -13,9 +15,9 @@ matrix:
   - python: 3.7-dev
   - python: nightly
   include:
-  - python: 3.5.0
+  - python: 3.5.3
     env: COCRAWLER_LOGLEVEL=DEBUG
-  - python: 3.5.0
+  - python: 3.5.3
     env: PYTHONASYNCIODEBUG=1
 
 install: "pip install -r requirements.txt"

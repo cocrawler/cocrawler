@@ -23,6 +23,7 @@ import urllib
 import asyncio
 import logging
 import aiohttp
+import async_timeout
 
 from . import stats
 from . import config
@@ -105,7 +106,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
         with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
-                with aiohttp.Timeout(pagetimeout):
+                with async_timeout.timeout(pagetimeout):
                     response = await session.get(mock_url or url.url,
                                                  allow_redirects=allow_redirects,
                                                  max_redirects=max_redirects,

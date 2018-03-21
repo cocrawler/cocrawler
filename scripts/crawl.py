@@ -104,12 +104,12 @@ def main():
         stats.coroutine_report()
         crawler.cancel_workers()
     finally:
-        crawler.close()
+        loop.run_until_complete(crawler.close())
         if app:
             webserver.close(app)
         if config.read('CarbonStats'):
             timer.close()
-        # apparently this is needed for full aiohttp cleanup
+        # apparently this is needed for full aiohttp cleanup -- or is it cargo cult
         loop.stop()
         loop.run_forever()
         loop.close()

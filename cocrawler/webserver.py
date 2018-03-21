@@ -19,6 +19,8 @@ def make_app():
     app.router.add_get('/', frontpage)
     app.router.add_get('/api/{name}', api)
 
+    # aiohttp 3.0 has AppRunner(). maybe I should switch to it?
+
     handler = app.make_handler()
     f = loop.create_server(handler, serverip, serverport)
     srv = loop.run_until_complete(f)
