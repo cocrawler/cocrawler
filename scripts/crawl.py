@@ -7,6 +7,7 @@ import sys
 import resource
 import os
 import faulthandler
+import gc
 
 import argparse
 import asyncio
@@ -74,6 +75,9 @@ def main():
             LOGGER.warning('Lowered logging level to WARNING because PYTHONASYNCIODEBUG env var is set')
         LOGGER.warning('Configured logging system to show ResourceWarning because PYTHONASYNCIODEBUG env var is set')
         LOGGER.warning('Note that this does have a significant impact on asyncio overhead')
+    if os.getenv('COCRAWLER_GC_DEBUG') is not None:
+        LOGGER.warning('Configuring gc debugging')
+        gc.set_debug(gc.DEBUG_STATS | gc.DEBUG_UNCOLLECTABLE)
 
     kwargs = {}
     if args.load:
