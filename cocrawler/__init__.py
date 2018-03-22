@@ -328,6 +328,7 @@ class Crawler:
             await post_fetch.post_200(f, url, priority, host_geoip, seed_host, json_log, self)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
+        LOGGER.debug('size of ridealong now stands at %r urls', self.scheduler.ridealong_size())
         stats.stats_set('queue size', self.scheduler.qsize())
         stats.stats_max('max queue size', self.scheduler.qsize())
 

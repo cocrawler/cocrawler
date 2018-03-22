@@ -141,6 +141,9 @@ class Scheduler:
     def del_ridealong(self, ridealongid):
         del self.ridealong[ridealongid]
 
+    def ridealong_size(self):
+        return len(self.ridealong)
+
     def done(self, worker_count):
         return self.awaiting_work == worker_count and self.q.qsize() == 0
 
