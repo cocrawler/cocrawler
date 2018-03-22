@@ -331,6 +331,7 @@ class Crawler:
         LOGGER.debug('size of ridealong now stands at %r urls', self.scheduler.ridealong_size())
         stats.stats_set('queue size', self.scheduler.qsize())
         stats.stats_max('max queue size', self.scheduler.qsize())
+        stats.stats_set('ridealong size', self.scheduler.ridealong_size())
 
         if self.crawllogfd:
             print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)

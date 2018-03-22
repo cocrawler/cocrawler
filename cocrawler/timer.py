@@ -68,6 +68,7 @@ slow_stats = [
     {'name': 'retries completely exhausted'},
     {'name': 'max queue size'},
     {'name': 'queue size'},
+    {'name': 'ridealong size'},
     {'name': 'added urls'},
     {'name': 'parser cpu time', 'kind': 'delta'},
     {'name': 'main thread cpu time', 'kind': 'delta'},
@@ -179,7 +180,7 @@ class CarbonTimer:
                 carbon_tuples += self.elapsed_timebin.gettuples(self.prefix+'.elapsed')
 
                 ru = resource.getrusage(resource.RUSAGE_SELF)
-                vmem = (ru[2])/1000000.
+                vmem = (ru[2])/1000000.  # gigabytes
                 # TODO: swapouts in 8, blocks out in 10
                 self.vmem_timebin.point(t, vmem)
                 carbon_tuples += self.vmem_timebin.gettuples(self.prefix+'.vmem')
