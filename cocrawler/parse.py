@@ -5,6 +5,7 @@ Parse links in html and css pages.
 import logging
 import re
 import hashlib
+import urllib.parse
 
 from bs4 import BeautifulSoup
 
@@ -40,6 +41,9 @@ def do_burner_work_html(html, html_bytes, headers_list, burn_prefix='', url=None
 
     base = head_soup.find('base') or {}
     base = base.get('href')
+    if base:
+        # base can be relative, e.g. 'subdir/'
+        base = urllib.parse.urljoin(url.url, base)
     base_or_url = base or url
 
     with stats.record_burn(burn_prefix+'find_head_links_soup', url=url):

@@ -235,6 +235,9 @@ def test_URL():
     url = URL('http://sub.example.com/', urljoin=urlj2)
     assert url.url == 'http://sub.example.com/'
 
+    url = URL('foo', urljoin='http://example.com/subdir/')  # base can cause this
+    assert url.url == 'http://example.com/subdir/foo'
+
     # read-only
     with pytest.raises(AttributeError):
         url.url = 'foo'
