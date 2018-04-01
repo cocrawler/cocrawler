@@ -135,7 +135,8 @@ def clean_webpage_links(link, urljoin=None):
                         str(urljoin), logstr, len(link))
             return ''  # will urljoin to the urljoin
 
-    # remove unquoted \r and \n anywhere in the url
+    # FF and Chrome eat ^I^J^M in the middle of quoted urls
+    link = link.replace('\t', '')
     link = link.replace('\r', '')
     link = link.replace('\n', '')
 
