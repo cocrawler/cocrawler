@@ -6,7 +6,7 @@ aiohttp==3.1.1
 async-timeout==2.0.1
 yarl==1.1.1
 aiodns==1.1.1
-pyyaml==3.12
+PyYAML==3.12
 cchardet==2.1.1
 surt==0.3.0
 robotexclusionrulesparser==1.7.1
@@ -23,6 +23,7 @@ lxml==4.2.1
 extensions==0.4
 warcio==1.5.1
 geoip2==2.7.0
+ipaddress==1.0.19
 
 # used to maintain this file
 pur==4.0.3
