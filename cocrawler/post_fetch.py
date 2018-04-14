@@ -29,16 +29,20 @@ def is_redirect(response):
     return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
 
 
-def minimal_facet_me(resp_headers, url, host_geoip, seed_host, kind, t, crawler):
+def minimal_facet_me(resp_headers, url, host_geoip, kind, t, crawler, seed_host=None, location=None):
     if not crawler.facetlogfd:
         return
     facets = facet.compute_all('', '', '', resp_headers, [], [], url=url)
     geoip.add_facets(facets, host_geoip)
     if not isinstance(url, str):
         url = url.url
+
     facet_log = {'url': url, 'facets': facets, 'kind': kind, 'time': t}
     if seed_host:
         facet_log['seed_host'] = seed_host
+    if location:  # redirect
+        facet_log['location'] = location
+
     print(json.dumps(facet_log, sort_keys=True), file=crawler.facetlogfd)
 
 
@@ -48,9 +52,9 @@ for robots.txt. So, facet it.
 '''
 
 
-def post_robots_txt(f, url, host_geoip, seed_host, t, crawler):
+def post_robots_txt(f, url, host_geoip, t, crawler, seed_host=None):
     resp_headers = f.response.headers
-    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'robots.txt', t, crawler)
+    minimal_facet_me(resp_headers, url, host_geoip, 'robots.txt', t, crawler, seed_host=seed_host)
 
 
 '''
@@ -65,9 +69,8 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, ridealong, priority, host_geoip, seed_host, json_log, crawler):
+def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, seed_host=None):
     resp_headers = f.response.headers
-    minimal_facet_me(resp_headers, url, host_geoip, seed_host, 'redir', json_log['time'], crawler)
 
     location = resp_headers.get('location')
     if location is None:
@@ -75,6 +78,10 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, seed_host, json_log
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
     next_url = urls.URL(location, urljoin=url)
+
+    minimal_facet_me(resp_headers, url, host_geoip, 'redir', json_log['time'], crawler,
+                     seed_host=seed_host, location=next_url.url)
+
     ridealong['url'] = next_url
 
     kind = urls.special_redirect(url, next_url)
