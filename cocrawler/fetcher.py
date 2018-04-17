@@ -94,6 +94,9 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                                                  allow_redirects=allow_redirects,
                                                  max_redirects=max_redirects,
                                                  headers=headers)
+
+                    # https://aiohttp.readthedocs.io/en/stable/tracing_reference.html
+                    # XXX should use tracing events to get t_first_byte
                     t_first_byte = '{:.3f}'.format(time.time() - t0)
 
                     while left > 0:
