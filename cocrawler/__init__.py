@@ -385,17 +385,21 @@ class Crawler:
             if elapsed < 1.03:
                 dominos += 1
                 undominos = 0
-                if dominos > 2:  # one action per 3 seconds of stability
+                if dominos > 2:
+                    # one action per 3 seconds of stability
                     limit += 1
                     dominos = 0
             else:
                 dominos = 0
-                if elapsed > 5.0:  # always act on tall spikes
+                if elapsed > 5.0:
+                    # always act on tall spikes
                     limit -= max((limit * 5) // 100, 1)  # 5%
                     undominos = 0
                 elif elapsed > 1.1:
                     undominos += 1
-                    if undominos > 1:  # only act if the medium spike is wider than 1 cycle
+                    if undominos > 1:
+                        # only act if the medium spike is wider than 1 cycle
+                        # (note: these spikes are caused by garbage collection)
                         limit -= max(limit // 100, 1)  # 1%
                         undominos = 0
                 else:
