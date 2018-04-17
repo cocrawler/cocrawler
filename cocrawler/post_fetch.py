@@ -13,6 +13,11 @@ import cgi
 from functools import partial
 import json
 
+try:
+    import cchardet as chardet
+except ImportError:  # pragma: no cover
+    import chardet
+
 from . import urls
 from . import parse
 from . import stats
@@ -154,7 +159,6 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     resp_headers = f.response.headers
     content_type = resp_headers.get('content-type', 'None')
     # sometimes content_type comes back multiline. whack it with a wrench.
-    # XXX make sure I'm not creating blank lines and stopping cgi parse early?!
     content_type = content_type.replace('\r', '\n').partition('\n')[0]
     if content_type:
         content_type, _ = cgi.parse_header(content_type)
@@ -163,21 +167,24 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     LOGGER.debug('url %r came back with content type %r', url.url, content_type)
     json_log['content_type'] = content_type
     stats.stats_sum('content-type=' + content_type, 1)
-    if content_type == 'text/html':
-        try:
-            with stats.record_burn('response.text() decode', url=url):
-                # need to guess at a reasonable encoding here
-                # can't use the hidden algo from f.response.text() thanks to the use of streaming to limit bytes
-                # hidden algo is: 1) consult headers, 2) if json, assume utf8, 3) call cchardet 4) assume utf8
-                # XXX
-                # let's not trust the headers too much!
-                body = f.body_bytes.decode(encoding='utf8')
-        except (UnicodeDecodeError, LookupError):
-            # LookupError: .text() guessed an encoding that decode() won't understand (wut?)
-            # XXX if encoding was in header, maybe I should use it here?
-            body = f.body_bytes.decode(encoding='utf-8', errors='replace')
 
-        # headers is a case-blind dict that's allergic to getting pickled.
+    if content_type == 'text/html':
+        # aiohttp will run cchardet() if no encoding headers
+        encoding = f.response.get_encoding()
+        # so we may be running it twice. at least it's fast.
+        detect = chardet.detect(f.body_bytes)
+        json_log['cchardet_encoding'] = detect['encoding']
+        json_log['cchardet_confidence'] = detect['confidence']
+
+        try:
+            with stats.record_burn('response body decode', url=url):
+                body = f.body_bytes.decode(encoding=encoding)
+        except (UnicodeDecodeError, LookupError):
+            with stats.record_burn('response body second decode', url=url):
+                body = f.body_bytes.decode(encoding='utf-8', errors='replace')
+            jsonlog['fallback_decoding'] = True
+
+        # headers is a multidict.CIMultiDict case-blind dict, does not pickle
         # let's make something more boring
         # XXX check that this is still a problem?
         # XXX use the one from warcio?
