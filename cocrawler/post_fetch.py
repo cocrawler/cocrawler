@@ -203,18 +203,18 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
 
     if content_type == 'text/html':
         encoding, detect = my_get_encoding(charset, f.body_bytes)
-        json_log['cchardet_encoding'] = detect['encoding']
+        json_log['cchardet_charset'] = detect['encoding']
         json_log['cchardet_confidence'] = detect['confidence']
         stats.stats_sum('cchardet-encoding=' + detect['encoding'], 1)
 
         try:
             with stats.record_burn('response body decode', url=url):
                 body = f.body_bytes.decode(encoding=encoding)
-                json_log['encoding_used'] = encoding
+                json_log['charset_used'] = encoding
         except (UnicodeDecodeError, LookupError):
             with stats.record_burn('response body second decode', url=url):
                 body = f.body_bytes.decode(encoding='utf-8', errors='replace')
-                json_log['encoding_used'] = 'utf-8 replace'
+                json_log['charset_used'] = 'utf-8 replace'
 
         if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
             stats.stats_sum('parser in burner thread', 1)
