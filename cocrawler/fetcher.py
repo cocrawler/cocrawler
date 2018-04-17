@@ -34,7 +34,6 @@ LOGGER = logging.getLogger(__name__)
 # XXX should be a policy plugin
 # XXX cookie handling -- no way to have a cookie jar other than at session level
 #    need to directly manipulate domain-level cookie jars to get cookies
-#    CookieJar.add_cookie_header(request) is tied to urlllib.request, how does aiohttp use it?! probably duck
 def apply_url_policies(url, crawler):
     headers = {}
     proxy = None

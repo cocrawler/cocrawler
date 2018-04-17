@@ -30,7 +30,6 @@ from . import fetcher
 from . import useragent
 from . import burner
 from . import url_allowed
-from . import cookies
 from . import post_fetch
 from . import config
 from . import warc
@@ -106,10 +105,7 @@ class Crawler:
         conn_timeout = config.read('Crawl', 'ConnectTimeout')
         if not conn_timeout:
             conn_timeout = None  # docs say 0. is no timeout, docs lie
-        if (config.read('Crawl', 'CookieJar') or '') == 'Defective':
-            cookie_jar = cookies.DefectiveCookieJar()
-        else:
-            cookie_jar = None  # which means a normal cookie jar
+        cookie_jar = aiohttp.DummyCookieJar()
         self.session = aiohttp.ClientSession(connector=conn, cookie_jar=cookie_jar,
                                              conn_timeout=conn_timeout)
 

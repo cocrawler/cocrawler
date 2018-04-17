@@ -44,7 +44,6 @@ Crawl:
   UpgradeInsecureRequests: 1
   ConnectTimeout: 0.  # seconds, 0.=none
 #  MaxCrawledUrls: 11
-#  CookieJar: Defective
 
 UserAgent:
   Style: laptopplus
