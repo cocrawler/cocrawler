@@ -211,7 +211,9 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
             with stats.record_burn('response body decode', url=url):
                 body = f.body_bytes.decode(encoding=encoding)
                 json_log['charset_used'] = encoding
-        except (UnicodeDecodeError, LookupError):
+        except UnicodeDecodeError:
+            # if we truncated the body, we could have caused the error
+            # or encoding could be wrong, or the page could be defective
             with stats.record_burn('response body second decode', url=url):
                 body = f.body_bytes.decode(encoding='utf-8', errors='replace')
                 json_log['charset_used'] = 'utf-8 replace'
