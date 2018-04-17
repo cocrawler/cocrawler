@@ -336,7 +336,7 @@ def get_hostname(url, parts=None, remove_www=False):
     # XXX audit code for other places www is explicitly mentioned
     if not parts:
         parts = urllib.parse.urlsplit(url)
-    hostname = parts.netloc
+    _, _, hostname, _ = surt.parse_netloc(parts.netloc)
     if remove_www and hostname.startswith('www.'):
         domain = get_domain(hostname)
         if not domain.startswith('www.'):

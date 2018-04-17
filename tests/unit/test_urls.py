@@ -177,7 +177,7 @@ def test_get_hostname():
     assert urls.get_hostname('http://www.bbc.co.uk', remove_www=True) == 'bbc.co.uk'
     assert urls.get_hostname('http://bbc.co.uk') == 'bbc.co.uk'
     assert urls.get_hostname('http://www.example.com') == 'www.example.com'
-    assert urls.get_hostname('http://www.example.com:80') == 'www.example.com:80'  # XXX this is a bug
+    assert urls.get_hostname('http://www.example.com:80') == 'www.example.com'
     assert urls.get_hostname('http://www.sub.example.com') == 'www.sub.example.com'
     assert urls.get_hostname('http://sub.example.com') == 'sub.example.com'
     assert urls.get_hostname('http://www.com') == 'www.com'
