@@ -82,7 +82,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
     try:
         t0 = time.time()
         last_exception = None
-        body_bytes = None
+        body_bytes = b''
         blocks = []
         left = max_page_size
 
