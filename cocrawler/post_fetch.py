@@ -12,6 +12,7 @@ import logging
 import cgi
 from functools import partial
 import json
+import codecs
 
 import multidict
 
@@ -34,6 +35,28 @@ LOGGER = logging.getLogger(__name__)
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
     return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
+
+
+# because we're using the streaming interface we can't call resp.get_encoding()
+# this is the same algo as aiohttp
+def my_get_encoding(charset, body_bytes):
+    detect = chardet.detect(body_bytes)
+    if 'encoding' in detect:
+        detect['encoding'] = detect['encoding'].lower()
+    if 'confidence' in detect:
+        detect['confidence'] = '{:.2f}'.format(detect['confidence'])
+
+    for encoding in (charset, detect['encoding'], 'utf-8'):
+        if encoding:
+            try:
+                codecs.lookup(encoding)
+                break
+            except LookupError:
+                pass
+    else:
+        encoding = None
+
+    return encoding, detect
 
 
 def minimal_facet_me(resp_headers, url, host_geoip, kind, t, crawler, seed_host=None, location=None):
@@ -171,14 +194,15 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     json_log['content_type'] = content_type
     stats.stats_sum('content-type=' + content_type, 1)
     if 'charset' in options:
-        json_log['content_type_charset'] = options['charset']
-        stats.stats_sum('content-type-charset=' + options['charset'], 1)
+        charset = options['charset'].lower()
+        json_log['content_type_charset'] = charset
+        stats.stats_sum('content-type-charset=' + charset, 1)
+    else:
+        charset = None
+        stats.stats_sum('content-type-charset=' + 'not specified', 1)
 
     if content_type == 'text/html':
-        # aiohttp will run cchardet() if no content-type charset
-        encoding = f.response.get_encoding()
-        # so we may be running it twice. at least it's fast.
-        detect = chardet.detect(f.body_bytes)
+        encoding, detect = my_get_encoding(charset, f.body_bytes)
         json_log['cchardet_encoding'] = detect['encoding']
         json_log['cchardet_confidence'] = detect['confidence']
         stats.stats_sum('cchardet-encoding=' + detect['encoding'], 1)
@@ -186,10 +210,11 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         try:
             with stats.record_burn('response body decode', url=url):
                 body = f.body_bytes.decode(encoding=encoding)
+                json_log['encoding_used'] = encoding
         except (UnicodeDecodeError, LookupError):
             with stats.record_burn('response body second decode', url=url):
                 body = f.body_bytes.decode(encoding='utf-8', errors='replace')
-            json_log['fallback_decoding'] = True
+                json_log['encoding_used'] = 'utf-8 replace'
 
         if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
             stats.stats_sum('parser in burner thread', 1)
