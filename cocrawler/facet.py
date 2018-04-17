@@ -235,11 +235,19 @@ def facets_grep(html, url=None):
     return facets
 
 
+def clean_utf8(s):
+    '''
+    aiohttp uses surrogatescape all over the header processing.
+    try to stop it from leaking any farther.
+    '''
+    try:
+        s.encode()
+    except UnicodeEncodeError:
+        s = s.encode('utf-8', 'replace').decode()
+    return s
+
+
 def facets_from_response_headers(headers):
-    '''
-    Extract facets from headers. All are useful for site software fingerprinting but
-    for now we'll default to grabbing the most search-enginey ones
-    '''
     if isinstance(headers, Mapping):
         headers_list = [[k.lower(), v] for k, v in headers.items()]
     else:
@@ -247,9 +255,8 @@ def facets_from_response_headers(headers):
     facets = []
     for h in headers_list:
         k, v = h
-        #if k in save_response_headers:
-        #    facets.append(('header-'+k, v))
-        facets.append(('header-'+k, v))  # XXX save them all for one run
+        v = clean_utf8(v)
+        facets.append(('header-'+k, v))
 
     return facets
 
