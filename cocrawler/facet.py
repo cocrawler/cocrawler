@@ -46,7 +46,7 @@ link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
 
-def compute_all(html, head, body, headers_list, links, embeds, head_soup=None, url=None, condense=False, expensive=False):
+def compute_all(html, head, body, headers, links, embeds, head_soup=None, url=None, condense=False, expensive=False):
     expensive = True  # XXX
 
     fhf = find_head_facets(head, head_soup=head_soup, url=url)
@@ -56,7 +56,7 @@ def compute_all(html, head, body, headers_list, links, embeds, head_soup=None, u
         #compare_head_body_grep(fgh, fgb, url)  # ~ 10% of the facets discovered in the body are also in the head
     else:
         fgb = []
-    frh = facets_from_response_headers(headers_list)
+    frh = facets_from_response_headers(headers)
     fe = facets_from_embeds(embeds)
 
     facets = [*fhf, *fgh, *fgb, *frh, *fe]
@@ -235,13 +235,15 @@ def facets_grep(html, url=None):
     return facets
 
 
-def facets_from_response_headers(headers_list):
+def facets_from_response_headers(headers):
     '''
     Extract facets from headers. All are useful for site software fingerprinting but
     for now we'll default to grabbing the most search-enginey ones
     '''
-    if isinstance(headers_list, Mapping):
-        headers_list = [[k.lower(), v] for k, v in headers_list.items()]
+    if isinstance(headers, Mapping):
+        headers_list = [[k.lower(), v] for k, v in headers.items()]
+    else:
+        headers_list = headers
     facets = []
     for h in headers_list:
         k, v = h
@@ -252,7 +254,6 @@ def facets_from_response_headers(headers_list):
     return facets
 
 
-# XXX should be generalized using lists from adblockers
 def facets_from_embeds(embeds):
     facets = []
     for url in embeds:  # this is both href and src embeds, but whatever

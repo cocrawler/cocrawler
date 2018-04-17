@@ -13,6 +13,8 @@ import cgi
 from functools import partial
 import json
 
+import multidict
+
 try:
     import cchardet as chardet
 except ImportError:  # pragma: no cover
@@ -184,19 +186,15 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
                 body = f.body_bytes.decode(encoding='utf-8', errors='replace')
             jsonlog['fallback_decoding'] = True
 
-        # headers is a multidict.CIMultiDict case-blind dict, does not pickle
-        # let's make something more boring
-        # XXX check that this is still a problem?
-        # XXX use the one from warcio?
-        resp_headers_list = []
-        for k, v in resp_headers.items():
-            resp_headers_list.append((k.lower(), v))
+        # headers is a multidict.CIMultiDictProxy case-blind dict
+        # and the Proxy form of it doesn't pickle, so convert to one that does
+        resp_headers = multidict.CIMultiDict(resp_headers)
 
         if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
             stats.stats_sum('parser in burner thread', 1)
             try:
                 links, embeds, sha1, facets = await crawler.burner.burn(
-                    partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers_list,
+                    partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers,
                             burn_prefix='burner ', url=url),
                     url=url)
             except ValueError as e:  # if it pukes, we get back no values
@@ -209,7 +207,7 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
             try:
                 # no coroutine state because this is a burn, not an await
                 links, embeds, sha1, facets = parse.do_burner_work_html(
-                    body, f.body_bytes, resp_headers_list, burn_prefix='main ', url=url)
+                    body, f.body_bytes, resp_headers, burn_prefix='main ', url=url)
             except ValueError:  # if it pukes, ..
                 stats.stats_sum('parser raised', 1)
                 # XXX jsonlog
