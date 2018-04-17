@@ -60,23 +60,6 @@ def apply_url_policies(url, crawler):
     return headers, proxy, mock_url, mock_robots
 
 
-def guess_encoding(bytes, headers=None):
-    '''
-    Similar to but not quite like the logic in aiohttp.response.text()
-    Get claimed charset from headers and combine that with clues in the data to
-    figure out the decoding:
-
-    Cases we want to get right:
-    * Header claims ascii or latin-1 but is really utf-8
-    * ... claims ascii or utf-8 but is really latin-1
-    * ... claims ascii or utf-8 but is really ascii with Microsoft "smart quotes"
-    * are there any countries/languages with considerble legacy encoding of content?
-
-    Just how slow is cchardet anyway?
-    '''
-    return
-
-
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_headers',
                                                  't_first_byte', 't_last_byte', 'is_truncated',
                                                  'last_exception'])
