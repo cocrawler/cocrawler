@@ -163,20 +163,25 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     # sometimes content_type comes back multiline. whack it with a wrench.
     content_type = content_type.replace('\r', '\n').partition('\n')[0]
     if content_type:
-        content_type, _ = cgi.parse_header(content_type)
+        content_type, options = cgi.parse_header(content_type)
     else:
         content_type = 'Unknown'
-    LOGGER.debug('url %r came back with content type %r', url.url, content_type)
+        options = {}
+
     json_log['content_type'] = content_type
     stats.stats_sum('content-type=' + content_type, 1)
+    if 'charset' in options:
+        json_log['content_type_charset'] = options['charset']
+        stats.stats_sum('content-type-charset=' + options['charset'], 1)
 
     if content_type == 'text/html':
-        # aiohttp will run cchardet() if no encoding headers
+        # aiohttp will run cchardet() if no content-type charset
         encoding = f.response.get_encoding()
         # so we may be running it twice. at least it's fast.
         detect = chardet.detect(f.body_bytes)
         json_log['cchardet_encoding'] = detect['encoding']
         json_log['cchardet_confidence'] = detect['confidence']
+        stats.stats_sum('cchardet-encoding=' + detect['encoding'], 1)
 
         try:
             with stats.record_burn('response body decode', url=url):
@@ -184,14 +189,13 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         except (UnicodeDecodeError, LookupError):
             with stats.record_burn('response body second decode', url=url):
                 body = f.body_bytes.decode(encoding='utf-8', errors='replace')
-            jsonlog['fallback_decoding'] = True
-
-        # headers is a multidict.CIMultiDictProxy case-blind dict
-        # and the Proxy form of it doesn't pickle, so convert to one that does
-        resp_headers = multidict.CIMultiDict(resp_headers)
+            json_log['fallback_decoding'] = True
 
         if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
             stats.stats_sum('parser in burner thread', 1)
+            # headers is a multidict.CIMultiDictProxy case-blind dict
+            # and the Proxy form of it doesn't pickle, so convert to one that does
+            resp_headers = multidict.CIMultiDict(resp_headers)
             try:
                 links, embeds, sha1, facets = await crawler.burner.burn(
                     partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers,
