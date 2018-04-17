@@ -144,6 +144,7 @@ def test_surt():
 
     # and unique to CoCrawler (so far)
     assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo/'
+    assert surt.surt("http://Example.Com:4445/Goo/") == 'com,example,:4445)/goo/'
     assert surt.surt("http://bücher.Com/Goo/") == 'com,xn--bcher-kva)/goo/'
     assert surt.surt("http://example.com/goo/;FOO=bar") == 'com,example)/goo/;foo=bar'
     assert surt.surt("http://example.com/goo/;FOO=bar?a=1&A=1&a=2") == 'com,example)/goo/;foo=bar?A=1&a=1&a=2'

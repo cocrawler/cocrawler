@@ -215,6 +215,8 @@ def surt(url, parts=None):
     hostname = discard_www_from_hostname(hostname)
     hostname = hostname_to_punycanon(hostname)
     hostname_parts = reverse_hostname_parts(hostname)
+    if port:
+        hostname_parts.append(':'+port)
 
     if path == '' or path == '/':
         path = '/'
