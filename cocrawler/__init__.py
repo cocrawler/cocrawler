@@ -344,6 +344,7 @@ class Crawler:
                     await self.fetch_and_process(work)
                 except concurrent.futures._base.CancelledError:  # seen with ^C
                     pass
+                # ValueError('no A records found') should not be a mystery
                 except Exception as e:
                     # this catches any buggy code that executes in the main thread
                     LOGGER.error('Something bad happened working on %s, it\'s a mystery:\n%s', work[2], e)
