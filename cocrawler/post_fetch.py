@@ -41,9 +41,9 @@ def is_redirect(response):
 # this is the same algo as aiohttp
 def my_get_encoding(charset, body_bytes):
     detect = chardet.detect(body_bytes)
-    if 'encoding' in detect:
+    if detect['encoding']:
         detect['encoding'] = detect['encoding'].lower()
-    if 'confidence' in detect:
+    if detect['confidence']:
         detect['confidence'] = '{:.2f}'.format(detect['confidence'])
 
     for encoding in (charset, detect['encoding'], 'utf-8'):
