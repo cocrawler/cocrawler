@@ -32,6 +32,7 @@ def expand_seeds_config(crawler):
             urls.append((h, u))
 
     seed_files = seeds.get('Files', [])
+    dedup = set()
     if seed_files:
         if not isinstance(seed_files, list):
             seed_files = [seed_files]
@@ -46,6 +47,9 @@ def expand_seeds_config(crawler):
                     if line == '':
                         continue
                     u = special_seed_handling(line)
+                    if u in dedup:
+                        continue
+                    dedup.add(u)
                     urls.append((line, u))
 
     final_urls = []

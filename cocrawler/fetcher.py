@@ -125,6 +125,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
         # ClientConnectorCertificateError for an SSL cert that doesn't match hostname
+        # ClientConnectorError(None, None) caused by robots redir to DNS fail
+        # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
         is_truncated = 'disconnect'  # testme WARC
         stats.stats_sum('fetch ClientError', 1)
         last_exception = repr(e)
