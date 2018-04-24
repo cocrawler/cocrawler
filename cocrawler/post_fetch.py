@@ -65,7 +65,7 @@ def my_decode(body_bytes, encoding, detect):
             # encoding or detect may be None
             continue
         try:
-            body = body_bytes.decode(encoding=encoding)
+            body = body_bytes.decode(encoding=charset)
             break
         except UnicodeDecodeError:
             # if we truncated the body, we could have caused the error:
