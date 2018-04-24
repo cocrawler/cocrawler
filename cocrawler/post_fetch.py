@@ -59,6 +59,44 @@ def my_get_encoding(charset, body_bytes):
     return encoding, detect
 
 
+def my_decode(body_bytes, encoding, detect):
+    for charset in encoding, detect['encoding']:
+        if not charset:
+            # encoding or detect may be None
+            continue
+        try:
+            body = body_bytes.decode(encoding=encoding)
+            break
+        except UnicodeDecodeError:
+            # if we truncated the body, we could have caused the error:
+            # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd9 in position 15: unexpected end of data
+            # or encoding could be wrong, or the page could be defective
+            pass
+    else:
+        body = body_bytes.decode(encoding='utf-8', errors='replace')
+        charset = 'utf-8 replace'
+    return body, charset
+
+
+def charset_log(json_log, charset, detect, charset_used):
+    '''
+    Log details, but only if interesting
+    '''
+    interesting = False
+
+    if ' replace' in charset_used:
+        interesting = True
+    elif not charset:
+        interesting = False
+
+    if interesting:
+        json_log['cchardet_charset'] = detect['encoding']
+        json_log['cchardet_confidence'] = detect['confidence']
+
+    json_log['charset'] = charset_used
+    stats.stats_sum('charset='+charset_used, 1)
+
+
 def minimal_facet_me(resp_headers, url, host_geoip, kind, t, crawler, seed_host=None, location=None):
     if not crawler.facetlogfd:
         return
@@ -202,21 +240,12 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         stats.stats_sum('content-type-charset=' + 'not specified', 1)
 
     if content_type == 'text/html':
-        encoding, detect = my_get_encoding(charset, f.body_bytes)
-        json_log['cchardet_charset'] = detect['encoding']
-        json_log['cchardet_confidence'] = detect['confidence']
-        stats.stats_sum('cchardet-encoding=' + detect['encoding'], 1)
+        with stats.record_burn('response body get_encoding', url=url):
+            encoding, detect = my_get_encoding(charset, f.body_bytes)
+        with stats.record_burn('response body decode', url=url):
+            body, charset_used = my_decode(f.body_bytes, encoding, detect)
 
-        try:
-            with stats.record_burn('response body decode', url=url):
-                body = f.body_bytes.decode(encoding=encoding)
-                json_log['charset_used'] = encoding
-        except UnicodeDecodeError:
-            # if we truncated the body, we could have caused the error
-            # or encoding could be wrong, or the page could be defective
-            with stats.record_burn('response body second decode', url=url):
-                body = f.body_bytes.decode(encoding='utf-8', errors='replace')
-                json_log['charset_used'] = 'utf-8 replace'
+        charset_log(json_log, charset, detect, charset_used)
 
         if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
             stats.stats_sum('parser in burner thread', 1)
