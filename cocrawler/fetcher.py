@@ -115,24 +115,26 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
                     t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
-        is_truncated = 'time'  # testme WARC
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)
         body_bytes = b''.join(blocks)
-        stats.stats_sum('fetch timeout body bytes found', 1)
-        stats.stats_sum('fetch timeout body bytes found bytes', len(body_bytes))
+        if len(body_bytes):
+            is_truncated = 'time'  # testme WARC
+            stats.stats_sum('fetch timeout body bytes found', 1)
+            stats.stats_sum('fetch timeout body bytes found bytes', len(body_bytes))
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
         # ClientConnectorCertificateError for an SSL cert that doesn't match hostname
         # ClientConnectorError(None, None) caused by robots redir to DNS fail
         # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
-        is_truncated = 'disconnect'  # testme WARC
         stats.stats_sum('fetch ClientError', 1)
         last_exception = repr(e)
         body_bytes = b''.join(blocks)
-        stats.stats_sum('fetch ClientError body bytes found', 1)
-        stats.stats_sum('fetch ClientError body bytes found bytes', len(body_bytes))
+        if len(body_bytes):
+            is_truncated = 'disconnect'  # testme WARC
+            stats.stats_sum('fetch ClientError body bytes found', 1)
+            stats.stats_sum('fetch ClientError body bytes found bytes', len(body_bytes))
     except ssl.CertificateError as e:
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
         # so this doesn't go off much
