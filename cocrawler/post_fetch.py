@@ -88,6 +88,10 @@ def charset_log(json_log, charset, detect, charset_used):
         interesting = True
     elif not charset:
         interesting = False
+        stats.stats_sum('cchardet used', 1)
+    elif charset != charset_used:
+        interesting = True
+        stats.stats_sum('cchardet used', 1)
 
     if interesting:
         json_log['cchardet_charset'] = detect['encoding']
