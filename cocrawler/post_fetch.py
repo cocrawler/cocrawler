@@ -224,14 +224,10 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
                                                        f.response.raw_headers, f.is_truncated, f.body_bytes)
 
     resp_headers = f.response.headers
-    content_type = resp_headers.get('content-type', 'None')
+    content_type = resp_headers.get('content-type', '')
     # sometimes content_type comes back multiline. whack it with a wrench.
     content_type = content_type.replace('\r', '\n').partition('\n')[0]
-    if content_type:
-        content_type, options = cgi.parse_header(content_type)
-    else:
-        content_type = 'Unknown'
-        options = {}
+    content_type, options = cgi.parse_header(content_type)
 
     json_log['content_type'] = content_type
     stats.stats_sum('content-type=' + content_type, 1)
@@ -243,7 +239,9 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         charset = None
         stats.stats_sum('content-type-charset=' + 'not specified', 1)
 
-    if content_type == 'text/html':
+    html_types = set(('text/html', '', 'application/xml+html'))
+
+    if content_type in html_types:
         with stats.record_burn('response body get_encoding', url=url):
             encoding, detect = my_get_encoding(charset, f.body_bytes)
         with stats.record_burn('response body decode', url=url):
