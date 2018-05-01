@@ -20,7 +20,6 @@ LOGGER = logging.getLogger(__name__)
 async def prefetch(url, resolver):
     with stats.coroutine_state('DNS prefetch'):
         with stats.record_latency('DNS prefetch', url=url.hostname):
-            stats.stats_sum('DNS external queries', 1)
             try:
                 await resolver.resolve(url.hostname, 80, stats_prefix='prefetch ')
             except OSError:  # mapped to aiodns.error.DNSError if it was a .get
@@ -60,11 +59,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
                 # TODO: spawn a thread to await this while I continue on
                 self._refresh_in_progress.add(host)
                 stats.stats_sum(stats_prefix+'DNS refresh lookup', 1)
+                stats.stats_sum('DNS external queries', 1)
                 self._cache[host] = await self.actual_async_lookup(host)
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss begun', 1)
+            stats.stats_sum('DNS external queries', 1)
             self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss success', 1)
 
