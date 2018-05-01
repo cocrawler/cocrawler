@@ -92,7 +92,8 @@ class Crawler:
             raise ValueError('proxies not yet supported')
 
         # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
-        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver, 'limit': self.max_workers//2,
+        self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver,
+                            'limit': max(1, self.max_workers//2),
                             'enable_cleanup_closed': True}
         local_addr = config.read('Fetcher', 'LocalAddr')
         if local_addr:
