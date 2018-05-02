@@ -300,7 +300,7 @@ class Crawler:
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,
                                 headers=req_headers, proxy=proxy, mock_url=mock_url)
 
-        json_log = {'type': 'get', 'url': url.url, 'priority': priority,
+        json_log = {'kind': 'get', 'url': url.url, 'priority': priority,
                     't_first_byte': f.t_first_byte, 'time': time.time()}
         if seed_host:
             json_log['seed_host'] = seed_host

@@ -156,25 +156,25 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
 
     ridealong['url'] = next_url
 
-    kind = urls.special_redirect(url, next_url)
+    redir_kind = urls.special_redirect(url, next_url)
     samesurt = url.surt == next_url.surt
 
     if 'seed' in ridealong:
         prefix = 'redirect seed'
     else:
         prefix = 'redirect'
-    if kind is not None:
-        stats.stats_sum(prefix+' '+kind, 1)
+    if redir_kind is not None:
+        stats.stats_sum(prefix+' '+redir_kind, 1)
     else:
         stats.stats_sum(prefix+' non-special', 1)
 
     queue_next = True
 
-    if kind is None:
+    if redir_kind is None:
         if samesurt:
             LOGGER.info('Whoops, %s is samesurt but not a special_redirect: %s to %s, location %s',
                         prefix, url.url, next_url.url, location)
-    elif kind == 'same':
+    elif redir_kind == 'same':
         LOGGER.info('attempted redirect to myself: %s to %s, location was %s', url.url, next_url.url, location)
         if 'Set-Cookie' not in resp_headers:
             LOGGER.info(prefix+' to myself and had no cookies.')
@@ -184,13 +184,13 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
         seeds.fail(ridealong, crawler)
         queue_next = False
     else:
-        LOGGER.info('special redirect of type %s for url %s', kind, url.url)
+        LOGGER.info('special redirect of type %s for url %s', redir_kind, url.url)
         # XXX push this info onto a last-k for the host
         # to be used pre-fetch to mutate urls we think will redir
 
     priority += 1
 
-    if samesurt and kind != 'same':
+    if samesurt and redir_kind != 'same':
         ridealong['skip_seen_url'] = True
 
     if 'freeredirs' in ridealong:
@@ -206,8 +206,8 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
 
     json_log['redirect'] = next_url.url
     json_log['location'] = location
-    if kind is not None:
-        json_log['kind'] = kind
+    if redir_kind is not None:
+        json_log['redir_kind'] = redir_kind
     if queue_next:
         json_log['found_new_links'] = 1
     else:
