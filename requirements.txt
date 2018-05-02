@@ -4,7 +4,7 @@
 uvloop==0.9.1
 aiohttp==3.1.3
 async-timeout==2.0.1
-yarl==1.1.1
+yarl==1.2.2
 aiodns==1.1.1
 PyYAML==3.12
 cchardet==2.1.1
@@ -34,7 +34,7 @@ bottle==0.12.13
 coverage==4.5.1
 pylint==1.8.4
 flake8==3.5.0
-pytest==3.5.0
+pytest==3.5.1
 pytest-cov==2.5.1
 pytest-asyncio==0.8.0
 pytest-sugar==0.9.1
@@ -44,5 +44,5 @@ coveralls==1.3.0
 wheel==0.31.0
 twine==1.11.0
 pypandoc==1.4
-setuptools==39.0.1
+setuptools==39.1.0
 setuptools-scm==2.0.0
