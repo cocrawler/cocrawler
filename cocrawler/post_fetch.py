@@ -87,7 +87,7 @@ def charset_log(json_log, charset, detect, charset_used):
     if ' replace' in charset_used:
         interesting = True
     elif not charset:
-        interesting = False
+        interesting = True
         stats.stats_sum('cchardet used', 1)
     elif charset != charset_used:
         interesting = True
