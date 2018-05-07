@@ -63,7 +63,7 @@ def expand_seeds_config(crawler):
                 elif u.startswith('https://'):
                     second = u.replace('https://', 'http://www.', 1)  # second chance is always http
                 else:
-                    raise ValueError('invalid seed: '+seed_host+' '+u)
+                    LOGGER.error('skipping invalid seed:', seed_host, u)
             else:
                 second = u.replace('://www.', '://', 1)
                 if second == u:
