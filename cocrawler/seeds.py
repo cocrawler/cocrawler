@@ -29,7 +29,8 @@ def expand_seeds_config(crawler):
     if seeds.get('Hosts', []):
         for h in seeds['Hosts']:
             u = special_seed_handling(h)
-            urls.append((h, u))
+            if u is not None:
+                urls.append((h, u))
 
     seed_files = seeds.get('Files', [])
     dedup = set()
@@ -47,6 +48,8 @@ def expand_seeds_config(crawler):
                     if line == '':
                         continue
                     u = special_seed_handling(line)
+                    if u is None:
+                        continue
                     if u in dedup:
                         continue
                     dedup.add(u)
@@ -111,6 +114,9 @@ def special_seed_handling(url):
             url = 'http:' + url
         else:
             url = 'http://' + url
+    if parts.netloc.startswith('.'):
+        # this looks ugly when it eventually causes dns to barf
+        return None
 
     global POLICY
     if POLICY == 'www-then-non-www' and not had_scheme:
