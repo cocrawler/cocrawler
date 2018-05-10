@@ -122,12 +122,16 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
             is_truncated = 'time'  # testme WARC
             stats.stats_sum('fetch timeout body bytes found', 1)
             stats.stats_sum('fetch timeout body bytes found bytes', len(body_bytes))
+#    except (aiohttp.ClientError.ClientResponseError.TooManyRedirects) as e:
+#        # XXX remove me when I stop using redirects for robots.txt fetching
+#        raise
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
         # ClientConnectorCertificateError for an SSL cert that doesn't match hostname
         # ClientConnectorError(None, None) caused by robots redir to DNS fail
         # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
+        # TooManyRedirects("0, message=''",) caused by too many robots.txt redirs 
         stats.stats_sum('fetch ClientError', 1)
         last_exception = repr(e)
         body_bytes = b''.join(blocks)
