@@ -60,7 +60,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
                 self._refresh_in_progress.add(host)
                 stats.stats_sum(stats_prefix+'DNS refresh lookup', 1)
                 stats.stats_sum('DNS external queries', 1)
-                self._cache[host] = await self.actual_async_lookup(host)
+                self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
