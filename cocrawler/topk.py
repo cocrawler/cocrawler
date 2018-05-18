@@ -31,7 +31,7 @@ class topK_max:
             self.d[key] = self.element(value, ridealong)
 
     def readout(self):
-        return [(k, list(v)) for k, v in self.d.iteritems()]
+        return [(k, list(v)) for k, v in self.d.items()]
 
     # XXX to do: union, update
 
@@ -67,7 +67,7 @@ class topK_sum:
 
     def readout(self):
         ret = []
-        for i in self.d.iteritems():
+        for i in self.d.items():
             if i[1].value > 2 * i[1].fake:
                 ret.append((i[0], [i[1].value, i[1].ridealong]))
         return ret
