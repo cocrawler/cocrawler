@@ -29,8 +29,8 @@ Seeds:
 
 REST: {}
 #REST:
-#  ServerIP: 0.0.0.0
-#  ServerPort: 8080
+#  ServerIP: localhost  # or 0.0.0.0, if you dare
+#  ServerPort: 8080  # add a + to search for a port
 
 Crawl:
   MaxDepth: 3
