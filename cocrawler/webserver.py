@@ -13,7 +13,12 @@ def make_app():
     serverip = config.read('REST', 'ServerIP')
     if serverip is None:
         return None
-    serverport = int(config.read('REST', 'ServerPort'))
+    serverport = config.read('REST', 'ServerPort')
+
+    increment = False
+    if isinstance(serverport, str) and serverport.endswith('+'):
+        increment = True
+        serverport = serverport[:-1]
 
     app = web.Application()
     app.router.add_get('/', frontpage)
@@ -23,7 +28,19 @@ def make_app():
     # also web.run_app(app, access_log=None) to turn off logging
 
     handler = app.make_handler()
-    f = loop.create_server(handler, serverip, serverport)
+
+    while True:
+        try:
+            f = loop.create_server(handler, serverip, serverport)
+            break
+        except OSError as e:  # address already in use
+            if increment:
+                LOGGER.info('OSError starting webserver: %s', repr(e))
+                serverport += 1
+                LOGGER.info('incrementing port to %d', serverport)
+            else:
+                raise
+
     srv = loop.run_until_complete(f)
     LOGGER.info('REST serving on %s', srv.sockets[0].getsockname())
 
