@@ -14,8 +14,8 @@ import pickle
 from collections import defaultdict
 from operator import itemgetter
 import logging
-
 import cachetools.ttl
+import json
 
 from . import config
 from . import stats
@@ -171,6 +171,16 @@ class Scheduler:
         for _ in range(0, count):
             work = pickle.load(f)
             self.q.put_nowait(work)
+
+    def dump_frontier(self):
+        while True:
+            try:
+                work = self.q.get_nowait()
+            except asyncio.queues.QueueEmpty:
+                break
+            priority, rand, surt = work
+            ridealong = self.get_ridealong(surt)
+            print(json.dumps({'priority': priority, 'rand': rand, 'url': ridealong['url'].url}))
 
     def summarize(self):
         '''

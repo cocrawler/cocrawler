@@ -61,7 +61,8 @@ scripts = ['scripts/aiohttp-fetch.py',
            'scripts/parse-html.py',
            'scripts/run_burner_bench.py',
            'scripts/run_burner.py',
-           'scripts/run_parsers.py']
+           'scripts/run_parsers.py',
+           'scripts/cocrawler-savefile-dump.py']
 
 try:
     import pypandoc
