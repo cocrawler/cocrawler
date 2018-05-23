@@ -59,12 +59,12 @@ class FixupEventLoopPolicy(uvloop.EventLoopPolicy):
 
 
 class Crawler:
-    def __init__(self, load=None, no_test=False):
+    def __init__(self, load=None, no_test=False, paused=False):
         asyncio.set_event_loop_policy(FixupEventLoopPolicy())
         self.loop = asyncio.get_event_loop()
         self.burner = burner.Burner('parser')
-        self.stopping = 0
-        self.paused = 0
+        self.stopping = False
+        self.paused = paused
         self.no_test = no_test
         self.next_minute = time.time() + 60
         self.scheduler = scheduler.Scheduler()
@@ -481,14 +481,14 @@ class Crawler:
 
             if not self.stopping and os.path.exists(self.stop_crawler):
                 LOGGER.warning('saw STOPCRAWLER file, stopping crawler and saving queues')
-                self.stopping = 1
+                self.stopping = True
 
             if not self.paused and os.path.exists(self.pause_crawler):
                 LOGGER.warning('saw PAUSECRAWLER file, pausing crawler')
-                self.paused = 1
-            elif self.paused:
+                self.paused = True
+            elif self.paused and not os.path.exists(self.pause_crawler):
                 LOGGER.warning('saw PAUSECRAWLER file disappear, un-pausing crawler')
-                self.paused = 0
+                self.paused = False
 
             self.workers = [w for w in self.workers if not w.done()]
             LOGGER.debug('%d workers remain', len(self.workers))
