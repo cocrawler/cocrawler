@@ -479,11 +479,11 @@ class Crawler:
         while True:
             await asyncio.sleep(1)
 
-            if os.path.exists(self.stop_crawler):
+            if not self.stopping and os.path.exists(self.stop_crawler):
                 LOGGER.warning('saw STOPCRAWLER file, stopping crawler and saving queues')
                 self.stopping = 1
 
-            if os.path.exists(self.pause_crawler):
+            if not self.paused and os.path.exists(self.pause_crawler):
                 LOGGER.warning('saw PAUSECRAWLER file, pausing crawler')
                 self.paused = 1
             elif self.paused:
