@@ -19,6 +19,7 @@ from collections import namedtuple
 import urllib.parse
 import logging
 import re
+import html
 
 import tldextract
 
@@ -108,6 +109,10 @@ def clean_webpage_links(link, urljoin=None):
         if m:
             if m.group(0) == '\\':
                 link = link[0:start] + link[start:].replace('\\', '/', 1)
+
+    # the current standard requires one round of &ent; unescaping, with tolerance for naked &
+    if '&' in link:
+        link = html.unescape(link)
 
     '''
     Runaway urls
