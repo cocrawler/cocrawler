@@ -16,6 +16,8 @@ Seeds:
   Hosts:
   - http://test.website/ordinary/0
   - http://test.website/ordinary/1 # makes the robots fetch interlock fire
+  CrawledHosts:
+  - http://test.website/ordinary/3
 
 Logging:
 #  LoggingLevel: 3
@@ -31,13 +33,12 @@ Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
-    fetch URLs: 1000
-    fetch http code=200: 1000
+    fetch URLs: 999
+    fetch http code=200: 999
     max urls found on a page: 3
-#    robots denied: 1
     robots denied: 4  # one url, with retries
-    warc r/r (prefix Testing): 1000
-    parser in burner thread: 1000
+    warc r/r (prefix Testing): 999
+    parser in burner thread: 999
     parser in main thread: 0
 
 System:
