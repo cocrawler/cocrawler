@@ -191,11 +191,17 @@ class Crawler:
                 return
         else:
             del ridealong['skip_seen_url']
-        if not url_allowed.url_allowed(url):
+
+        allowed = url_allowed.url_allowed(url)
+        if not allowed:
             LOGGER.debug('url %s was rejected by url_allow.', url.url)
             stats.stats_sum('rejected by url_allowed', 1)
             self.log_rejected_add_url(url)
             return
+        if allowed.url != url.url:
+            LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
+            stats.stats_sum('modified by url_allowed', 1)
+            url = allowed
         # end allow/deny plugin
 
         LOGGER.debug('actually adding url %s, surt %s', url.url, url.surt)

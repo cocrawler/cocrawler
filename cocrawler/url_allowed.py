@@ -70,7 +70,7 @@ def url_allowed(url):
     if not extension_allowed(url):
         return False
 
-    return True
+    return url
 
 
 valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
