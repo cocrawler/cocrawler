@@ -53,6 +53,22 @@ def url_allowed(url):
     if not scheme_allowed(url):
         return False
 
+    # XXX DO NOT COMMIT ME
+    # recipe for opentable.com
+    drop_url_fgrep = {'/landmark/', '/s/'}  # /restaurant/ is a redir, ok
+    drop_cgi_args = {'lang', 'page', 'cmpid'}
+
+    for ufg in drop_url_fgrep:
+        if ufg in url.url:
+            return False
+    query = url.urlsplit.query
+    cgis = query.split('&')
+    for cgi in cgis:
+        if '=' in cgi:
+            cname, cvalue = cgi.split('=', 1)
+            if cname in drop_cgi_args:
+                return False
+
     if POLICY == 'SeedsDomain':
         if url.registered_domain not in SEEDS:
             return False

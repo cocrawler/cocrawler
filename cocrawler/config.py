@@ -22,6 +22,8 @@ Seeds:
 #  - http://xkcd.com/
 #  Files:
 #  - seed_list.txt
+#  CrawledFiles:
+#  - crawled_list.txt
   FreeSeedRedirs: 3  # many seeds do lots of redirs
   SeedRetries: 4  # overwrites the standard crawl retry
 #  Policy: www-then-non-www

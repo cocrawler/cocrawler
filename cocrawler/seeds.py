@@ -12,6 +12,21 @@ POLICY = None
 valid_policies = set(('None', 'www-then-non-www'))
 
 
+def sanatize(line, dedup):
+    if '#' in line:
+        line, _ = line.split('#', 1)
+    line = line.strip()
+    if line == '':
+        return None, None
+    u = special_seed_handling(line)
+    if u is None:
+        return None, None
+    if u in dedup:
+        return None, None
+    dedup.add(u)
+    return line, u
+
+
 def expand_seeds_config(crawler):
     urls = []
     seeds = config.read('Seeds')
@@ -32,6 +47,12 @@ def expand_seeds_config(crawler):
             if u is not None:
                 urls.append((h, u))
 
+    if seeds.get('CrawledHosts', []):
+        for h in seeds['CrawledHosts']:
+            u = special_seed_handling(h)
+            if u is not None:
+                crawler.datalayer.add_seen_url(URL(u))
+
     seed_files = seeds.get('Files', [])
     dedup = set()
     if seed_files:
@@ -42,18 +63,9 @@ def expand_seeds_config(crawler):
             LOGGER.info('Loading seeds from file %s', name)
             with open(name, 'r') as f:
                 for line in f:
-                    if '#' in line:
-                        line, _ = line.split('#', 1)
-                    line = line.strip()
-                    if line == '':
-                        continue
-                    u = special_seed_handling(line)
-                    if u is None:
-                        continue
-                    if u in dedup:
-                        continue
-                    dedup.add(u)
-                    urls.append((line, u))
+                    seed_host, u = sanatize(line, dedup)
+                    if seed_host:
+                        urls.append((seed_host, u))
 
     final_urls = []
     for seed_host, u in urls:
@@ -76,6 +88,21 @@ def expand_seeds_config(crawler):
         else:
             second = ''
         final_urls.append((seed_host, url, second))
+
+    crawled_files = seeds.get('CrawledFiles')
+    if crawled_files:
+        if not isinstance(crawled_files, list):
+            crawled_files = [crawled_files]
+        for name in crawled_files:
+            name = str(name)
+            LOGGER.info('loading crawled urls from file %s', name)
+            dedup = set()
+            with open(name, 'r') as f:
+                for line in f:
+                    seed_host, u = sanatize(line, dedup)
+                    if seed_host:
+                        crawler.datalayer.add_seen_url(URL(u))
+
     return seed_some_urls(final_urls, crawler)
 
 
