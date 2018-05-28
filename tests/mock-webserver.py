@@ -3,16 +3,16 @@
 A bottle+gevent based webservice suitable for testing CoCrawler
 '''
 
-import os
-import random
-from bottle import route, run, request, abort, redirect
-
 try:
     from gevent import monkey
     monkey.patch_all()
 except ImportError:
     print('gevent not present; that\'s OK for test purposes')
     pass
+
+import os
+import random
+from bottle import route, run, request, abort, redirect
 
 
 def generate_robots(host):
