@@ -202,6 +202,7 @@ class Crawler:
             LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
             stats.stats_sum('modified by url_allowed', 1)
             url = allowed
+            ridealong['url'] = url
         # end allow/deny plugin
 
         LOGGER.debug('actually adding url %s, surt %s', url.url, url.surt)
