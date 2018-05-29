@@ -203,6 +203,11 @@ class Crawler:
             stats.stats_sum('modified by url_allowed', 1)
             url = allowed
             ridealong['url'] = url
+            if self.datalayer.seen_url(url):
+                stats.stats_sum('rejected by seen_urls', 1)
+                self.log_rejected_add_url(url)
+                return
+
         # end allow/deny plugin
 
         LOGGER.debug('actually adding url %s, surt %s', url.url, url.surt)
