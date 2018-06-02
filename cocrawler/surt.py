@@ -140,7 +140,7 @@ def hostname_to_punycanon(hostname):
         try:
             puny = unquoted.encode('idna', errors='strict')
         except UnicodeError:
-            LOGGER.error('failed trying to punycode hostname {}'.format(unquoted))
+            LOGGER.error('failed trying to punycode hostname {}'.format(repr(unquoted)))
             # return immediately because we can't punycode
             return unquoted
 
