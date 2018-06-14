@@ -36,12 +36,20 @@ class Scheduler:
         self.delta_t = 1./self.maxhostqps
         self.max_crawled_urls = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
 
+    def global_crawl_quota_exceeded(self):
+        if ((self.max_crawled_urls is not None and
+             (stats.stat_value('fetch http code=200') or 0) >= self.max_crawled_urls)):
+            return True
+
     async def get_work(self):
         '''
         This function is called separately by each worker. It's allowed to sleep and/or requeue
         if work can't be done immediately.
         '''
         while True:
+            if self.global_crawl_quota_exceeded():
+                raise asyncio.CancelledError  # cancel this one worker
+
             try:
                 work = self.q.get_nowait()
             except asyncio.queues.QueueEmpty:
@@ -52,12 +60,6 @@ class Scheduler:
                 with stats.coroutine_state('awaiting work'):
                     work = await self.q.get()
                 self.awaiting_work -= 1
-
-            if ((self.max_crawled_urls is not None and
-                 (stats.stat_value('fetch http code=200') or 0) >= self.max_crawled_urls)):
-                self.q.put_nowait(work)
-                self.q.task_done()
-                raise asyncio.CancelledError
 
             now = time.time()
             surt = work[2]
