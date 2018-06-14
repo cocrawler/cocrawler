@@ -61,6 +61,11 @@ class Scheduler:
                     work = await self.q.get()
                 self.awaiting_work -= 1
 
+            if self.global_crawl_quota_exceeded():
+                self.q.put_nowait(work)
+                self.q.task_done()
+                raise asyncio.CancelledError  # cancel this one worker
+
             now = time.time()
             surt = work[2]
             surt_host, _, _ = surt.partition(')')
