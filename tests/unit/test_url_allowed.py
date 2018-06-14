@@ -4,18 +4,37 @@ import cocrawler.url_allowed as url_allowed
 
 def test_url_allowed():
     assert not url_allowed.url_allowed(URL('ftp://example.com'))
-    url_allowed.SEEDS.add('example.com')
-    url_allowed.POLICY = 'SeedsDomain'
+
+    url_allowed.setup(policy='SeedsDomain')
+    url_allowed.setup_seeds([URL('http://example.com')])
     assert url_allowed.url_allowed(URL('http://example.com'))
     assert url_allowed.url_allowed(URL('http://www.example.com'))
     assert url_allowed.url_allowed(URL('http://sub.example.com'))
-    url_allowed.POLICY = 'SeedsHostname'
+
+    url_allowed.setup(policy='SeedsHostname')
+    url_allowed.setup_seeds([URL('http://example.com')])
     assert url_allowed.url_allowed(URL('http://example.com'))
     assert url_allowed.url_allowed(URL('http://www.example.com'))
     assert not url_allowed.url_allowed(URL('http://sub.example.com'))
-    url_allowed.POLICY = 'OnlySeeds'
+
+    url_allowed.setup(policy='SeedsPrefix')
+    url_allowed.setup_seeds([URL('http://example.com/prefix1')])
+    url_allowed.setup_seeds([URL('http://example2.com/prefix2/')])
     assert not url_allowed.url_allowed(URL('http://example.com'))
-    url_allowed.POLICY = 'AllDomains'
+    assert url_allowed.url_allowed(URL('http://www.example.com/prefix11'))
+    assert not url_allowed.url_allowed(URL('http://example2.com'))
+    assert not url_allowed.url_allowed(URL('http://www.example2.com/prefix21'))
+    assert not url_allowed.url_allowed(URL('http://www.example2.com/prefix2'))
+    assert url_allowed.url_allowed(URL('http://www.example2.com/prefix2/'))
+    assert url_allowed.url_allowed(URL('http://www.example2.com/prefix2/foo'))
+
+    url_allowed.setup(policy='OnlySeeds')
+    url_allowed.setup_seeds([URL('http://example.com')])
+    assert url_allowed.url_allowed(URL('http://example.com'))
+    assert not url_allowed.url_allowed(URL('http://example.com/foo'))
+
+    url_allowed.setup(policy='AllDomains')
+    url_allowed.setup_seeds([URL('http://example.com')])
     assert url_allowed.url_allowed(URL('http://example.com'))
     assert url_allowed.url_allowed(URL('http://exa2mple.com'))
     assert url_allowed.url_allowed(URL('http://exa3mple.com'))

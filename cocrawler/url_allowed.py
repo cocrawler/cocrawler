@@ -3,13 +3,14 @@ Generic implementation of url_allowed.
 '''
 
 import logging
+from collections import defaultdict
 
 from . import config
 
 LOGGER = logging.getLogger(__name__)
 
 POLICY = None
-SEEDS = set()
+SEEDS = None
 
 allowed_schemes = set(('http', 'https'))
 
@@ -49,6 +50,14 @@ def extension_allowed(url):
     return True
 
 
+def host_prefix_match(url, SEEDS):
+    hostprefixes = SEEDS[url.hostname_without_www]
+    path = url.urlsplit.path
+    for hp in hostprefixes:
+        if path.startswith(hp):
+            return True
+
+
 def url_allowed(url):
     if not scheme_allowed(url):
         return False
@@ -58,6 +67,11 @@ def url_allowed(url):
             return False
     elif POLICY == 'SeedsHostname':
         if url.hostname_without_www not in SEEDS:
+            return False
+    elif POLICY == 'SeedsPrefix':
+        if url.hostname_without_www not in SEEDS:
+            return False
+        if not host_prefix_match(url, SEEDS):
             return False
     elif POLICY == 'OnlySeeds':
         if url.url not in SEEDS:
@@ -73,16 +87,23 @@ def url_allowed(url):
     return url
 
 
-valid_policies = set(('SeedsDomain', 'SeedsHostname', 'OnlySeeds', 'AllDomains'))
+valid_policies = {'SeedsDomain': set(), 'SeedsHostname': set(), 'SeedsPrefix': defaultdict(list),
+                  'OnlySeeds': set(), 'AllDomains': None}
 
 
-def setup():
+def setup(policy=None):
     global POLICY
-    POLICY = config.read('Plugins', 'url_allowed')
+    if policy:
+        POLICY = policy
+    else:
+        POLICY = config.read('Plugins', 'url_allowed')
 
     if POLICY not in valid_policies:
         raise ValueError('unknown url_allowed policy of ' + str(POLICY))
     LOGGER.info('url_allowed policy: %s', POLICY)
+
+    global SEEDS
+    SEEDS = valid_policies[POLICY]
 
 
 def setup_seeds(seeds):
@@ -92,6 +113,9 @@ def setup_seeds(seeds):
     elif POLICY == 'SeedsHostname':
         for s in seeds:
             SEEDS.add(s.hostname_without_www)
+    elif POLICY == 'SeedsPrefix':
+        for s in seeds:
+            SEEDS[s.hostname_without_www].append(s.urlsplit.path)
     elif POLICY == 'OnlySeeds':
         for s in seeds:
             SEEDS.add(s.url)
