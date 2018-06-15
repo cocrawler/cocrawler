@@ -162,9 +162,10 @@ class Crawler:
     def qsize(self):
         return self.scheduler.qsize()
 
-    def log_rejected_add_url(self, url):
+    def log_rejected_add_url(self, url, reason):
         if self.rejectedaddurlfd:
-            print(url.url, file=self.rejectedaddurlfd)
+            log_line = {'url': url.url, 'reason': reason}
+            print(json.dumps(log_line, sort_keys=True), file=self.rejectedaddurlfd)
 
     def add_url(self, priority, ridealong):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
@@ -181,13 +182,15 @@ class Crawler:
 
         # XXX allow/deny plugin modules go here
         if priority > int(config.read('Crawl', 'MaxDepth')):
-            stats.stats_sum('rejected by MaxDepth', 1)
-            self.log_rejected_add_url(url)
+            reason = 'rejected by MaxDepth'
+            stats.stats_sum('add_url '+reason, 1)
+            self.log_rejected_add_url(url, reason)
             return
         if 'skip_seen_url' not in ridealong:
             if self.datalayer.seen_url(url):
-                stats.stats_sum('rejected by seen_urls', 1)
-                self.log_rejected_add_url(url)
+                reason = 'rejected by seen_urls'
+                stats.stats_sum('add_url '+reason, 1)
+                self.log_rejected_add_url(url, reason)
                 return
         else:
             del ridealong['skip_seen_url']
@@ -195,17 +198,20 @@ class Crawler:
         allowed = url_allowed.url_allowed(url)
         if not allowed:
             LOGGER.debug('url %s was rejected by url_allow.', url.url)
-            stats.stats_sum('rejected by url_allowed', 1)
-            self.log_rejected_add_url(url)
+            reason = 'rejected by url_allowed'
+            stats.stats_sum('add_url '+reason, 1)
+            self.log_rejected_add_url(url, reason)
             return
         if allowed.url != url.url:
             LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
-            stats.stats_sum('modified by url_allowed', 1)
+            reason = 'modified by url_allowed'
+            stats.stats_sum('add_url '+reason, 1)
             url = allowed
             ridealong['url'] = url
             if self.datalayer.seen_url(url):
-                stats.stats_sum('rejected by seen_urls', 1)
-                self.log_rejected_add_url(url)
+                reason = 'rejected by seen_url'
+                stats.stats_sum('add_url '+reason, 1)
+                self.log_rejected_add_url(url, reason)
                 return
 
         # end allow/deny plugin
