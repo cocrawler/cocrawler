@@ -71,7 +71,7 @@ class Scheduler:
             surt_host, _, _ = surt.partition(')')
             ridealong = self.get_ridealong(surt)
 
-            recycle, why, dt = self.do_we_recycle(now, surt, surt_host, ridealong)
+            recycle, why, dt = self.schedule_work(now, surt, surt_host, ridealong)
 
             # sleep then requeue
             if recycle:
@@ -91,7 +91,7 @@ class Scheduler:
 
             return work
 
-    def do_we_recycle(self, now, surt, surt_host, ridealong):
+    def schedule_work(self, now, surt, surt_host, ridealong):
         recycle = False
         why = None
         dt = 0
