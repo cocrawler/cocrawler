@@ -181,6 +181,11 @@ class Crawler:
             seeds.seed_from_redir(url)
 
         # XXX allow/deny plugin modules go here
+        if not self.robots.check_cached(url):
+            reason = 'rejected by cached robots'
+            stats.stats_sum('add_url '+reason, 1)
+            self.log_rejected_add_url(url, reason)
+            return
         if priority > int(config.read('Crawl', 'MaxDepth')):
             reason = 'rejected by MaxDepth'
             stats.stats_sum('add_url '+reason, 1)

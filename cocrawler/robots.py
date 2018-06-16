@@ -111,20 +111,30 @@ class Robots:
         if self.robotslogfd:
             self.robotslogfd.close()
 
-    async def check(self, url, host_geoip=None, seed_host=None, crawler=None,
-                    headers=None, proxy=None, mock_robots=None, cached_only=False):
+    def check_cached(self, url):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
         try:
             robots, mentions_us = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
-            if cached_only:
-                stats.stats_sum('robots cached_only miss', 1)
-                return True
+            stats.stats_sum('robots cached_only miss', 1)
+            return True
+        return self._check(url, schemenetloc, robots, mentions_us)
+
+    async def check(self, url, host_geoip=None, seed_host=None, crawler=None,
+                    headers=None, proxy=None, mock_robots=None):
+        schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
+
+        try:
+            robots, mentions_us = self.datalayer.read_robots_cache(schemenetloc)
+            stats.stats_sum('robots cache hit', 1)
+        except KeyError:
             robots, mentions_us = await self.fetch_robots(schemenetloc, mock_robots, host_geoip, seed_host, crawler,
                                                           headers=headers, proxy=proxy)
+        return self._check(url, schemenetloc, robots, mentions_us)
 
+    def _check(self, url, schemenetloc, robots, mentions_us):
         if url.urlsplit.path:
             pathplus = url.urlsplit.path
         else:

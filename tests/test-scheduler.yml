@@ -33,7 +33,7 @@ Testing:
     fetch URLs: 11
     fetch http code=200: 11
     max urls found on a page: 3
-    robots denied: 4
+    robots denied: 11  # the url ^/denied/ on each page crawled
     parser in burner thread: 0
     parser in main thread: 11
     warc r/r (prefix Testing): 0

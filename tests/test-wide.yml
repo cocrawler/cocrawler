@@ -33,6 +33,6 @@ Testing:
     fetch http code=303: 1
     max urls found on a page: 3
     add_url rejected by seen_urls: 2
-    robots denied: 4
+    robots denied: 13  # one per crawled plus ... ?
   StatsGE:
     fetch http code=503: 1
