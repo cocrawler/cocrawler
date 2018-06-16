@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Scheduler:
-    def __init__(self):
+    def __init__(self, robots):
         self.q = asyncio.PriorityQueue()
         self.ridealong = {}
         self.awaiting_work = 0
@@ -35,8 +35,43 @@ class Scheduler:
         self.maxhostqps = float(config.read('Crawl', 'MaxHostQPS'))
         self.delta_t = 1./self.maxhostqps
         self.max_crawled_urls = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
+        self.initialize_budgets()
+        self.robots = robots
 
-    def global_crawl_quota_exceeded(self):
+    def initialize_budgets(self):
+        self.budgets = {}
+        for which, conf in dict({'global_budget': 'GlobalBudget',
+                            'domain_budget': 'DomainBudget', 'host_budget': 'HostBudget'}).items():
+            value = config.read('Crawl', conf)
+            if value is not None:
+                self.budgets[which] = defaultdict(lambda: int(value))
+            else:
+                self.budgets[which] = {}
+
+    def check_budget(self, which, key):
+        budget = self.budgets[which]
+        if key in budget:
+            if budget[key] > 0:
+                budget[key] -= 1
+                return True
+            else:
+                return False
+        else:
+            return None
+
+    def check_budgets(self, url):
+        hb = self.check_budget('host_budget', url.hostname_without_www)
+        if hb is not None:
+            return hb
+        db = self.check_budget('domain_budget', url.registered_domain)
+        if db is not None:
+            return db
+        gb = self.check_budget('global_budget', None)
+        if gb is not None:
+            return gb
+        return True
+
+    def max_crawled_urls_exceeded(self):
         if ((self.max_crawled_urls is not None and
              (stats.stat_value('fetch http code=200') or 0) >= self.max_crawled_urls)):
             return True
@@ -47,7 +82,7 @@ class Scheduler:
         if work can't be done immediately.
         '''
         while True:
-            if self.global_crawl_quota_exceeded():
+            if self.max_crawled_urls_exceeded():
                 raise asyncio.CancelledError  # cancel this one worker
 
             try:
@@ -61,7 +96,7 @@ class Scheduler:
                     work = await self.q.get()
                 self.awaiting_work -= 1
 
-            if self.global_crawl_quota_exceeded():
+            if self.max_crawled_urls_exceeded():
                 self.q.put_nowait(work)
                 self.q.task_done()
                 raise asyncio.CancelledError  # cancel this one worker
@@ -103,6 +138,11 @@ class Scheduler:
         # does host have cached robots? XXX
         # if not, and we're The One, fetch it
         # if not, and we aren't The One, recycle
+
+        if not self.robots.check_cached(ridealong['url']):
+            recycle = True
+            why = 'scheduler cached robots deny'
+            return recycle, why, 0.
 
         # when's the next available rate limit slot?
         now = time.time()

@@ -67,7 +67,6 @@ class Crawler:
         self.paused = paused
         self.no_test = no_test
         self.next_minute = time.time() + 60
-        self.scheduler = scheduler.Scheduler()
         self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
         self.prevent_compression = config.read('Crawl', 'PreventCompression')
         self.upgrade_insecure_requests = config.read('Crawl', 'UpgradeInsecureRequests')
@@ -112,6 +111,7 @@ class Crawler:
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
+        self.scheduler = scheduler.Scheduler(self.robots)
 
         self.crawllog = config.read('Logging', 'Crawllog')
         if self.crawllog:
@@ -183,6 +183,11 @@ class Crawler:
         # XXX allow/deny plugin modules go here
         if not self.robots.check_cached(url):
             reason = 'rejected by cached robots'
+            stats.stats_sum('add_url '+reason, 1)
+            self.log_rejected_add_url(url, reason)
+            return
+        if not self.scheduler.check_budgets(url):
+            reason = 'rejected by crawl budgets'
             stats.stats_sum('add_url '+reason, 1)
             self.log_rejected_add_url(url, reason)
             return
