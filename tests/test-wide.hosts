@@ -14,5 +14,5 @@ http://500.host10.com/ordinary/9
 
 # will redir once on robots and once on the link (to /ordinary/1)
 http://302.host10.com/ordinary/0
-# and we seed the redir url so it's seen twice and causes a seen_url reject
+# and we seed the redir url so it's seen twice and causes a crawled reject
 http://302.host10.com/ordinary/1

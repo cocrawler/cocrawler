@@ -196,14 +196,14 @@ class Crawler:
             stats.stats_sum('add_url '+reason, 1)
             self.log_rejected_add_url(url, reason)
             return
-        if 'skip_seen_url' not in ridealong:
-            if self.datalayer.seen_url(url):
-                reason = 'rejected by seen_urls'
+        if 'skip_crawled' not in ridealong:
+            if self.datalayer.crawled(url):
+                reason = 'rejected by crawled'
                 stats.stats_sum('add_url '+reason, 1)
                 self.log_rejected_add_url(url, reason)
                 return
         else:
-            del ridealong['skip_seen_url']
+            del ridealong['skip_crawled']
 
         allowed = url_allowed.url_allowed(url)
         if not allowed:
@@ -218,8 +218,8 @@ class Crawler:
             stats.stats_sum('add_url '+reason, 1)
             url = allowed
             ridealong['url'] = url
-            if self.datalayer.seen_url(url):
-                reason = 'rejected by seen_url'
+            if self.datalayer.crawled(url):
+                reason = 'rejected by crawled'
                 stats.stats_sum('add_url '+reason, 1)
                 self.log_rejected_add_url(url, reason)
                 return
@@ -241,7 +241,7 @@ class Crawler:
 
         self.scheduler.queue_work((priority, rand, url.surt))
 
-        self.datalayer.add_seen_url(url)
+        self.datalayer.add_crawled(url)
         return 1
 
     def cancel_workers(self):

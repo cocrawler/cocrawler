@@ -10,9 +10,9 @@ def test_seen():
     c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
     config.set_config(c)
     dl = datalayer.Datalayer()
-    assert not dl.seen_url(URL('http://example.com'))
-    dl.add_seen_url(URL('http://example.com'))
-    assert dl.seen_url(URL('http://example.com'))
+    assert not dl.crawled(URL('http://example.com'))
+    dl.add_crawled(URL('http://example.com'))
+    assert dl.crawled(URL('http://example.com'))
 
 
 def test_robotscache():
@@ -32,17 +32,17 @@ def test_saveload():
     c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
     config.set_config(c)
     dl = datalayer.Datalayer()
-    dl.add_seen_url(URL('http://example.com'))
-    assert dl.seen_url(URL('http://example.com'))
+    dl.add_crawled(URL('http://example.com'))
+    assert dl.crawled(URL('http://example.com'))
 
     with open(name, 'wb') as f:
         dl.save(f)
-    dl.add_seen_url(URL('http://example2.com'))
+    dl.add_crawled(URL('http://example2.com'))
     with open(name, 'rb') as f:
         dl.load(f)
 
-    assert dl.seen_url(URL('http://example.com'))
-    assert not dl.seen_url(URL('http://example2.com'))
+    assert dl.crawled(URL('http://example.com'))
+    assert not dl.crawled(URL('http://example2.com'))
     os.unlink(name)
     assert not os.path.exists(name)
 
@@ -51,11 +51,11 @@ def test_summarize(capsys):
     c = {'Robots': {'RobotsCacheSize': 1, 'RobotsCacheTimeout': 1}}
     config.set_config(c)
     dl = datalayer.Datalayer()
-    dl.add_seen_url(URL('http://example.com'))
-    dl.add_seen_url(URL('http://example2.com'))
+    dl.add_crawled(URL('http://example.com'))
+    dl.add_crawled(URL('http://example2.com'))
     dl.summarize()
 
     out, err = capsys.readouterr()
 
     assert len(err) == 0
-    assert out.startswith('2 seen_urls')
+    assert out.startswith('2 crawled')

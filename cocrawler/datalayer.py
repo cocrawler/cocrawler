@@ -29,12 +29,12 @@ import cachetools.ttl
 from . import config
 
 LOGGER = logging.getLogger(__name__)
-__NAME__ = 'datalayer seen_urls memory'
+__NAME__ = 'datalayer crawled memory'
 
 
 class Datalayer:
     def __init__(self):
-        self.seen_urls = set()
+        self.crawled_set = set()
 
         robots_size = config.read('Robots', 'RobotsCacheSize')
         robots_ttl = config.read('Robots', 'RobotsCacheTimeout')
@@ -44,14 +44,14 @@ class Datalayer:
     # as part of a "should we add this url to the queue?" process,
     # we need to remember all queued urls.
 
-    def add_seen_url(self, url):
-        self.seen_urls.add(url.surt)
+    def add_crawled(self, url):
+        self.crawled_set.add(url.surt)
 
-    def seen_url(self, url):
+    def crawled(self, url):
         # do this with a honking bloom filter?
         # notice when an url without cgi args is popular, maybe probe to
         # see if we can guess tracking args vs real ones.
-        return url.surt in self.seen_urls
+        return url.surt in self.crawled_set
 
     # collections.TTLCache is built on collections.OrderedDict and not sortedcontainers :-(
     # so it may need replacing if someone wants to do a survey crawl
@@ -65,7 +65,7 @@ class Datalayer:
 
     def save(self, f):
         pickle.dump(__NAME__, f)
-        pickle.dump(self.seen_urls, f)
+        pickle.dump(self.crawled_set, f)
         # don't save robots cache
 
     def load(self, f):
@@ -73,10 +73,10 @@ class Datalayer:
         if name != __NAME__:
             LOGGER.error('save file name does not match datalayer name: %s != %s', name, __NAME__)
             raise ValueError
-        self.seen_urls = pickle.load(f)
+        self.crawled_set = pickle.load(f)
 
     def summarize(self):
         '''
         print a human-readable sumary of what's in the datalayer
         '''
-        print('{} seen_urls'.format(len(self.seen_urls)))
+        print('{} crawled'.format(len(self.crawled_set)))
