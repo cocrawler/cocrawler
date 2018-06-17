@@ -186,23 +186,21 @@ class Crawler:
             stats.stats_sum('add_url '+reason, 1)
             self.log_rejected_add_url(url, reason)
             return
+
+        reason = None
         if not self.scheduler.check_budgets(url):
             reason = 'rejected by crawl budgets'
-            stats.stats_sum('add_url '+reason, 1)
-            self.log_rejected_add_url(url, reason)
-            return
-        if priority > int(config.read('Crawl', 'MaxDepth')):
+        elif priority > int(config.read('Crawl', 'MaxDepth')):
             reason = 'rejected by MaxDepth'
+        elif 'skip_crawled' not in ridealong and self.datalayer.crawled(url):
+            reason = 'rejected by crawled'
+
+        if reason:
             stats.stats_sum('add_url '+reason, 1)
             self.log_rejected_add_url(url, reason)
             return
-        if 'skip_crawled' not in ridealong:
-            if self.datalayer.crawled(url):
-                reason = 'rejected by crawled'
-                stats.stats_sum('add_url '+reason, 1)
-                self.log_rejected_add_url(url, reason)
-                return
-        else:
+
+        if 'skip_crawled' in ridealong:
             del ridealong['skip_crawled']
 
         allowed = url_allowed.url_allowed(url)
