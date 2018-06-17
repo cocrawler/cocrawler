@@ -200,12 +200,13 @@ class Crawler:
                 reason = 'rejected by url_allowed'
             elif allowed.url != url.url:
                 LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
-                note = 'modified by url_allowed'
-                stats.stats_sum('add_url '+note, 1)
+                stats.stats_sum('add_url modified by url_allowed', 1)
                 url = allowed
                 ridealong['url'] = url
                 if self.datalayer.crawled(url):
                     reason = 'rejected by crawled'
+
+        # XXX add url to the frontier here -- it's robots allowed, even if rejected for other reasons
 
         if reason:
             stats.stats_sum('add_url '+reason, 1)
