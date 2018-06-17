@@ -222,7 +222,7 @@ class Crawler:
                 if self.datalayer.crawled(url):
                     reason = 'rejected by crawled'
 
-        if not self.datalayer.crawled(url):
+        if 'skip_crawled' not in ridealong and not self.datalayer.crawled(url):
             self.log_frontier(url)
 
         if reason:
