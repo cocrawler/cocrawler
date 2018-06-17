@@ -23,7 +23,6 @@ import urllib
 import asyncio
 import logging
 import aiohttp
-import async_timeout
 
 from . import stats
 from . import config
@@ -67,7 +66,6 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
 async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 allow_redirects=None, max_redirects=None,
                 stats_prefix='', max_page_size=-1):
-    pagetimeout = float(config.read('Crawl', 'PageTimeout'))
 
     if proxy:  # pragma: no cover
         proxy = aiohttp.ProxyConnector(proxy=proxy)
@@ -88,32 +86,31 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
         with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
-                with async_timeout.timeout(pagetimeout):
-                    response = await session.get(mock_url or url.url,
-                                                 allow_redirects=allow_redirects,
-                                                 max_redirects=max_redirects,
-                                                 headers=headers)
+                response = await session.get(mock_url or url.url,
+                                             allow_redirects=allow_redirects,
+                                             max_redirects=max_redirects,
+                                             headers=headers)
 
-                    # https://aiohttp.readthedocs.io/en/stable/tracing_reference.html
-                    # XXX should use tracing events to get t_first_byte
-                    t_first_byte = '{:.3f}'.format(time.time() - t0)
+                # https://aiohttp.readthedocs.io/en/stable/tracing_reference.html
+                # XXX should use tracing events to get t_first_byte
+                t_first_byte = '{:.3f}'.format(time.time() - t0)
 
-                    while left > 0:
-                        block = await response.content.read(left)
-                        if not block:
-                            body_bytes = b''.join(blocks)
-                            break
-                        blocks.append(block)
-                        left -= len(block)
-                    else:
+                while left > 0:
+                    block = await response.content.read(left)
+                    if not block:
                         body_bytes = b''.join(blocks)
+                        break
+                    blocks.append(block)
+                    left -= len(block)
+                else:
+                    body_bytes = b''.join(blocks)
 
-                    if not response.content.at_eof():
-                        stats.stats_sum('fetch truncated length', 1)
-                        response.close()  # this does interrupt the network transfer
-                        is_truncated = 'length'  # testme WARC
+                if not response.content.at_eof():
+                    stats.stats_sum('fetch truncated length', 1)
+                    response.close()  # this does interrupt the network transfer
+                    is_truncated = 'length'  # testme WARC
 
-                    t_last_byte = '{:.3f}'.format(time.time() - t0)
+                t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         stats.stats_sum('fetch timeout', 1)
         last_exception = repr(e)

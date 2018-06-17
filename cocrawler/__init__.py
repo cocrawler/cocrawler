@@ -102,12 +102,18 @@ class Crawler:
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
 
-        conn_timeout = config.read('Crawl', 'ConnectTimeout')
-        if not conn_timeout:
-            conn_timeout = None  # docs say 0. is no timeout, docs lie
+        connect_timeout = config.read('Crawl', 'ConnectTimeout')
+        page_timeout = float(config.read('Crawl', 'PageTimeout'))
+        timeout_kwargs = {}
+        if connect_timeout:
+            timeout_kwargs['sock_connect'] = connect_timeout
+        if page_timeout:
+            timeout_kwargs['total'] = page_timeout
+        timeout = aiohttp.ClientTimeout(**timeout_kwargs)
+
         cookie_jar = aiohttp.DummyCookieJar()
         self.session = aiohttp.ClientSession(connector=conn, cookie_jar=cookie_jar,
-                                             conn_timeout=conn_timeout)
+                                             timeout=timeout)
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
