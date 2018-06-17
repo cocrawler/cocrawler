@@ -204,23 +204,25 @@ class Crawler:
             return
 
         reason = None
-        if not self.scheduler.check_budgets(url):
-            reason = 'rejected by crawl budgets'
+
+        allowed = url_allowed.url_allowed(url)
+        if not allowed:
+            reason = 'rejected by url_allowed'
+        elif allowed.url != url.url:
+            LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
+            stats.stats_sum('add_url modified by url_allowed', 1)
+            url = allowed
+            ridealong['url'] = url
+
+        if reason:
+            pass
         elif priority > int(config.read('Crawl', 'MaxDepth')):
             reason = 'rejected by MaxDepth'
         elif 'skip_crawled' not in ridealong and self.datalayer.crawled(url):
             reason = 'rejected by crawled'
-        else:
-            allowed = url_allowed.url_allowed(url)
-            if not allowed:
-                reason = 'rejected by url_allowed'
-            elif allowed.url != url.url:
-                LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
-                stats.stats_sum('add_url modified by url_allowed', 1)
-                url = allowed
-                ridealong['url'] = url
-                if self.datalayer.crawled(url):
-                    reason = 'rejected by crawled'
+        elif not self.scheduler.check_budgets(url):
+            # the budget is debited here, so it has to be last
+            reason = 'rejected by crawl budgets'
 
         if 'skip_crawled' in ridealong:
             self.log_frontier(url)

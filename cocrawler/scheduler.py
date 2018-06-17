@@ -40,16 +40,18 @@ class Scheduler:
 
     def initialize_budgets(self):
         self.budgets = {}
-        for which, conf in dict({'global_budget': 'GlobalBudget',
-                            'domain_budget': 'DomainBudget', 'host_budget': 'HostBudget'}).items():
+        self.budget_default = {}
+        for which, conf in (('global_budget', 'GlobalBudget'), ('domain_budget', 'DomainBudget'),
+                            ('host_budget', 'HostBudget')):
             value = config.read('Crawl', conf)
+            self.budgets[which] = {}
             if value is not None:
-                self.budgets[which] = defaultdict(lambda: int(value))
-            else:
-                self.budgets[which] = {}
+                self.budget_default[which] = int(value)
 
     def check_budget(self, which, key):
         budget = self.budgets[which]
+        if key not in budget and which in self.budget_default:
+            budget[key] = self.budget_default[which]
         if key in budget:
             if budget[key] > 0:
                 budget[key] -= 1
@@ -72,9 +74,10 @@ class Scheduler:
         return True
 
     def max_crawled_urls_exceeded(self):
-        if ((self.max_crawled_urls is not None and
-             (stats.stat_value('fetch http code=200') or 0) >= self.max_crawled_urls)):
-            return True
+        #if ((self.max_crawled_urls is not None and
+        #     (stats.stat_value('fetch http code=200') or 0) >= self.max_crawled_urls)):
+        #    return True
+        return False
 
     async def get_work(self):
         '''

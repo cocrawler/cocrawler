@@ -1,8 +1,13 @@
+# 0.5 QPS means that our 50 initial workers run into a lot of schedule sleeps
+# The seed is one url, which returns one url, which then returns 2 urls, and so on
+# Each page fetched has 1 robots denied link.
+
 Crawl:
   MaxHostQPS: 0.5
   MaxWorkers: 100
   MaxDepth: 100000
   MaxCrawledUrls: 10
+  GlobalBudget: 10
   UserAgent: cocrawler-test/0.01
 
 Plugins:
@@ -17,9 +22,10 @@ Seeds:
   - http://test.website/ordinary/0
 
 Logging:
-#  LoggingLevel: 3
   Crawllog: crawllog.jsonl
+#  Frontierlog: frontierlog
   Robotslog: robotslog.jsonl
+#  RejectedAddUrllog: rejectedaddurllog.jsonl
 
 UserAgent:
   Style: crawler
@@ -30,14 +36,14 @@ Testing:
   TestHostmapAll: 127.0.0.1:8080
 #  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
-    fetch URLs: 11
-    fetch http code=200: 11
+    fetch URLs: 10
+    fetch http code=200: 10
     max urls found on a page: 3
-    robots denied: 11  # the url ^/denied/ on each page crawled
+    robots denied: 10  # the url ^/denied/ on each page crawled
     parser in burner thread: 0
-    parser in main thread: 11
+    parser in main thread: 10
     warc r/r (prefix Testing): 0
   StatsGE:
-    scheduler ratelimit recycle sum: 20
-    scheduler ratelimit short sleep sum: 2
-    elapsed: 19
+    scheduler ratelimit recycle sum: 15
+    scheduler ratelimit short sleep sum: 10
+    elapsed: 14
