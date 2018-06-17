@@ -222,12 +222,15 @@ class Crawler:
                 if self.datalayer.crawled(url):
                     reason = 'rejected by crawled'
 
-        if 'skip_crawled' not in ridealong and not self.datalayer.crawled(url):
+        if 'skip_crawled' in ridealong:
+            self.log_frontier(url)
+        elif not self.datalayer.crawled(url):
             self.log_frontier(url)
 
         if reason:
             stats.stats_sum('add_url '+reason, 1)
             self.log_rejected_add_url(url, reason)
+            LOGGER.debug('add_url no, reason %s url %s', reason, url.url)
             return
 
         if 'skip_crawled' in ridealong:
@@ -272,6 +275,8 @@ class Crawler:
             self.rejectedaddurlfd.close()
         if self.facetlogfd:
             self.facetlogfd.close()
+        if self.frontierlogfd:
+            self.frontierlogfd.close()
         if self.scheduler.qsize():
             LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
         await self.session.close()
