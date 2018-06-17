@@ -125,6 +125,12 @@ class Crawler:
         else:
             self.crawllogfd = None
 
+        self.frontierlog = config.read('Logging', 'Frontierlog')
+        if self.frontierlog:
+            self.frontierlogfd = open(self.frontierlog, 'a')
+        else:
+            self.frontierlogfd = None
+
         self.rejectedaddurl = config.read('Logging', 'RejectedAddUrllog')
         if self.rejectedaddurl:
             self.rejectedaddurlfd = open(self.rejectedaddurl, 'a')
@@ -173,6 +179,10 @@ class Crawler:
             log_line = {'url': url.url, 'reason': reason}
             print(json.dumps(log_line, sort_keys=True), file=self.rejectedaddurlfd)
 
+    def log_frontier(self, url):
+        if self.frontierlogfd:
+            print(url.url, file=self.frontierlogfd)
+
     def add_url(self, priority, ridealong):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
@@ -212,7 +222,8 @@ class Crawler:
                 if self.datalayer.crawled(url):
                     reason = 'rejected by crawled'
 
-        # XXX add url to the frontier here -- it's robots allowed, even if rejected for other reasons
+        if not self.datalayer.crawled(url):
+            self.log_frontier(url)
 
         if reason:
             stats.stats_sum('add_url '+reason, 1)

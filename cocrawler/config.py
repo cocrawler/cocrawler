@@ -99,6 +99,7 @@ Logging: {}
 # note that the following files are all opened for append, for
 # restart purposes. Might change to unique filenames?
 #  Crawllog: crawllog.jsonl
+#  Frontierlog: frontierlog
 #  Robotslog: robotslog.jsonl
 #  RejectedAddUrllog: rejectedaddurl.log
 #  Facetlog: facet.log

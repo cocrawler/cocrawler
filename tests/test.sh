@@ -21,7 +21,7 @@ NOCH=--no-confighome
 echo
 echo test-deep
 echo
-rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz
+rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz frontierlog
 $COVERAGE ../scripts/crawl.py --configfile test-deep.yml $NOCH --config WARC.WARCAll:True
 
 # tests against the logfiles
