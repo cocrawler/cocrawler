@@ -194,6 +194,18 @@ class Crawler:
             reason = 'rejected by MaxDepth'
         elif 'skip_crawled' not in ridealong and self.datalayer.crawled(url):
             reason = 'rejected by crawled'
+        else:
+            allowed = url_allowed.url_allowed(url)
+            if not allowed:
+                reason = 'rejected by url_allowed'
+            elif allowed.url != url.url:
+                LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
+                note = 'modified by url_allowed'
+                stats.stats_sum('add_url '+note, 1)
+                url = allowed
+                ridealong['url'] = url
+                if self.datalayer.crawled(url):
+                    reason = 'rejected by crawled'
 
         if reason:
             stats.stats_sum('add_url '+reason, 1)
@@ -202,25 +214,6 @@ class Crawler:
 
         if 'skip_crawled' in ridealong:
             del ridealong['skip_crawled']
-
-        allowed = url_allowed.url_allowed(url)
-        if not allowed:
-            LOGGER.debug('url %s was rejected by url_allow.', url.url)
-            reason = 'rejected by url_allowed'
-            stats.stats_sum('add_url '+reason, 1)
-            self.log_rejected_add_url(url, reason)
-            return
-        if allowed.url != url.url:
-            LOGGER.debug('url %s was modified to %s by url_allow.', url.url, allowed.url)
-            reason = 'modified by url_allowed'
-            stats.stats_sum('add_url '+reason, 1)
-            url = allowed
-            ridealong['url'] = url
-            if self.datalayer.crawled(url):
-                reason = 'rejected by crawled'
-                stats.stats_sum('add_url '+reason, 1)
-                self.log_rejected_add_url(url, reason)
-                return
 
         # end allow/deny plugin
 
