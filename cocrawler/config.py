@@ -45,7 +45,6 @@ Crawl:
   PreventCompression: False
   UpgradeInsecureRequests: 1
   ConnectTimeout: 0.  # seconds, 0.=none
-#  MaxCrawledUrls: 11
 #  GlobalBudget: None
 #  DomainBudget: None
 #  HostBudget: None

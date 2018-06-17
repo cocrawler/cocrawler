@@ -34,7 +34,6 @@ class Scheduler:
         self.frozen_until = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds is longer than our typical delay
         self.maxhostqps = float(config.read('Crawl', 'MaxHostQPS'))
         self.delta_t = 1./self.maxhostqps
-        self.max_crawled_urls = int(config.read('Crawl', 'MaxCrawledUrls') or 0) or None  # 0 => None
         self.initialize_budgets()
         self.robots = robots
 

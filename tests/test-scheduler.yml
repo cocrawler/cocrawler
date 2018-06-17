@@ -6,7 +6,6 @@ Crawl:
   MaxHostQPS: 0.5
   MaxWorkers: 100
   MaxDepth: 100000
-  MaxCrawledUrls: 10
   GlobalBudget: 10
   UserAgent: cocrawler-test/0.01
 

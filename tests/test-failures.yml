@@ -3,7 +3,7 @@ REST:
   ServerPort: 8093
 
 Crawl:
-  MaxCrawledUrls: 5000 # prevent a runaway
+  GlobalBudget: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
   PageTimeout: 5  # we talk to google.com:81 so don't make this too short
   RetryTimeout: 0.3

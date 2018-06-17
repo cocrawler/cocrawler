@@ -61,25 +61,26 @@ rm -f robotslog.jsonl crawllog.jsonl facetlog.jsonl rejectedaddurl.log
 
 echo
 echo test-wide with save and load first half
+echo skipped because Greg removed MaxCrawledUrls
 echo
-rm -f test-wide-save
-cat test-wide.yml test-wide-save.yml > test-wide-tmp.yml
-$COVERAGE ../scripts/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.MaxCrawledUrls:5 --config Crawl.MaxWorkers:3 $NOCH
-rm -f test-wide-tmp.yml
-# save these in case debugging is needed
-mv robotslog.jsonl robotslog.jsonl.save
-mv crawllog.jsonl crawllog.jsonl.save
-mv rejectedaddurl.log rejectedaddurl.log.save
+#rm -f test-wide-save
+#cat test-wide.yml test-wide-save.yml > test-wide-tmp.yml
+#$COVERAGE ../scripts/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.GlobalBudget:5 --config Crawl.MaxWorkers:3 $NOCH
+#rm -f test-wide-tmp.yml
+## save these in case debugging is needed
+#mv robotslog.jsonl robotslog.jsonl.save
+#mv crawllog.jsonl crawllog.jsonl.save
+#mv rejectedaddurl.log rejectedaddurl.log.save
 
-ls -l test-wide-save
+#ls -l test-wide-save
 
-echo
-echo test wide save and load second half: load
-echo
-$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
-rm -f test-wide-save
-rm -f robotslog.jsonl.save crawllog.jsonl.save rejectedaddurl.log.save
-rm -f robotslog.jsonl crawllog.jsonl facetlog.jsonl rejectedaddurl.log
+#echo
+#echo test wide save and load second half: load
+#echo
+#$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
+#rm -f test-wide-save
+#rm -f robotslog.jsonl.save crawllog.jsonl.save rejectedaddurl.log.save
+#rm -f robotslog.jsonl crawllog.jsonl facetlog.jsonl rejectedaddurl.log
 
 echo
 echo test-failures

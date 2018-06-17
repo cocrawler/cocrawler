@@ -2,7 +2,7 @@ Crawl:
   MaxHostQPS: 10000  # essentially disables rate limiting
   MaxWorkers: 100
   MaxDepth: 100000
-  MaxCrawledUrls: 5000 # prevent a runaway
+  GlobalBudget: 5000 # prevent a runaway
   UserAgent: cocrawler-test/0.01
 
 Plugins:
