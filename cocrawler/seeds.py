@@ -115,7 +115,7 @@ def seed_some_urls(urls, crawler, skip_crawled=False):
         ridealong = {'url': url, 'priority': priority, 'seed': True,
                      'retries_left': retries_left, 'seed_host': seed_host}
         if skip_crawled:
-            ridealong[skip_crawled] = skip_crawled
+            ridealong['skip_crawled'] = skip_crawled
         if second_chance_url:
             ridealong['second_chance_url'] = second_chance_url
         if freeseedredirs:
