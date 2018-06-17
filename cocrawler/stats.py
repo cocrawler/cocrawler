@@ -263,10 +263,10 @@ def check(no_test=False):
                 LOGGER.error('Stat %s does not exist, should be >= %s', s, sge[s])
                 exitstatus = 1
             elif stat_value(s) < sge[s]:
-                LOGGER.error('Stat %s of %s is not >= %s', s, stat_value(s), sge[s])
+                LOGGER.error('Stat %s=%s is not >= %s', s, stat_value(s), sge[s])
                 exitstatus = 1
             else:
-                LOGGER.debug('Stat %s=%s is the expected value', s, sge[s])
+                LOGGER.debug('Stat %s=%s is >= %s', s, stat_value(s), sge[s])
 
 
 def burners_to_boring():
