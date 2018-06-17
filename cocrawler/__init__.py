@@ -348,9 +348,10 @@ class Crawler:
             self._retry_if_able(work, ridealong)
             return
 
-        # success
-
         self.scheduler.del_ridealong(surt)
+
+        if f.response.status >= 400 and 'seed' in ridealong:
+            seeds.fail(ridealong, self)
 
         json_log['status'] = f.response.status
 
