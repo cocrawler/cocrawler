@@ -235,7 +235,7 @@ class Robots:
                                 headers=headers, proxy=proxy, mock_url=mock_url,
                                 allow_redirects=True, max_redirects=5, stats_prefix='robots ')
 
-        json_log = {'action': 'fetch', 'time': time.time(), 'host': schemenetloc}
+        json_log = {'action': 'fetch', 'time': time.time()}
 
         if f.last_exception:
             json_log['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
@@ -349,4 +349,5 @@ class Robots:
 
     def jsonlog(self, schemenetloc, json_log):
         if self.robotslogfd:
+            json_log['host'] = schemenetloc
             print(json.dumps(json_log, sort_keys=True), file=self.robotslogfd)
