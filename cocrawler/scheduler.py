@@ -110,8 +110,8 @@ class Scheduler:
 
             recycle, why, dt = self.schedule_work(now, surt, surt_host, ridealong)
 
-            # sleep then requeue
             if recycle:
+                # sleep then requeue
                 stats.stats_sum(why+' sum', dt)
                 with stats.coroutine_state(why):
                     await asyncio.sleep(dt)
@@ -120,7 +120,6 @@ class Scheduler:
                     continue
 
             # Normal case: sleep if needed, and then return the work to the caller.
-            self.next_fetch[surt_host] = now + dt + self.delta_t
             if dt > 0:
                 stats.stats_sum(why+' sum', dt)
                 with stats.coroutine_state(why):
@@ -129,9 +128,7 @@ class Scheduler:
             return work
 
     def schedule_work(self, now, surt, surt_host, ridealong):
-        recycle = False
-        why = None
-        dt = 0
+        recycle, why, dt = False, None, 0
 
         # does host have cached dns? XXX
         # if not, and we're The One, fetch it
@@ -142,7 +139,8 @@ class Scheduler:
         # if not, and we aren't The One, recycle
 
         if not self.robots.check_cached(ridealong['url']):
-            recycle = True
+            # do use a slot; fall through so that the fetch will fail robots
+            recycle = False
             why = 'scheduler cached robots deny'
             return recycle, why, 0.
 
@@ -152,12 +150,16 @@ class Scheduler:
             dt = max(self.next_fetch[surt_host] - now, 0.)
         else:
             dt = 0
+
         if dt > 3.0:
             recycle = True
             why = 'scheduler ratelimit recycle'
             dt = 3.0
         elif dt > 0:
             why = 'scheduler ratelimit short sleep'
+            self.next_fetch[surt_host] = now + dt + self.delta_t
+        else:
+            self.next_fetch[surt_host] = now + self.delta_t
 
         return recycle, why, dt
 
