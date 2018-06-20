@@ -138,7 +138,7 @@ class Scheduler:
         # if not, and we're The One, fetch it
         # if not, and we aren't The One, recycle
 
-        if not self.robots.check_cached(ridealong['url']):
+        if not self.robots.check_cached(ridealong['url'], quiet=True):
             # do use a slot; fall through so that the fetch will fail robots
             recycle = False
             why = 'scheduler cached robots deny'

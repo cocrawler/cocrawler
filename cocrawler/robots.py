@@ -111,7 +111,7 @@ class Robots:
         if self.robotslogfd:
             self.robotslogfd.close()
 
-    def check_cached(self, url):
+    def check_cached(self, url, quiet=False):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
         try:
@@ -120,7 +120,7 @@ class Robots:
         except KeyError:
             stats.stats_sum('robots cached_only miss', 1)
             return True
-        return self._check(url, schemenetloc, robots, mentions_us)
+        return self._check(url, schemenetloc, robots, mentions_us, quiet=quiet)
 
     async def check(self, url, host_geoip=None, seed_host=None, crawler=None,
                     headers=None, proxy=None, mock_robots=None):
@@ -134,7 +134,7 @@ class Robots:
                                                           headers=headers, proxy=proxy)
         return self._check(url, schemenetloc, robots, mentions_us)
 
-    def _check(self, url, schemenetloc, robots, mentions_us):
+    def _check(self, url, schemenetloc, robots, mentions_us, quiet=False):
         if url.urlsplit.path:
             pathplus = url.urlsplit.path
         else:
@@ -143,6 +143,9 @@ class Robots:
             pathplus += '?' + url.urlsplit.query
 
         if robots is None:
+            if quiet:
+                return False
+
             LOGGER.debug('no robots info known for %s, failing %s%s', schemenetloc, schemenetloc, pathplus)
             self.jsonlog(schemenetloc, {'error': 'no robots info known', 'action': 'deny'})
             stats.stats_sum('robots denied - robots info not known', 1)
@@ -161,6 +164,11 @@ class Robots:
                     generic_check = robots.is_allowed('*', pathplus)
                 else:
                     generic_check = None
+
+        if quiet:
+            return check
+
+        # just logging from here on down
 
         if check:
             LOGGER.debug('robots allowed for %s%s', schemenetloc, pathplus)
