@@ -28,14 +28,12 @@ def test_strip_bom():
     robots_txt = b'\xef\xbb\xbf'
     assert robots.strip_bom(robots_txt) == b''
     robots_txt = b'\xef\xbb\xbf  '
-    assert robots.strip_bom(robots_txt) == b''
-    robots_txt = b'\xef\xbb\xbf  <'
-    assert robots.strip_bom(robots_txt) == b'<'
+    assert robots.strip_bom(robots_txt) == b'  '
 
     robots_txt = b'\xfe\xff'
     assert robots.strip_bom(robots_txt) == b''
-    robots_txt = b'\xfe\xff  \n \t \vwumpus'
-    assert robots.strip_bom(robots_txt) == b'wumpus'
+    robots_txt = b'\xfe\xfffoo'
+    assert robots.strip_bom(robots_txt) == b'foo'
 
     robots_txt = b'\xff\xfe'
     assert robots.strip_bom(robots_txt) == b''

@@ -26,11 +26,11 @@ LOGGER = logging.getLogger(__name__)
 
 def strip_bom(b):
     if b[:3] == b'\xef\xbb\xbf':  # utf-8, e.g. microsoft.com's sitemaps
-        return b[3:].lstrip()
+        return b[3:]
     elif b[:2] in (b'\xfe\xff', b'\xff\xfe'):  # utf-16 BE and LE, respectively
-        return b[2:].lstrip()
+        return b[2:]
     else:
-        return b.lstrip()
+        return b
 
 
 def preprocess_robots(text, robotname, json_log):
@@ -307,7 +307,7 @@ class Robots:
             sha1 = 'sha1:' + hashlib.sha1(body_bytes).hexdigest()
         json_log['checksum'] = sha1
 
-        body_bytes = strip_bom(body_bytes)
+        body_bytes = strip_bom(body_bytes).lstrip()
 
         plausible, message = is_plausible_robots(body_bytes)
         if not plausible:
