@@ -1,12 +1,12 @@
 # Install with "python -m pip install -r requirements.txt".
 
 # used by the cocrawler system
-uvloop==0.10.1
+uvloop==0.10.2
 aiohttp==3.3.2
 async-timeout==3.0.0
 yarl==1.2.6
 aiodns==1.1.1
-PyYAML==3.12
+PyYAML==4.1
 cchardet==2.1.1
 surt==0.3.0
 robotexclusionrulesparser==1.7.1
@@ -17,9 +17,9 @@ sortedcontainers==2.0.4
 sortedcollections==1.0.1
 psutil==5.4.6
 hdrhistogram==0.6.1
-fakeredis==0.10.3
+fakeredis==0.11.0
 beautifulsoup4==4.6.0
-lxml==4.2.1
+lxml==4.2.3
 extensions==0.4
 warcio==1.5.3
 geoip2==2.9.0
@@ -34,7 +34,7 @@ bottle==0.12.13
 coverage==4.5.1
 pylint==1.9.2
 flake8==3.5.0
-pytest==3.6.1
+pytest==3.6.2
 pytest-cov==2.5.1
 pytest-asyncio==0.8.0
 pytest-sugar==0.9.1
