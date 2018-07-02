@@ -185,7 +185,7 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     if content_type in html_types:
         if content_encoding != 'identity':
             with stats.record_burn('response body decompress', url=url):
-                body_bytes = content.decompress(content_encoding, f.body_bytes)
+                body_bytes = content.decompress(f.body_bytes, content_encoding)
         else:
             body_bytes = f.body_bytes
 

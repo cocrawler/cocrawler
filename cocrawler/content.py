@@ -18,17 +18,17 @@ def get_accept_encoding():
     return 'identity, deflate, gzip'  # br
 
 
-def decompress(data, content_encoding):
+def decompress(body_bytes, content_encoding):
     content_encoding = content_encoding.lower()
     if content_encoding == 'deflate':
         try:
-            return zlib.decompress(data, zlib.MAX_WBITS)  # expects header/checksum
+            return zlib.decompress(body_bytes, zlib.MAX_WBITS)  # expects header/checksum
         except Exception:
-            return zlib.decompress(data, -zlib.MAX_WBITS)  # no header/checksum
+            return zlib.decompress(body_bytes, -zlib.MAX_WBITS)  # no header/checksum
     elif content_encoding == 'gzip':
-        return zlib.decompress(data, 16 + zlib.MAX_WBITS)
+        return zlib.decompress(body_bytes, 16 + zlib.MAX_WBITS)
     #elif content_encoding == 'br':
-    #    return brotli.decompress(data)
+    #    return brotli.decompress(body_bytes)
     else:
         raise ValueError('unknown content_encoding: '+content_encoding)
 
