@@ -13,6 +13,8 @@ import cgi
 from functools import partial
 import json
 import codecs
+import zlib
+import brotli
 
 import multidict
 
@@ -35,6 +37,21 @@ LOGGER = logging.getLogger(__name__)
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
     return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
+
+
+def decompress(data, content_encoding):
+    content_encoding = content_encoding.lower()
+    if content_encoding == 'deflate':
+        try:
+            return zlib.decompress(data, zlib.MAX_WBITS)  # expects header/checksum
+        except Exception:
+            return zlib.decompress(data, -zlib.MAX_WBITS)  # no header/checksum
+    elif content_encoding == 'gzip':
+        return zlib.decompress(data, 16 + zlib.MAX_WBITS)
+    #elif content_encoding == 'br':
+    #    return brotli.decompress(data)
+    else:
+        raise ValueError('unknown content_encoding: '+content_encoding)
 
 
 # because we're using the streaming interface we can't call resp.get_encoding()
@@ -247,10 +264,17 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     html_types = set(('text/html', '', 'application/xml+html'))
 
     if content_type in html_types:
+        content_encoding = resp_headers.get('content-encoding', 'identity')
+        if content_encoding != 'identity':
+            with stats.record_burn('response body decompress', url=url):
+                body_bytes = decompress(content_encoding, f.body_bytes)
+        else:
+            body_bytes = f.body_bytes
+
         with stats.record_burn('response body get_charset', url=url):
-            charset, detect = my_get_charset(charset, f.body_bytes)
+            charset, detect = my_get_charset(charset, body_bytes)
         with stats.record_burn('response body decode', url=url):
-            body, charset_used = my_decode(f.body_bytes, charset, detect)
+            body, charset_used = my_decode(body_bytes, charset, detect)
 
         charset_log(json_log, charset, detect, charset_used)
 
@@ -261,7 +285,7 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
             resp_headers = multidict.CIMultiDict(resp_headers)
             try:
                 links, embeds, sha1, facets = await crawler.burner.burn(
-                    partial(parse.do_burner_work_html, body, f.body_bytes, resp_headers,
+                    partial(parse.do_burner_work_html, body, body_bytes, resp_headers,
                             burn_prefix='burner ', url=url),
                     url=url)
             except ValueError as e:  # if it pukes, we get back no values
@@ -274,7 +298,7 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
             try:
                 # no coroutine state because this is a burn, not an await
                 links, embeds, sha1, facets = parse.do_burner_work_html(
-                    body, f.body_bytes, resp_headers, burn_prefix='main ', url=url)
+                    body, body_bytes, resp_headers, burn_prefix='main ', url=url)
             except ValueError:  # if it pukes, ..
                 stats.stats_sum('parser raised', 1)
                 # XXX jsonlog
