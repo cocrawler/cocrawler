@@ -35,8 +35,6 @@ def decompress(data, content_encoding):
 
 def parse_headers(resp_headers, json_log):
     content_type = resp_headers.get('content-type', '')
-    content_encoding = resp_headers.get('content-encoding', 'identity')
-
     # sometimes content_type comes back multiline. whack it with a wrench.
     content_type = content_type.replace('\r', '\n').partition('\n')[0]
     content_type, options = cgi.parse_header(content_type)
@@ -50,6 +48,11 @@ def parse_headers(resp_headers, json_log):
     else:
         charset = None
         stats.stats_sum('content-type-charset=' + 'not specified', 1)
+
+    content_encoding = resp_headers.get('content-encoding', 'identity')
+    if content_encoding != 'identity':
+        json_log['content_encoding'] = content_encoding
+        stats.stats_sum('content-encoding=' + content_encoding, 1)
 
     return content_type, content_encoding, charset
 
