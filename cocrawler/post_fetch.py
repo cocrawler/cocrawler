@@ -9,7 +9,6 @@ parent subsequently calls add_url on them -- cocrawler.cocrawler
 '''
 
 import logging
-import cgi
 from functools import partial
 import json
 
@@ -179,25 +178,11 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
                                                        f.response.raw_headers, f.is_truncated, f.body_bytes)
 
     resp_headers = f.response.headers
-    content_type = resp_headers.get('content-type', '')
-    # sometimes content_type comes back multiline. whack it with a wrench.
-    content_type = content_type.replace('\r', '\n').partition('\n')[0]
-    content_type, options = cgi.parse_header(content_type)
-
-    json_log['content_type'] = content_type
-    stats.stats_sum('content-type=' + content_type, 1)
-    if 'charset' in options:
-        charset = options['charset'].lower()
-        json_log['content_type_charset'] = charset
-        stats.stats_sum('content-type-charset=' + charset, 1)
-    else:
-        charset = None
-        stats.stats_sum('content-type-charset=' + 'not specified', 1)
+    content_type, content_encoding, charset = content.parse_headers(resp_headers, json_log)
 
     html_types = set(('text/html', '', 'application/xml+html'))
 
     if content_type in html_types:
-        content_encoding = resp_headers.get('content-encoding', 'identity')
         if content_encoding != 'identity':
             with stats.record_burn('response body decompress', url=url):
                 body_bytes = content.decompress(content_encoding, f.body_bytes)

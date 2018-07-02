@@ -4,6 +4,9 @@ Charset and encoding-related code
 import zlib
 import codecs
 #import brotli
+import cgi
+
+from . import stats
 
 try:
     import cchardet as chardet
@@ -28,6 +31,27 @@ def decompress(data, content_encoding):
     #    return brotli.decompress(data)
     else:
         raise ValueError('unknown content_encoding: '+content_encoding)
+
+
+def parse_headers(resp_headers, json_log):
+    content_type = resp_headers.get('content-type', '')
+    content_encoding = resp_headers.get('content-encoding', 'identity')
+
+    # sometimes content_type comes back multiline. whack it with a wrench.
+    content_type = content_type.replace('\r', '\n').partition('\n')[0]
+    content_type, options = cgi.parse_header(content_type)
+
+    json_log['content_type'] = content_type
+    stats.stats_sum('content-type=' + content_type, 1)
+    if 'charset' in options:
+        charset = options['charset'].lower()
+        json_log['content_type_charset'] = charset
+        stats.stats_sum('content-type-charset=' + charset, 1)
+    else:
+        charset = None
+        stats.stats_sum('content-type-charset=' + 'not specified', 1)
+
+    return content_type, content_encoding, charset
 
 
 # because we're using the streaming interface we can't call resp.get_encoding()
