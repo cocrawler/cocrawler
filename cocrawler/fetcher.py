@@ -26,6 +26,7 @@ import aiohttp
 
 from . import stats
 from . import config
+from . import content
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,6 +52,8 @@ def apply_url_policies(url, crawler):
 
     if crawler.prevent_compression:
         headers['Accept-Encoding'] = 'identity'
+    else:
+        headers['Accept-Encoding'] = content.get_accept_encoding()
 
     if crawler.upgrade_insecure_requests:
         headers['Upgrade-Insecure-Requests'] = '1'

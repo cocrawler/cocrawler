@@ -113,7 +113,7 @@ class Crawler:
 
         cookie_jar = aiohttp.DummyCookieJar()
         self.session = aiohttp.ClientSession(connector=conn, cookie_jar=cookie_jar,
-                                             timeout=timeout)
+                                             auto_decompress=False, timeout=timeout)
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
