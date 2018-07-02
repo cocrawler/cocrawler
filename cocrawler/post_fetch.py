@@ -39,33 +39,34 @@ def is_redirect(response):
 
 # because we're using the streaming interface we can't call resp.get_encoding()
 # this is the same algo as aiohttp
-def my_get_encoding(charset, body_bytes):
+# using 'charset' because 'encoding' is a python concept, not http
+def my_get_charset(charset, body_bytes):
     detect = chardet.detect(body_bytes)
     if detect['encoding']:
         detect['encoding'] = detect['encoding'].lower()
     if detect['confidence']:
         detect['confidence'] = '{:.2f}'.format(detect['confidence'])
 
-    for encoding in (charset, detect['encoding'], 'utf-8'):
-        if encoding:
+    for cset in (charset, detect['encoding'], 'utf-8'):
+        if cset:
             try:
-                codecs.lookup(encoding)
+                codecs.lookup(cset)
                 break
             except LookupError:
                 pass
     else:
-        encoding = None
+        cset = None
 
-    return encoding, detect
+    return cset, detect
 
 
-def my_decode(body_bytes, encoding, detect):
-    for charset in encoding, detect['encoding']:
-        if not charset:
+def my_decode(body_bytes, charset, detect):
+    for cset in charset, detect['encoding']:
+        if not cset:
             # encoding or detect may be None
             continue
         try:
-            body = body_bytes.decode(encoding=charset)
+            body = body_bytes.decode(encoding=cset)
             break
         except UnicodeDecodeError:
             # if we truncated the body, we could have caused the error:
@@ -74,8 +75,8 @@ def my_decode(body_bytes, encoding, detect):
             pass
     else:
         body = body_bytes.decode(encoding='utf-8', errors='replace')
-        charset = 'utf-8 replace'
-    return body, charset
+        cset = 'utf-8 replace'
+    return body, cset
 
 
 def charset_log(json_log, charset, detect, charset_used):
@@ -242,10 +243,10 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
     html_types = set(('text/html', '', 'application/xml+html'))
 
     if content_type in html_types:
-        with stats.record_burn('response body get_encoding', url=url):
-            encoding, detect = my_get_encoding(charset, f.body_bytes)
+        with stats.record_burn('response body get_charset', url=url):
+            charset, detect = my_get_charset(charset, f.body_bytes)
         with stats.record_burn('response body decode', url=url):
-            body, charset_used = my_decode(f.body_bytes, encoding, detect)
+            body, charset_used = my_decode(f.body_bytes, charset, detect)
 
         charset_log(json_log, charset, detect, charset_used)
 
