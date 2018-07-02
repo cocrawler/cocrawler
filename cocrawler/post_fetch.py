@@ -39,7 +39,11 @@ def is_redirect(response):
 
 # because we're using the streaming interface we can't call resp.get_encoding()
 # this is the same algo as aiohttp
-# using 'charset' because 'encoding' is a python concept, not http
+# using the name 'charset' because 'encoding' is a python concept, not http
+# TODO:
+# https://encoding.spec.whatwg.org/#names-and-labels says we should map
+#   iso9958-1 to windows-1252 since 1252 a supserset, and a common problem on the actual web
+# implement the entire WHATWG table; python doesn't know that x-cp1252 should map to windows-1252
 def my_get_charset(charset, body_bytes):
     detect = chardet.detect(body_bytes)
     if detect['encoding']:
