@@ -12,7 +12,7 @@ import urllib.parse
 import hashlib
 import re
 
-import robotexclusionrulesparser
+import reppy.robots
 import magic
 
 from .urls import URL
@@ -154,14 +154,14 @@ class Robots:
 
         me = self.robotname
         if not mentions_us:
-            me = '*'  # works around bug in robotsexclusionparser
+            me = '*'  # works around substringbug in robotsexclusionparser
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
-            check = robots.is_allowed(me, pathplus)
+            check = robots.allowed(pathplus, me)
             if not check:
-                google_check = robots.is_allowed('googlebot', pathplus)
+                google_check = robots.allowed(pathplus, 'googlebot')
                 if me != '*':
-                    generic_check = robots.is_allowed('*', pathplus)
+                    generic_check = robots.allowed(pathplus, '*')
                 else:
                     generic_check = None
 
@@ -191,8 +191,7 @@ class Robots:
         return False
 
     def _cache_empty_robots(self, schemenetloc, final_schemenetloc):
-        parsed = robotexclusionrulesparser.RobotExclusionRulesParser()
-        parsed.parse('')
+        parsed = reppy.robots.Robots.parse('', '')
         self.datalayer.cache_robots(schemenetloc, (parsed, False))
         if final_schemenetloc:
             self.datalayer.cache_robots(final_schemenetloc, (parsed, False))
@@ -333,14 +332,13 @@ class Robots:
         preprocessed, mentions_us = preprocess_robots(body, self.robotname, json_log)
 
         with stats.record_burn('robots parse', url=schemenetloc):
-            robots = robotexclusionrulesparser.RobotExclusionRulesParser()
-            robots.parse(preprocessed)
+            robots = reppy.robots.Robots.parse('', preprocessed)
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
-            check = robots.is_allowed('*', '/')
+            check = robots.allowed('/', '*')
             if not check:
                 json_log['generic-deny-slash'] = True
-                check = robots.is_allowed('googlebot', '/')
+                check = robots.allowed('/', 'googlebot')
                 json_log['google-deny-slash'] = not check
 
         self.datalayer.cache_robots(schemenetloc, (robots, mentions_us))
@@ -349,8 +347,9 @@ class Robots:
             self.datalayer.cache_robots(final_schemenetloc, (robots, mentions_us))
             # we did not set this but we'll discard it anyway
             self.in_progress.discard(final_schemenetloc)
-        if robots.sitemaps:
-            json_log['has-sitemaps'] = len(robots.sitemaps)
+        sitemaps = list(robots.sitemaps)
+        if sitemaps:
+            json_log['has-sitemaps'] = len(sitemaps)
 
         self.jsonlog(schemenetloc, json_log)
         return robots, mentions_us
