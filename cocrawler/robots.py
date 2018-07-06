@@ -20,6 +20,7 @@ from . import stats
 from . import fetcher
 from . import config
 from . import post_fetch
+from . import content
 
 LOGGER = logging.getLogger(__name__)
 
@@ -301,6 +302,9 @@ class Robots:
         post_fetch.post_robots_txt(f, robots_url, host_geoip, json_log['time'], crawler, seed_host=seed_host)
 
         body_bytes = f.body_bytes
+        content_encoding = f.headers.get('content-encoding', 'identity')
+        if content_encoding != 'identity':
+            body_bytes = content.decompress(f.body_bytes, content_encoding)
 
         with stats.record_burn('robots sha1'):
             sha1 = 'sha1:' + hashlib.sha1(body_bytes).hexdigest()
