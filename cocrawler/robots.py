@@ -302,7 +302,7 @@ class Robots:
         post_fetch.post_robots_txt(f, robots_url, host_geoip, json_log['time'], crawler, seed_host=seed_host)
 
         body_bytes = f.body_bytes
-        content_encoding = f.headers.get('content-encoding', 'identity')
+        content_encoding = f.response.headers.get('content-encoding', 'identity')
         if content_encoding != 'identity':
             body_bytes = content.decompress(f.body_bytes, content_encoding)
 
