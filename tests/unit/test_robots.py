@@ -39,11 +39,7 @@ def test_strip_bom():
     assert robots.strip_bom(robots_txt) == b''
 
 
-def test_robots():
-    '''
-    There's already end-to-end testing for the normal functionality.
-    Exercise only the weird stuff here.
-    '''
+def test_is_plausible_robots():
     robots_txt = b'<'
     plausible, message = is_plausible_robots(robots_txt)
     assert not plausible
