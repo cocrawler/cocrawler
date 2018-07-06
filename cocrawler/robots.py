@@ -58,8 +58,8 @@ def preprocess_robots(text, robotname, json_log):
             line_count += 1
             robots += line + '\n'
 
-    user_agents = re.findall(r'\s* User-Agent: \s* (.*)', robots, re.X | re.I)
-    action_lines = len(re.findall(r'(allow|disallow|crawl-delay)', robots, re.X | re.I))
+    user_agents = re.findall(r'^ \s* User-Agent: \s* (.*) \s* (?:\#.*)?', robots, re.X | re.I | re.M)
+    action_lines = len(re.findall(r'^ \s* (allow|disallow|crawl-delay):', robots, re.X | re.I | re.M))
 
     user_agents = list(set([u.lower() for u in user_agents]))
 
