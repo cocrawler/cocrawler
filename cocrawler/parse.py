@@ -21,7 +21,7 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
 
     # This embodies a minimal parsing policy; it needs to be made pluggable/configurable
     #  split head/body
-    #  soup the head so we can accurately get base and facets
+    #  soup the head so we can accurately get base and other details
     #  regex the body for links and embeds, for speed
 
     with stats.record_burn(burn_prefix+'split_head_body', url=url):
