@@ -1,27 +1,14 @@
 import pytest
 
 import cocrawler.robots as robots
-from cocrawler.robots import is_plausible_robots
+from cocrawler.robots import is_plausible_robots, robots_facets
 
 
-def test_preprocess_robots():
-    robots_txt = '''
-foo
-#bar
-
-baz
-'''
-    ret = '''foo\nbaz\n'''
-    assert robots.preprocess_robots(robots_txt, 'foo', {}) == (ret, False)
-
+def test_robots_facets():
     robots_txt = 'User-AgEnT: cOcRaWlEr\nAllow: /'
     json_log = {}
-    ret = 'User-AgEnT: cOcRaWlEr\nAllow: /\n'
-    assert robots.preprocess_robots(robots_txt, 'CoCrAwLeR', json_log) == (ret, True)
+    robots_facets(robots_txt, 'CoCrAwLeR', json_log)
     assert json_log == {'action-lines': 1, 'mentions-us': True, 'size': 30, 'user-agents': 1}
-
-    assert robots.preprocess_robots('', 'foo', {}) == ('', False)
-    assert robots.preprocess_robots('foo', 'foo', {}) == ('foo\n', False)
 
 
 def test_strip_bom():
