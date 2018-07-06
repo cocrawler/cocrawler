@@ -10,6 +10,7 @@ PyYAML==3.12
 cchardet==2.1.1
 surt==0.3.0
 robotexclusionrulesparser==1.7.1
+reppy==0.4.9
 cachetools==2.1.0
 filemagic==1.6
 tldextract==2.2.0
