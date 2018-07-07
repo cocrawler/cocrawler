@@ -1,4 +1,5 @@
-dist: xenial # 16.04 LTS
+dist: xenial # 16.04 LTS -- not currently working, I get the default
+sudo: false
 
 language: python
 python:
