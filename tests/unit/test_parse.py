@@ -83,6 +83,12 @@ def test_do_burner_work_html():
     assert len(embeds) == 1
 
 
+def test_clean_urllist():
+    test = ['http://example.com', 'data:46532656', 'https://example.com']
+    ret = ['http://example.com', 'https://example.com']
+    assert parse.clean_urllist(test, ('data:', 'javascript:')) == ret
+
+
 def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
     assert len(links) == 6
