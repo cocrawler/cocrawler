@@ -189,17 +189,17 @@ def split_head_body(html, url=None):
     and return the entire page as body.
     '''
 
-    # hueristic: if there's a <head> tag at all, it's early in the document
+    # heuristic: if there's a <head> tag at all, it's early in the document
     m = re.search(r'<head[\s>]', html[:2000], re.I)
     if not m:
         stats.stats_sum('parser split short fail', 1)
         # well darn. try the same re as below, but with limited size
         m = re.search(r'<(?:/head>|body[\s>])', html[:50000], re.I)
-        if not m:
-            return '', html
-        else:
+        if m:
             stats.stats_sum('parser split short fail save', 1)
             return html[:m.start()], html[m.end():]
+        else:
+            return '', html
 
     # having seen <head>, we're willing to parse for a long time
     m = re.search(r'<(?:/head>|body[\s>])', html[:1000000], re.I)

@@ -143,7 +143,7 @@ def test_css_parser():
 
 def test_split_head_body():
     '''
-    Whitebox test of the hueristics in this function
+    Whitebox test of the heuristics in this function
     '''
     head, body = parse.split_head_body('x'*100000)
     assert head == ''
