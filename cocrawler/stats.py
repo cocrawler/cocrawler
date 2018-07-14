@@ -6,6 +6,7 @@ import logging
 import pickle
 import time
 from contextlib import contextmanager
+import itertools
 
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
@@ -79,14 +80,14 @@ def record_a_latency(name, start, url=None, elapsedmin=10.0):
         latency['hist'] = HdrHistogram(1, 30 * 1000, 2)  # 1ms-30sec, 2 sig figs
     latency['hist'].record_value(elapsed * 1000)  # ms
 
-    # show the 10 most recent latencies > 10 seconds
     if elapsed > elapsedmin:
         if 'list' not in latency:
             latency['list'] = ValueSortedDict()
         url = url or 'none'
         length = len(latency['list'])
-        for _ in range(9, length):
-            latency['list'].popitem(last=False)  # throwing away biggest value(s)
+        if length > 9:
+            for u in itertools.islice(latency['list'], 9, length):
+                del latency['list'][u]
         latency['list'][url] = -elapsed
 
     latencies[name] = latency
