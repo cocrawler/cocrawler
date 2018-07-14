@@ -471,9 +471,13 @@ class Crawler:
         mem.update(url_allowed.memory())
         mem.update(self.resolver.memory())
         print('Memory summary')
+
+        def _in_millions(m):
+            return '{:.1f}mb'.format(m / 1000000.)
+
         for k in sorted(mem.keys()):
             v = mem[k]
-            print('  ', k, 'len', v['len'], 'bytes', v['bytes'])
+            print('  ', k, 'len', v['len'], 'bytes', _in_millions(v['bytes']))
         print('Top objects')
         lines = io.StringIO()
         objgraph.show_most_common_types(limit=20, file=lines)
