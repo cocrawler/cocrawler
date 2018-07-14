@@ -24,13 +24,16 @@ def decompress(body_bytes, content_encoding):
         try:
             return zlib.decompress(body_bytes, zlib.MAX_WBITS)  # expects header/checksum
         except Exception:
+            # http://www.gzip.org/zlib/zlib_faq.html#faq38
             return zlib.decompress(body_bytes, -zlib.MAX_WBITS)  # no header/checksum
     elif content_encoding == 'gzip':
         return zlib.decompress(body_bytes, 16 + zlib.MAX_WBITS)
     #elif content_encoding == 'br':
     #    return brotli.decompress(body_bytes)
     else:
-        raise ValueError('unknown content_encoding: '+content_encoding)
+        # fairly common to have 'raw' or 'none'
+        #raise ValueError('unknown content_encoding: '+content_encoding)
+        return body_bytes
 
 
 def parse_headers(resp_headers, json_log):
