@@ -20,7 +20,6 @@ Seeds:
   - http://test.website/ordinary/3
 
 Logging:
-#  LoggingLevel: 3
   Crawllog: crawllog.jsonl
   Frontierlog: frontierlog
   Robotslog: robotslog.jsonl
