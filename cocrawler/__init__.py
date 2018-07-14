@@ -468,6 +468,8 @@ class Crawler:
     def memory(self):
         mem = self.scheduler.memory()
         mem.update(self.datalayer.memory())
+        mem.update(url_allowed.memory())
+        mem.update(self.resolver.memory())
         print('Memory summary')
         for k in sorted(mem.keys()):
             v = mem[k]
@@ -478,6 +480,7 @@ class Crawler:
         lines.seek(0)
         for l in lines.read().splitlines():
             print('  ', l)
+        print('', flush=True)
 
     def save(self, f):
         self.scheduler.save(self, f, )

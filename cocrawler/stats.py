@@ -10,6 +10,7 @@ import itertools
 
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
+import pympler
 
 from .urls import URL
 from . import config
@@ -343,3 +344,26 @@ def load(f):
     maxes = pickle.load(f)
     global sums
     sums = pickle.load(f)
+
+
+def memory():
+        maxes = {}
+        maxes['bytes'] = pympler.asizeof.asizesof(maxes)[0]
+        maxes['len'] = len(maxes)
+        sums = {}
+        sums['bytes'] = pympler.asizeof.asizesof(sums)[0]
+        sums['len'] = len(sums)
+        sets = {}
+        sets['bytes'] = pympler.asizeof.asizesof(sets)[0]
+        sets['len'] = len(sets)
+        burners = {}
+        burners['bytes'] = pympler.asizeof.asizesof(burners)[0]
+        burners['len'] = len(burners)
+        latencies = {}
+        latencies['bytes'] = pympler.asizeof.asizesof(latencies)[0]
+        latencies['len'] = len(latencies)
+        coroutine_stats = {}
+        coroutine_stats['bytes'] = pympler.asizeof.asizesof(coroutine_stats)[0]
+        coroutine_stats['len'] = len(coroutine_stats)
+        return {'maxes': maxes, 'sums': sums, 'sets': sets, 'burners': burners,
+                'latencies': latencies, 'coroutine_stats': coroutine_states}

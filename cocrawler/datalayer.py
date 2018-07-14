@@ -90,4 +90,7 @@ class Datalayer:
         crawled_set = {}
         crawled_set['bytes'] = pympler.asizeof.asizesof(self.crawled_set)[0]
         crawled_set['len'] = len(self.crawled_set)
-        return {'crawled_set': crawled_set}
+        robots = {}
+        robots['bytes'] = pympler.asizeof.asizesof(self.robots)[0]
+        robots['len'] = len(self.robots)
+        return {'crawled_set': crawled_set, 'robots': robots}

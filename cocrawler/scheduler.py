@@ -304,4 +304,11 @@ class Scheduler:
         ridealong = {}
         ridealong['bytes'] = pympler.asizeof.asizesof(self.ridealong)[0]
         ridealong['len'] = len(self.ridealong)
-        return {'q': q, 'ridealong': ridealong}
+        next_fetch = {}
+        next_fetch['bytes'] = pympler.asizeof.asizesof(self.next_fetch)[0]
+        next_fetch['len'] = len(self.next_fetch)
+        frozen_until = {}
+        frozen_until['bytes'] = pympler.asizeof.asizesof(self.frozen_until)[0]
+        frozen_until['len'] = len(self.frozen_until)
+        return {'q': q, 'ridealong': ridealong,
+                'next_fetch': next_fetch, 'frozen_until': frozen_until}

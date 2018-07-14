@@ -5,6 +5,8 @@ Generic implementation of url_allowed.
 import logging
 from collections import defaultdict
 
+import pympler
+
 from . import config
 
 LOGGER = logging.getLogger(__name__)
@@ -126,3 +128,13 @@ def setup_seeds(seeds):
         LOGGER.debug('Seed list:')
         for s in seeds:  # only print the new ones
             LOGGER.debug('  Seed: %s', s)
+
+
+def memory():
+        '''
+        Return a dict summarizing the our memory usage
+        '''
+        seeds = {}
+        seeds['bytes'] = pympler.asizeof.asizesof(SEEDS)[0]
+        seeds['len'] = len(SEEDS)
+        return {'seeds': seeds}
