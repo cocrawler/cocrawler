@@ -48,6 +48,7 @@ Crawl:
 #  GlobalBudget: None
 #  DomainBudget: None
 #  HostBudget: None
+  DebugMemory: False
 
 UserAgent:
   Style: laptopplus

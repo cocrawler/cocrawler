@@ -26,6 +26,8 @@ import logging
 # import sortedcontainers - I wish! not sure if cachetools.ttl is as efficient
 import cachetools.ttl
 
+import pympler.asizeof
+
 from . import config
 
 LOGGER = logging.getLogger(__name__)
@@ -80,3 +82,12 @@ class Datalayer:
         print a human-readable sumary of what's in the datalayer
         '''
         print('{} crawled'.format(len(self.crawled_set)))
+
+    def memory(self):
+        '''
+        Return a dict summarizing the datalayer's memory usage
+        '''
+        crawled_set = {}
+        crawled_set['bytes'] = pympler.asizeof.asizesof(self.crawled_set)[0]
+        crawled_set['len'] = len(self.crawled_set)
+        return {'crawled_set': crawled_set}

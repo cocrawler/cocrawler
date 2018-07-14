@@ -11,6 +11,7 @@ from setuptools_scm import get_version
 import json
 import traceback
 import concurrent
+import io
 
 import asyncio
 import uvloop
@@ -19,6 +20,7 @@ import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
 import psutil
+import objgraph
 
 from . import scheduler
 from . import stats
@@ -463,6 +465,20 @@ class Crawler:
     def summarize(self):
         self.scheduler.summarize()
 
+    def memory(self):
+        mem = self.scheduler.memory()
+        mem.update(self.datalayer.memory())
+        print('Memory summary')
+        for k in sorted(mem.keys()):
+            v = mem[k]
+            print('  ', k, 'len', v['len'], 'bytes', v['bytes'])
+        print('Top objects')
+        lines = io.StringIO()
+        objgraph.show_most_common_types(limit=20, file=lines)
+        lines.seek(0)
+        for l in lines.read().splitlines():
+            print('  ', l)
+
     def save(self, f):
         self.scheduler.save(self, f, )
 
@@ -502,6 +518,7 @@ class Crawler:
             stats.stats_set('DNS cache size', self.resolver.size())
             stats.report()
             stats.coroutine_report()
+            self.memory()
 
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start
@@ -552,6 +569,9 @@ class Crawler:
 
             self.update_cpu_stats()
             self.minute()
+
+        if config.read('Crawl', 'DebugMemory'):
+            self.memory()
 
         self.cancel_workers()
 
