@@ -13,7 +13,7 @@ import hashlib
 import re
 
 import reppy.robots
-import magic
+#import magic
 
 from .urls import URL
 from . import stats
@@ -74,7 +74,8 @@ class Robots:
         self.max_tries = config.read('Robots', 'MaxTries')
         self.max_robots_page_size = int(config.read('Robots', 'MaxRobotsPageSize'))
         self.in_progress = set()
-        self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
+        # magic is 3 milliseconds per call, too expensive to use
+        #self.magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
         self.robotslog = config.read('Logging', 'Robotslog')
         if self.robotslog:
             self.robotslogfd = open(self.robotslog, 'a')
@@ -82,8 +83,8 @@ class Robots:
             self.robotslogfd = None
 
     def __del__(self):
-        if self.magic is not None:
-            self.magic.close()
+        #if self.magic is not None:
+        #    self.magic.close()
         if self.robotslogfd:
             self.robotslogfd.close()
 
