@@ -7,8 +7,6 @@ python:
   - 3.5
   - 3.6.0
   - 3.6
-  - 3.7
-    sudo: true
   - nightly
 
 matrix:
@@ -21,6 +19,8 @@ matrix:
     env: COCRAWLER_LOGLEVEL=DEBUG
   - python: 3.5.3
     env: PYTHONASYNCIODEBUG=1
+  - python: 3.7
+    sudo: true
 
 git:
   depth: 9999
