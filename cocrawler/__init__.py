@@ -68,7 +68,7 @@ class Crawler:
         self.stopping = False
         self.paused = paused
         self.no_test = no_test
-        self.next_minute = time.time() + 60
+        self.next_minute = 0
         self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
         self.prevent_compression = config.read('Crawl', 'PreventCompression')
         self.upgrade_insecure_requests = config.read('Crawl', 'UpgradeInsecureRequests')
@@ -466,6 +466,8 @@ class Crawler:
         self.scheduler.summarize()
 
     def memory(self):
+        if not config.read('Crawl', 'DebugMemory'):
+            return
         mem = self.scheduler.memory()
         mem.update(self.datalayer.memory())
         mem.update(url_allowed.memory())
@@ -535,6 +537,8 @@ class Crawler:
         '''
         Run the crawler until it's out of work
         '''
+        self.minute()  # print pre-start stats
+
         self.control_limit_worker = asyncio.Task(self.control_limit())
         self.workers = [asyncio.Task(self.work()) for _ in range(self.max_workers)]
 
@@ -577,8 +581,7 @@ class Crawler:
             self.update_cpu_stats()
             self.minute()
 
-        if config.read('Crawl', 'DebugMemory'):
-            self.memory()
+        self.memory()
 
         self.cancel_workers()
 
