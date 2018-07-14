@@ -131,6 +131,8 @@ class Robots:
         me = self.robotname
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
+            if pathplus.startswith('//') and ':' in pathplus:
+                pathplus = 'htp://' + pathplus
             check = robots.allowed(pathplus, me)
             if not check:
                 google_check = robots.allowed(pathplus, 'googlebot')
