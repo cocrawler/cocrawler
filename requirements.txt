@@ -23,6 +23,8 @@ lxml==4.2.3
 extensions==0.4
 warcio==1.5.3
 geoip2==2.9.0
+objgraph==3.4.0
+Pympler==0.5
 
 # used to maintain this file
 pur==5.0.0
