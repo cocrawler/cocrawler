@@ -8,13 +8,13 @@ python:
   - 3.6.0
   - 3.6
   - 3.7
+    sudo: true
   - nightly
 
 matrix:
   fast_finish: true
   allow_failures:
   - python: 3.7
-    sudo: true
   - python: nightly
   include:
   - python: 3.5.3
