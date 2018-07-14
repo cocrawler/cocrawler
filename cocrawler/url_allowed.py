@@ -8,6 +8,7 @@ from collections import defaultdict
 import pympler
 
 from . import config
+from . import memory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -109,6 +110,8 @@ def setup(policy=None):
     global SEEDS
     SEEDS = valid_policies[POLICY]
 
+    memory.register_debug(mymemory)
+
 
 def setup_seeds(seeds):
     if POLICY == 'SeedsDomain':
@@ -130,7 +133,7 @@ def setup_seeds(seeds):
             LOGGER.debug('  Seed: %s', s)
 
 
-def memory():
+def mymemory():
         '''
         Return a dict summarizing the our memory usage
         '''

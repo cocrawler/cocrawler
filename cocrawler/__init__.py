@@ -11,7 +11,6 @@ from setuptools_scm import get_version
 import json
 import traceback
 import concurrent
-import io
 
 import asyncio
 import uvloop
@@ -20,7 +19,6 @@ import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
 import psutil
-import objgraph
 
 from . import scheduler
 from . import stats
@@ -37,6 +35,7 @@ from . import config
 from . import warc
 from . import dns
 from . import geoip
+from . import memory
 
 LOGGER = logging.getLogger(__name__)
 __title__ = 'cocrawler'
@@ -465,29 +464,6 @@ class Crawler:
     def summarize(self):
         self.scheduler.summarize()
 
-    def memory(self):
-        if not config.read('Crawl', 'DebugMemory'):
-            return
-        mem = self.scheduler.memory()
-        mem.update(self.datalayer.memory())
-        mem.update(url_allowed.memory())
-        mem.update(self.resolver.memory())
-        print('Memory summary')
-
-        def _in_millions(m):
-            return '{:.1f}mb'.format(m / 1000000.)
-
-        for k in sorted(mem.keys()):
-            v = mem[k]
-            print('  ', k, 'len', v['len'], 'bytes', _in_millions(v['bytes']))
-        print('Top objects')
-        lines = io.StringIO()
-        objgraph.show_most_common_types(limit=20, file=lines)
-        lines.seek(0)
-        for l in lines.read().splitlines():
-            print('  ', l)
-        print('', flush=True)
-
     def save(self, f):
         self.scheduler.save(self, f, )
 
@@ -527,7 +503,7 @@ class Crawler:
             stats.stats_set('DNS cache size', self.resolver.size())
             stats.report()
             stats.coroutine_report()
-            self.memory()
+            memory.print_summary()
 
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start
@@ -581,7 +557,7 @@ class Crawler:
             self.update_cpu_stats()
             self.minute()
 
-        self.memory()
+        memory.print_summary()
 
         self.cancel_workers()
 

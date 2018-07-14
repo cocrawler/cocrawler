@@ -29,6 +29,7 @@ import cachetools.ttl
 import pympler.asizeof
 
 from . import config
+from . import memory
 
 LOGGER = logging.getLogger(__name__)
 __NAME__ = 'datalayer crawled memory'
@@ -41,6 +42,8 @@ class Datalayer:
         robots_size = config.read('Robots', 'RobotsCacheSize')
         robots_ttl = config.read('Robots', 'RobotsCacheTimeout')
         self.robots = cachetools.ttl.TTLCache(robots_size, robots_ttl)
+
+        memory.register_debug(self.memory)
 
     # This is the minimum url database:
     # as part of a "should we add this url to the queue?" process,

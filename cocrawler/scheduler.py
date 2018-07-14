@@ -21,6 +21,7 @@ import pympler.asizeof
 
 from . import config
 from . import stats
+from . import memory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +39,8 @@ class Scheduler:
         self.delta_t = 1./self.maxhostqps
         self.initialize_budgets()
         self.robots = robots
+
+        memory.register_debug(self.memory)
 
     def initialize_budgets(self):
         self.budgets = {}

@@ -14,6 +14,7 @@ import pympler
 
 from . import stats
 from . import config
+from . import memory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +46,8 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
         self._cachemaxsize = config.read('Fetcher', 'DNSCacheMaxSize')
         self._cache = cachetools.LRUCache(int(self._cachemaxsize))
         self._refresh_in_progress = set()
+
+        memory.register_debug(self.memory)
 
     async def resolve(self, host, port, stats_prefix='fetch ', **kwargs):
         t = time.time()
