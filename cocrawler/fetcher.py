@@ -116,7 +116,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         stats.stats_sum('fetch timeout', 1)
-        last_exception = repr(e)
+        last_exception = str(e)
         body_bytes = b''.join(blocks)
         if len(body_bytes):
             is_truncated = 'time'  # testme WARC
@@ -133,7 +133,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
         # TooManyRedirects("0, message=''",) caused by too many robots.txt redirs 
         stats.stats_sum('fetch ClientError', 1)
-        last_exception = repr(e)
+        last_exception = str(e)
         body_bytes = b''.join(blocks)
         if len(body_bytes):
             is_truncated = 'disconnect'  # testme WARC
@@ -143,7 +143,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
         # so this doesn't go off much
         stats.stats_sum('fetch SSL error', 1)
-        last_exception = repr(e)
+        last_exception = str(e)
     #except (ValueError, AttributeError, RuntimeError) as e:
         # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
         # ValueError Location: https:/// 'Host could not be detected' -- robots fetch
@@ -154,19 +154,19 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
     except ValueError as e:
         # no A records found -- raised by my dns code
         stats.stats_sum('fetch other error - ValueError', 1)
-        last_exception = repr(e)
+        last_exception = str(e)
     except AttributeError as e:
         stats.stats_sum('fetch other error - AttributeError', 1)
-        last_exception = repr(e)
+        last_exception = str(e)
     except RuntimeError as e:
         stats.stats_sum('fetch other error - RuntimeError', 1)
-        last_exception = repr(e)
+        last_exception = str(e)
     except asyncio.CancelledError:
         raise
     except Exception as e:
-        last_exception = repr(e)
+        last_exception = str(e)
         stats.stats_sum('fetch surprising error', 1)
-        LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', mock_url or url.url, e)
+        LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', mock_url or url.url, last_exception)
         traceback.print_exc()
 
     if last_exception:
