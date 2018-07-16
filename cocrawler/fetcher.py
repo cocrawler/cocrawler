@@ -169,7 +169,9 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', mock_url or url.url, last_exception)
         traceback.print_exc()
 
-    if last_exception:
+    if last_exception is not None:
+        if not last_exception:
+            last_exception = '(an empty string)'
         LOGGER.info('we failed working on %s, the last exception is %s', mock_url or url.url, last_exception)
         return FetcherResponse(None, None, None, None, None, False, last_exception)
 
