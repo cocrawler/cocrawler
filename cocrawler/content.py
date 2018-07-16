@@ -39,7 +39,7 @@ def decompress(body_bytes, content_encoding):
 def parse_headers(resp_headers, json_log):
     content_type = resp_headers.get('content-type', '')
     # sometimes content_type comes back multiline. whack it with a wrench.
-    content_type = content_type.replace('\r', '\n').partition('\n')[0]
+    content_type = content_type.replace('\r', '\n').partition('\n')[0].lower()
     content_type, options = cgi.parse_header(content_type)
 
     json_log['content_type'] = content_type
