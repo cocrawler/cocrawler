@@ -76,7 +76,7 @@ async def main(urls):
         except Exception as e:
             print_exc()
 
-    session.close()
+    await session.close()
 
 loop = asyncio.get_event_loop()
 
