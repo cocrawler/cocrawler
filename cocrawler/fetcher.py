@@ -133,7 +133,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
         # TooManyRedirects("0, message=''",) caused by too many robots.txt redirs 
         stats.stats_sum('fetch ClientError', 1)
-        detailed_name = type(e).__name__
+        detailed_name = str(type(e).__name__)
         last_exception = 'ClientError: ' + detailed_name + ': ' + str(e)
         body_bytes = b''.join(blocks)
         if len(body_bytes):
