@@ -89,7 +89,6 @@ def main():
     except KeyboardInterrupt:
         sys.stderr.flush()
         print('\nInterrupt. Exiting cleanly.\n')
-        stats.coroutine_report()
         crawler.cancel_workers()
     finally:
         loop.run_until_complete(crawler.close())
