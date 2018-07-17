@@ -269,6 +269,7 @@ class Crawler:
 
     async def close(self):
         stats.report()
+        memory.print_summary()
         parse.report()
         stats.check(no_test=self.no_test)
         stats.check_collisions()
@@ -556,8 +557,6 @@ class Crawler:
 
             self.update_cpu_stats()
             self.minute()
-
-        memory.print_summary()
 
         self.cancel_workers()
 
