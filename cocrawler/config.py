@@ -131,20 +131,14 @@ def print_final():
 
 def merge_dicts(a, b):
     '''
-    Merge 2-level dict b into a, b overwriting a if present.
-    Not very general purpose!
-    XXX does having c here actually do anything? is c=a a
+    Merge 2-level dict b into a, b values overwriting a if present.
+    Changes a.
     '''
-    c = a
     for k1 in b:
-        for k2 in b[k1]:
-            v = b[k1][k2]
-            if k1 not in c or not c[k1]:
-                c[k1] = {}
-            if k2 not in c[k1]:
-                c[k1][k2] = {}
-            c[k1][k2] = v
-    return c
+        if k1 not in a:
+            a[k1] = {}
+        a[k1].update(b[k1])
+    return a
 
 
 def config(configfile, configlist, confighome=True):
