@@ -116,7 +116,7 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
     except asyncio.TimeoutError as e:
         stats.stats_sum('fetch timeout', 1)
-        last_exception = 'TimeoutError: ' + str(e)
+        last_exception = 'TimeoutError'
         body_bytes = b''.join(blocks)
         if len(body_bytes):
             is_truncated = 'time'  # testme WARC
@@ -133,7 +133,8 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
         # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
         # TooManyRedirects("0, message=''",) caused by too many robots.txt redirs 
         stats.stats_sum('fetch ClientError', 1)
-        last_exception = 'ClientError: ' + str(e)
+        detailed_name = type(e).__name__
+        last_exception = 'ClientError: ' + detailed_name + ': ' + str(e)
         body_bytes = b''.join(blocks)
         if len(body_bytes):
             is_truncated = 'disconnect'  # testme WARC
