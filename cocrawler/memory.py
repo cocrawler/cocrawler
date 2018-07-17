@@ -5,6 +5,7 @@ Code related to memory and memory debugging
 import logging
 import io
 import resource
+import gc
 
 import objgraph
 
@@ -45,6 +46,7 @@ def print_summary():
 
     LOGGER.info('Top objects:')
 
+    gc.collect()
     lines = io.StringIO()
     objgraph.show_most_common_types(limit=20, file=lines)
     lines.seek(0)
