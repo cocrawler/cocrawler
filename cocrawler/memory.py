@@ -29,7 +29,8 @@ def _in_millions(m):
 
 def print_summary():
     '''
-    Log a summary of current memory usage
+    Log a summary of current memory usage. This is very expensive
+    when there is a lot of memory used.
     '''
     if not config.read('Crawl', 'DebugMemory'):
         return
