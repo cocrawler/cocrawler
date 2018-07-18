@@ -12,7 +12,7 @@ from cocrawler.urls import URL
 
 
 def test_cocrawler(capsys):
-    config.config(None, None, confighome=False)
+    config.config(None, None)
 
     # we have to get around the useragent checks
     config.write('pytest', 'UserAgent', 'MyPrefix')

@@ -17,13 +17,12 @@ import cocrawler.config as config
 ARGS = argparse.ArgumentParser(description='CoCrawler dns fetcher')
 ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
-ARGS.add_argument('--no-confighome', action='store_true')
 ARGS.add_argument('--type', default='A')
 ARGS.add_argument('hosts', nargs='+', help='list of hostnames to query')
 
 args = ARGS.parse_args()
 
-config.config(args.configfile, args.config, confighome=not args.no_confighome)
+config.config(args.configfile, args.config)
 
 ns = config.read('Fetcher', 'Nameservers')
 if not isinstance(ns, list):

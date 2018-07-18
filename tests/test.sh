@@ -16,13 +16,11 @@ sleep 1
 # if COVERAGE is set, use it, else python
 if [ -z "$COVERAGE" ]; then COVERAGE=python; fi
 
-NOCH=--no-confighome
-
 echo
 echo test-deep
 echo
 rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz frontierlog
-$COVERAGE ../scripts/crawl.py --configfile test-deep.yml $NOCH --config WARC.WARCAll:True
+$COVERAGE ../scripts/crawl.py --configfile test-deep.yml --config WARC.WARCAll:True
 
 # tests against the logfiles
 grep -q "/denied/" robotslog.jsonl || (echo "FAIL: nothing about /denied/ in robotslog"; exit 1)
@@ -50,13 +48,13 @@ rm -f robotslog.jsonl crawllog.jsonl Testing-000000-*.warc.gz testing.warc.gz
 echo
 echo test-scheduler
 echo
-$COVERAGE ../scripts/crawl.py --configfile test-scheduler.yml $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-scheduler.yml
 rm -f robotslog.jsonl crawllog.jsonl
 
 echo
 echo test-wide
 echo
-$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1 $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --config Testing.doesnotexist:1
 rm -f robotslog.jsonl crawllog.jsonl facetlog.jsonl rejectedaddurl.log
 
 echo
@@ -65,7 +63,7 @@ echo skipped because Greg removed MaxCrawledUrls
 echo
 #rm -f test-wide-save
 #cat test-wide.yml test-wide-save.yml > test-wide-tmp.yml
-#$COVERAGE ../scripts/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.GlobalBudget:5 --config Crawl.MaxWorkers:3 $NOCH
+#$COVERAGE ../scripts/crawl.py --configfile test-wide-tmp.yml --no-test --config Crawl.GlobalBudget:5 --config Crawl.MaxWorkers:3
 #rm -f test-wide-tmp.yml
 ## save these in case debugging is needed
 #mv robotslog.jsonl robotslog.jsonl.save
@@ -77,7 +75,7 @@ echo
 #echo
 #echo test wide save and load second half: load
 #echo
-#$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --load test-wide-save $NOCH
+#$COVERAGE ../scripts/crawl.py --configfile test-wide.yml --load test-wide-save
 #rm -f test-wide-save
 #rm -f robotslog.jsonl.save crawllog.jsonl.save rejectedaddurl.log.save
 #rm -f robotslog.jsonl crawllog.jsonl facetlog.jsonl rejectedaddurl.log
@@ -85,7 +83,7 @@ echo
 echo
 echo test-failures
 echo
-$COVERAGE ../scripts/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1 $NOCH
+$COVERAGE ../scripts/crawl.py --configfile test-failures.yml --config error --config error:1 --config error.error:1
 rm -f robotslog.jsonl crawllog.jsonl
 
 echo

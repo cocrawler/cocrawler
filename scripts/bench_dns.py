@@ -18,13 +18,12 @@ import cocrawler.config as config
 ARGS = argparse.ArgumentParser(description='CoCrawler dns benchmark')
 ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
-ARGS.add_argument('--no-confighome', action='store_true')
 ARGS.add_argument('--count', type=int, default=1000)
 ARGS.add_argument('--expect-not-suitable', action='store_true')
 
 args = ARGS.parse_args()
 
-config.config(args.configfile, args.config, confighome=not args.no_confighome)
+config.config(args.configfile, args.config)
 max_workers = config.read('Crawl', 'MaxWorkers')
 
 ns = config.read('Fetcher', 'Nameservers')

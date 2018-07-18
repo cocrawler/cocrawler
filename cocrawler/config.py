@@ -126,7 +126,7 @@ def print_default():
 
 
 def print_final():
-    print(repr(__global_config))
+    print(yaml.dump(__global_config))
 
 
 def merge_dicts(a, b):
@@ -141,33 +141,45 @@ def merge_dicts(a, b):
     return a
 
 
-def config(configfile, configlist, confighome=True):
+def make_list(configfile):
+    cwd = os.getcwd().split('/')
+
+    filelist = []
+    if configfile:
+        filelist.append(configfile)
+    for x in range(len(cwd), 1, -1):
+        filelist.append('/'.join(cwd[0:x]) + '/.cocrawler-config.yml')
+    return filelist
+
+
+def load_files(configfile):
+    filelist = make_list(configfile)
+    combined = {}
+
+    for f in filelist:
+        if os.path.isfile(f):
+            LOGGER.info('loading %s', f)
+            with open(f, 'r') as c:
+                from_file = yaml.safe_load(c)
+                root = from_file.get('root', False)
+                if 'root' in from_file:
+                    del from_file['root']
+                    if root:  # it was actually true
+                        LOGGER.info('saw root=True in %s', f)
+                        break
+                combined = merge_dicts(combined, from_file)
+    return combined
+
+
+def config(configfile, configlist):
     '''
     Return a config dict which is the sum of all the various configurations
     '''
 
     default = yaml.safe_load(default_yaml)
 
-    config_from_file = {}
-    if configfile:
-        LOGGER.info('loading %s', configfile)
-        try:
-            with open(configfile, 'r') as c:
-                config_from_file = yaml.safe_load(c)
-        except FileNotFoundError:
-            LOGGER.error('configfile %s not found', configfile)
-            exit(1)
-
-    combined = merge_dicts(default, config_from_file)
-
-    homefile = os.path.expanduser('~/.cocrawler-config.yml')
-    if confighome and os.path.exists(homefile):
-        LOGGER.info('loading ~/.cocrawler-config.yml')
-        with open(homefile, 'r') as c:
-            config_from_file = yaml.safe_load(c)
-        combined = merge_dicts(combined, config_from_file)
-    elif confighome:
-        LOGGER.info('~/.cocrawler-config.yml not found')
+    file_config = load_files(configfile)
+    combined = merge_dicts(default, file_config)
 
     if configlist:
         for c in configlist:

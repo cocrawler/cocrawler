@@ -1,0 +1,11 @@
+root: True
+
+Fetcher:
+  Nameservers:
+  - 8.8.8.8
+
+UserAgent:
+  Style: laptopplus
+  MyPrefix: pytest
+  URL: https://github.com/cocrawler/cocrawler
+
