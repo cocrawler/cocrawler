@@ -165,7 +165,8 @@ class Crawler:
         LOGGER.info('Touch %s to pause the crawler.', self.pause_crawler)
 
     def __del__(self):
-        self.connector.close()
+        if hasattr(self, 'connector'):
+            self.connector.close()
 
     @property
     def seeds(self):
