@@ -34,7 +34,7 @@ bottle==0.12.13
 
 # used by Makefile
 coverage==4.5.1
-pylint==1.9.2
+pylint==2.0.0
 flake8==3.5.0
 pytest==3.6.3
 attrs==18.1.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
