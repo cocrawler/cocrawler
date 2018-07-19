@@ -167,6 +167,8 @@ class Crawler:
         self.memory_crawler = os.path.expanduser('~/MEMORYCRAWLER.{}'.format(os.getpid()))
         LOGGER.info('Use %s to debug objects in the crawler.', self.memory_crawler)
 
+        fetcher.establish_filters()
+
     def __del__(self):
         if hasattr(self, 'connector'):
             self.connector.close()

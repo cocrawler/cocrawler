@@ -31,6 +31,19 @@ from . import content
 LOGGER = logging.getLogger(__name__)
 
 
+class AsyncioSSLFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        if 'ERROR:asyncio:SSL error errno:1 reason: CERTIFICATE_VERIFY_FAILED' in msg:
+            return False
+        return True
+
+
+def establish_filters():
+    f = AsyncioSSLFilter()
+    logging.getLogger('asyncio').addFilter(f)
+
+
 # XXX should be a policy plugin
 # XXX cookie handling -- no way to have a cookie jar other than at session level
 #    need to directly manipulate domain-level cookie jars to get cookies
