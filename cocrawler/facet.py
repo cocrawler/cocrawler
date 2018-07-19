@@ -49,7 +49,7 @@ save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-se
 def compute_all(html, head, body, headers, links, embeds, head_soup=None, url=None, condense=False, expensive=False):
     expensive = True  # XXX
 
-    fhf = find_head_facets(head, head_soup=head_soup, url=url)
+    fhf = find_head_facets(head, head_soup, url=url)
     fgh = facets_grep(head, url=url)
     if expensive:
         fgb = facets_grep(body, url=url)
@@ -69,17 +69,8 @@ def compute_all(html, head, body, headers, links, embeds, head_soup=None, url=No
     return facet_dedup(facets)
 
 
-def find_head_facets(head, head_soup=None, url=None):
+def find_head_facets(head, head_soup, url=None):
     facets = []
-
-    if head_soup is None:
-        stats.stats_sum('beautiful soup head bytes', len(head))
-        with stats.record_burn('beautiful soup head', url=url):
-            try:
-                head_soup = BeautifulSoup(head, 'lxml')
-            except Exception as e:
-                facets.append(('BeautifulSoupHeadException', repr(e)))
-                return facets
 
     html = head_soup.find('html')
     if html:

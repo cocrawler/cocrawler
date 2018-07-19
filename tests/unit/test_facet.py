@@ -1,5 +1,7 @@
 import pytest
 
+from bs4 import BeautifulSoup
+
 import cocrawler.facet as facet
 from cocrawler.urls import URL
 
@@ -15,7 +17,8 @@ def test_double_entries():
     <meta name="format-detection" content="telephone=no"/>
     <meta name="format-detection" content="email=no"/>
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-name-robots', 'noarchive'),
                       ('meta-name-robots', 'index, follow'),
                       ('meta-name-referrer', 'unsafe-url'),
@@ -32,7 +35,8 @@ def test_generator():
     <meta name="generator" content="Movable Type Publishing Platform 4.01" />
     <meta name="generator" content="Drupal 7 (http://drupal.org)" />
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-name-generator', 'WordPress 2.5.1'),
                       ('meta-name-generator', 'Movable Type 3.33'),
                       ('meta-name-generator', 'Movable Type Publishing Platform 4.01'),
@@ -46,7 +50,8 @@ def test_link_rel():
     <link rel="canonical" href="https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort">
     <link rel="something" href="https://microformats.org/foo-bar" />
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('link-rel-amphtml',
                        ('http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092',
                         'notype')),
@@ -66,7 +71,8 @@ def test_facebook():
     <link rel="origin" href="..."/>
     <meta property="op:markup_version" content="v1.0">
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-property-fb:admins', '704409894'),
                       ('meta-property-fb:app_id', '4942312939'),
                       ('meta-property-og:site_name', 'ABC News'),
@@ -85,7 +91,8 @@ def test_twitter():
     <meta name="twitter:app:name:ipad" content="ABC News" />
     <meta name="twitter:app:id:ipad" content="306934135" />
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-name-twitter:app:id:iphone', '300255638'),
                       ('meta-name-twitter:app:url:iphone', 'abcnewsiphone://link/story,42263092'),
                       ('meta-name-twitter:app:name:ipad', 'ABC News'),
@@ -110,7 +117,8 @@ def test_applinks():  # fb + Parse
     <meta property="al:ios:app_store_id" content="12345" />
     <meta property="al:ios:app_name" content="App Links" />
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-property-al:ios:url', 'applinks://docs'),
                       ('meta-property-al:ios:app_store_id', '12345'),
                       ('meta-property-al:ios:app_name', 'App Links')]
@@ -120,7 +128,8 @@ def test_misc_meta_name():
     t = '''
     <meta name="parsely-title" content="Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising Effort">
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-name-parsely-title',
                        'Postmates Secures $141 Million in a ‘Super, Super Difficult’ Fundraising '
                        'Effort')]
@@ -133,7 +142,8 @@ def test_google_stuff():
     <script src="http://www.google.com/adsense/domains/caf.js"></script>
     <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == 'foo'
 
 
@@ -153,7 +163,8 @@ def test_integrity():
 
     <link rel="amphtml" href="http://example.com/amp" />
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('link-rel-opengraph', ('http://example.com', 'notype')),
                       ('link-rel-amphtml', ('http://example.com/amp', 'notype')),
                       ('thing-script integrity', 3)]
@@ -192,17 +203,20 @@ def test_misc():
     t = '''
     <html lang="fr">
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('html lang', 'fr')]
     t = '''
     <html xml:lang="fr" xmlns="http://www.w3.org/1999/xhtml">
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('html xml:lang', 'fr')]
     t = '''
     <base href="http://example.com/">
     '''
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('base', 'http://example.com/')]
 
 
@@ -227,9 +241,11 @@ def test_refresh_noscript():
     t = '<meta http-equiv="refresh" content="0; url=http://www.ExampleOnly.com/"/>'
     tno = '<noscript>' + t + '</noscript>'
 
-    facets = facet.find_head_facets(t)
+    head_soup = BeautifulSoup(t, 'lxml')
+    facets = facet.find_head_facets(t, head_soup)
     assert facets == [('meta-http-equiv-refresh', '0; url=http://www.ExampleOnly.com/')]
-    facets = facet.find_head_facets(tno)
+    head_soup = BeautifulSoup(tno, 'lxml')
+    facets = facet.find_head_facets(tno, head_soup)
     assert facets == [('meta-http-equiv-refresh-noscript', '0; url=http://www.ExampleOnly.com/')]
 
 

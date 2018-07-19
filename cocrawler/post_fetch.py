@@ -13,6 +13,7 @@ from functools import partial
 import json
 
 import multidict
+from bs4 import BeautifulSoup
 
 from . import urls
 from . import parse
@@ -57,7 +58,9 @@ def charset_log(json_log, charset, detect, charset_used):
 def minimal_facet_me(resp_headers, url, host_geoip, kind, t, crawler, seed_host=None, location=None):
     if not crawler.facetlogfd:
         return
-    facets = facet.compute_all('', '', '', resp_headers, [], [], url=url)
+
+    head_soup = BeautifulSoup('', 'lxml')
+    facets = facet.compute_all('', '', '', resp_headers, [], [], head_soup=head_soup, url=url)
     geoip.add_facets(facets, host_geoip)
     if not isinstance(url, str):
         url = url.url
