@@ -40,10 +40,10 @@ def print_objects(f):
             except Exception as e:
                 LOGGER.info('exception trying to objgraph a random %s: %s', line, str(e))
                 break
-            with tempfile.NamedTemporaryFile(dir='/tmp', prefix=line, suffix='.dot', mode='w') as fd:
+            with tempfile.NamedTemporaryFile(dir='/tmp', prefix=line, suffix='.dot', mode='w') as out:
                 try:
-                    objgraph.show_chain(objgraph.find_backref_chain(obj, objgraph.is_proper_module), output=fd)
-                    LOGGER.info('object %s file %s', line, fd.name)
+                    objgraph.show_chain(objgraph.find_backref_chain(obj, objgraph.is_proper_module), output=out)
+                    LOGGER.info('object %s file %s', line, out.name)
                 except Exception as e:
                     LOGGER.info('exception trying to show_chain a random %s: %s', line, str(e))
     try:
