@@ -38,14 +38,14 @@ def print_objects(f):
             try:
                 obj = random.choice(objgraph.by_type(line))
             except Exception as e:
-                LOGGER.info('exception %s trying to objgraph a random %s', str(e), line)
+                LOGGER.info('exception trying to objgraph a random %s: %s', line, str(e))
                 break
-            with tempfile.NamedTemporaryFile(prefix=line, dir='/tmp') as fd:
+            with tempfile.NamedTemporaryFile(dir='/tmp', prefix=line, suffix='.dot', mode='w') as fd:
                 try:
                     objgraph.show_chain(objgraph.find_backref_chain(obj, objgraph.is_proper_module), output=fd)
                     LOGGER.info('object %s file %s', line, fd.name)
                 except Exception as e:
-                    LOGGER.info('exception %s trying to show_chain a random %s', str(e), line)
+                    LOGGER.info('exception trying to show_chain a random %s: %s', line, str(e))
     try:
         os.remove(f)
     except Exception as e:
