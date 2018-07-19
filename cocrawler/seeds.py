@@ -119,7 +119,7 @@ def seed_some_urls(urls, crawler, skip_crawled=False):
         if second_chance_url:
             ridealong['second_chance_url'] = second_chance_url
         if freeseedredirs:
-            ridealong['free_redirs'] = freeseedredirs
+            ridealong['freeredirs'] = freeseedredirs
         crawler.add_url(priority, ridealong)
 
     stats.stats_sum('seeds added', len(urls))
