@@ -41,6 +41,8 @@ aiohttp_errors = {
     'Future exception was never retrieved',
     'Unclosed connection',
     'SSL error errno:1 reason: TLSV1_UNRECOGNIZED_NAME',
+    'SSL error errno:1 reason: SSLV3_ALERT_HANDSHAKE_FAILURE',
+    'SSL error errno:1 reason: TLSV1_ALERT_INTERNAL_ERROR',
 }
 
 

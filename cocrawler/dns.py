@@ -27,6 +27,13 @@ async def prefetch(url, resolver):
             except OSError:  # mapped to aiodns.error.DNSError if it was a .get
                 stats.stats_sum('prefetch DNS error', 1)
                 return None
+            except ValueError:
+                stats.stats_sum('prefetch DNS no A records found', 1)
+                return None
+            except UnicodeError as e:
+                stats.stats_sum('prefetch DNS unicode error', 1)
+                LOGGER.info('UnicodeError prefetching dns for %s: %s', url.hostname, str(e))
+                return None
     return resolver.get_cache_entry(url.hostname)
 
 
