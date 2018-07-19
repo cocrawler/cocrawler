@@ -48,8 +48,9 @@ class AsyncioSSLFilter(logging.Filter):
     def filter(self, record):
         if record.name == 'asyncio' and record.levelname == 'ERROR':
             msg = record.getMessage()
-            if msg in aiohttp_errors:
-                return False
+            for ae in aiohttp_errors:
+                if msg.startswith(ae):
+                    return False
         return True
 
 
