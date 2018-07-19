@@ -159,10 +159,13 @@ class Crawler:
             stats.stats_max('initial seeds', self.scheduler.qsize())
 
         self.stop_crawler = os.path.expanduser('~/STOPCRAWLER.{}'.format(os.getpid()))
-        self.pause_crawler = os.path.expanduser('~/PAUSECRAWLER.{}'.format(os.getpid()))
-
         LOGGER.info('Touch %s to stop the crawler.', self.stop_crawler)
+
+        self.pause_crawler = os.path.expanduser('~/PAUSECRAWLER.{}'.format(os.getpid()))
         LOGGER.info('Touch %s to pause the crawler.', self.pause_crawler)
+
+        self.memory_crawler = os.path.expanduser('~/MEMORYCRAWLER.{}'.format(os.getpid()))
+        LOGGER.info('Use %s to debug objects in the crawler.', self.memory_crawler)
 
     def __del__(self):
         if hasattr(self, 'connector'):
@@ -270,7 +273,7 @@ class Crawler:
 
     async def close(self):
         stats.report()
-        memory.print_summary()
+        memory.print_summary(self.memory_crawler)
         parse.report()
         stats.check(no_test=self.no_test)
         stats.check_collisions()
@@ -505,7 +508,7 @@ class Crawler:
             stats.stats_set('DNS cache size', self.resolver.size())
             stats.report()
             stats.coroutine_report()
-            memory.print_summary()
+            memory.print_summary(self.memory_crawler)
 
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start

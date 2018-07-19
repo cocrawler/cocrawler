@@ -6,6 +6,9 @@ import logging
 import io
 import resource
 import gc
+import os
+import random
+import tempfile
 
 import objgraph
 
@@ -27,11 +30,36 @@ def _in_millions(m):
     return '{:.1f}mb'.format(m / 1000000.)
 
 
-def print_summary():
+def print_objects(f):
+    gc.collect()
+    with open(f, 'r') as fd:
+        for line in fd:
+            line = line.strip()
+            try:
+                obj = random.choice(objgraph.by_type(line))
+            except Exception as e:
+                LOGGER.info('exception %s trying to objgraph a random %s', str(e), line)
+                break
+            with tempfile.NamedTemporaryFile(prefix=line, dir='/tmp') as fd:
+                try:
+                    objgraph.show_chain(objgraph.find_backref_chain(obj, objgraph.is_proper_module), output=fd)
+                    LOGGER.info('object %s file %s', line, fd.name)
+                except Exception as e:
+                    LOGGER.info('exception %s trying to show_chain a random %s', str(e), line)
+    try:
+        os.remove(f)
+    except Exception as e:
+        LOGGER.info('exception %s removing memory_crawler file %s', str(e), f)
+
+
+def print_summary(f):
     '''
     Log a summary of current memory usage. This is very expensive
     when there is a lot of memory used.
     '''
+    if os.path.isfile(f):
+        print_objects(f)
+
     if not config.read('Crawl', 'DebugMemory'):
         return
 
