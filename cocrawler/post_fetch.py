@@ -137,7 +137,7 @@ def handle_redirect(f, url, ridealong, priority, rand, host_geoip, json_log, cra
         seeds.fail(ridealong, crawler)
         queue_next = False
     else:
-        LOGGER.info('special redirect of type %s for url %s', redir_kind, url.url)
+        LOGGER.debug('special redirect of type %s for url %s', redir_kind, url.url)
         # XXX push this info onto a last-k for the host
         # to be used pre-fetch to mutate urls we think will redir
 
