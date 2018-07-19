@@ -164,10 +164,10 @@ def load_files(configfile):
                 root = from_file.get('root', False)
                 if 'root' in from_file:
                     del from_file['root']
-                    if root:  # it was actually true
-                        LOGGER.info('saw root=True in %s', f)
-                        break
                 combined = merge_dicts(combined, from_file)
+                if root:  # it was actually true
+                    LOGGER.info('saw root=True in %s', f)
+                    break
     return combined
 
 
