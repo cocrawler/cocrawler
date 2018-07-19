@@ -30,12 +30,26 @@ from . import content
 
 LOGGER = logging.getLogger(__name__)
 
+# these errors get printed deep in aiohttp but they also bubble up
+aiohttp_errors = {
+    'SSL handshake failed',
+    'SSL error errno:1 reason: CERTIFICATE_VERIFY_FAILED',
+    'SSL handshake failed on verifying the certificate',
+    'Fatal error on transport TCPTransport',
+    'Fatal error on SSL transport',
+    'SSL error errno:1 reason: UNKNOWN_PROTOCOL',
+    'Future exception was never retrieved',
+    'Unclosed connection',
+    'SSL error errno:1 reason: TLSV1_UNRECOGNIZED_NAME',
+}
+
 
 class AsyncioSSLFilter(logging.Filter):
     def filter(self, record):
-        msg = record.getMessage()
-        if 'ERROR:asyncio:SSL error errno:1 reason: CERTIFICATE_VERIFY_FAILED' in msg:
-            return False
+        if record.name == 'asyncio' and record.levelname == 'ERROR':
+            msg = record.getMessage()
+            if msg in aiohttp_errors:
+                return False
         return True
 
 
