@@ -57,7 +57,7 @@ UserAgent:
 
 Robots:
   MaxTries: 4
-  RobotsCacheSize: 1000
+  RobotsCacheSize: 100000  # 40mb-ish
   RobotsCacheTimeout: 86400
   MaxRobotsPageSize: 500000
 
