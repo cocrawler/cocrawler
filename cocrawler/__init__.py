@@ -188,7 +188,7 @@ class Crawler:
         if self.frontierlogfd:
             print(url.url, file=self.frontierlogfd)
 
-    def add_url(self, priority, ridealong):
+    def add_url(self, priority, ridealong, rand=None):
         # XXX eventually do something with the frag - record as a "javascript-needed" clue
 
         # XXX optionally generate additional urls plugin here
@@ -250,10 +250,10 @@ class Crawler:
 
         ridealong['priority'] = priority
 
-        # to randomize fetches, and sub-prioritize embeds
-        if ridealong.get('embed'):
-            rand = 0.0
-        else:
+        # to randomize fetches
+        # already set for a freeredir
+        # could be used to sub-prioritize embeds
+        if rand is None:
             rand = random.uniform(0, 0.99999)
 
         self.scheduler.set_ridealong(url.surt, ridealong)
@@ -369,7 +369,7 @@ class Crawler:
         json_log['status'] = f.response.status
 
         if post_fetch.is_redirect(f.response):
-            post_fetch.handle_redirect(f, url, ridealong, priority, host_geoip, json_log, self, seed_host=seed_host)
+            post_fetch.handle_redirect(f, url, ridealong, priority, rand, host_geoip, json_log, self, seed_host=seed_host)
             # meta-http-equiv-redirect will be dealt with in post_fetch
 
         if f.response.status == 200:
