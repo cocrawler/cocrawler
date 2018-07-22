@@ -11,6 +11,7 @@ from setuptools_scm import get_version
 import json
 import traceback
 import concurrent
+import resource
 
 import asyncio
 import uvloop
@@ -68,6 +69,7 @@ class Crawler:
         self.paused = paused
         self.no_test = no_test
         self.next_minute = 0
+        self.next_hour = time.time() + 3600
         self.max_page_size = int(config.read('Crawl', 'MaxPageSize'))
         self.prevent_compression = config.read('Crawl', 'PreventCompression')
         self.upgrade_insecure_requests = config.read('Crawl', 'UpgradeInsecureRequests')
@@ -505,12 +507,25 @@ class Crawler:
         '''
         print interesting stuff, once a minute
         '''
-        if time.time() > self.next_minute:
-            self.next_minute = time.time() + 60
-            stats.stats_set('DNS cache size', self.resolver.size())
-            stats.report()
-            stats.coroutine_report()
-            memory.print_summary(self.memory_crawler)
+        if time.time() < self.next_minute:
+            return
+
+        self.next_minute = time.time() + 60
+        stats.stats_set('DNS cache size', self.resolver.size())
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        vmem = (ru[2])/1000000.  # gigabytes
+        stats.stats_set('main thread vmem', vmem)
+        stats.report()
+        stats.coroutine_report()
+        memory.print_summary(self.memory_crawler)
+
+    def hour(self):
+        '''Do something once per hour'''
+        if time.time() < self.next_hour:
+            return
+
+        self.next_hour = time.time() + 3600
+        pass
 
     def update_cpu_stats(self):
         elapsedc = time.clock()  # should be since process start
@@ -563,6 +578,7 @@ class Crawler:
 
             self.update_cpu_stats()
             self.minute()
+            self.hour()
 
         self.cancel_workers()
 
