@@ -200,31 +200,14 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
 
         charset_log(json_log, charset, detect, charset_used)
 
-        if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
-            stats.stats_sum('parser in burner thread', 1)
-            # headers is a multidict.CIMultiDictProxy case-blind dict
-            # and the Proxy form of it doesn't pickle, so convert to one that does
-            resp_headers = multidict.CIMultiDict(resp_headers)
-            try:
-                links, embeds, sha1, facets = await crawler.burner.burn(
-                    partial(parse.do_burner_work_html, body, body_bytes, resp_headers,
-                            burn_prefix='burner ', url=url),
-                    url=url)
-            except ValueError as e:  # if it pukes, we get back no values
-                stats.stats_sum('parser raised', 1)
-                LOGGER.info('parser raised %r', e)
-                # XXX jsonlog
-                return
-        else:
-            stats.stats_sum('parser in main thread', 1)
-            try:
-                # no coroutine state because this is a burn, not an await
-                links, embeds, sha1, facets = parse.do_burner_work_html(
-                    body, body_bytes, resp_headers, burn_prefix='main ', url=url)
-            except ValueError:  # if it pukes, ..
-                stats.stats_sum('parser raised', 1)
-                # XXX jsonlog
-                return
+        try:
+            links, embeds, sha1, facets = await do_parser(body, body_bytes, resp_headers, url, crawler)
+        except ValueError as e:
+            stats.stats_sum('parser raised', 1)
+            LOGGER.info('parser raised %r', e)
+            # XXX jsonlog
+            return
+
         json_log['checksum'] = sha1
 
         geoip.add_facets(facets, host_geoip)
@@ -264,6 +247,25 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         # neah stick that in add_url!
 
         # actual jsonlog is emitted after the return
+
+
+async def do_parser(body, body_bytes, resp_headers, url, crawler):
+    if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
+        stats.stats_sum('parser in burner thread', 1)
+        # headers is a multidict.CIMultiDictProxy case-blind dict
+        # and the Proxy form of it doesn't pickle, so convert to one that does
+        resp_headers = multidict.CIMultiDict(resp_headers)
+        links, embeds, sha1, facets = await crawler.burner.burn(
+            partial(parse.do_burner_work_html, body, body_bytes, resp_headers,
+                    burn_prefix='burner ', url=url),
+            url=url)
+    else:
+        stats.stats_sum('parser in main thread', 1)
+        # no coroutine state because this is a burn, not an await
+        links, embeds, sha1, facets = parse.do_burner_work_html(
+            body, body_bytes, resp_headers, burn_prefix='main ', url=url)
+
+    return links, embeds, sha1, facets
 
 
 def post_dns(dns, expires, url, crawler):
