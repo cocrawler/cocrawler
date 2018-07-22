@@ -225,7 +225,7 @@ class Crawler:
             pass
         elif priority > int(config.read('Crawl', 'MaxDepth')):
             reason = 'rejected by MaxDepth'
-        elif 'skip_crawled' not in ridealong and self.datalayer.crawled(url):
+        elif 'skip_crawled' not in ridealong and self.datalayer.seen(url):
             reason = 'rejected by crawled'
         elif not self.scheduler.check_budgets(url):
             # the budget is debited here, so it has to be last
@@ -233,7 +233,7 @@ class Crawler:
 
         if 'skip_crawled' in ridealong:
             self.log_frontier(url)
-        elif not self.datalayer.crawled(url):
+        elif not self.datalayer.seen(url):
             self.log_frontier(url)
 
         if reason:
@@ -262,7 +262,7 @@ class Crawler:
 
         self.scheduler.queue_work((priority, rand, url.surt))
 
-        self.datalayer.add_crawled(url)
+        self.datalayer.add_seen(url)
         return 1
 
     def cancel_workers(self):

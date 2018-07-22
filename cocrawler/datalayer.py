@@ -32,12 +32,12 @@ from . import config
 from . import memory
 
 LOGGER = logging.getLogger(__name__)
-__NAME__ = 'datalayer crawled memory'
+__NAME__ = 'datalayer seen memory'
 
 
 class Datalayer:
     def __init__(self):
-        self.crawled_set = set()
+        self.seen_set = set()
 
         robots_size = config.read('Robots', 'RobotsCacheSize')
         robots_ttl = config.read('Robots', 'RobotsCacheTimeout')
@@ -49,14 +49,14 @@ class Datalayer:
     # as part of a "should we add this url to the queue?" process,
     # we need to remember all queued urls.
 
-    def add_crawled(self, url):
-        self.crawled_set.add(url.surt)
+    def add_seen(self, url):
+        self.seen_set.add(url.surt)
 
-    def crawled(self, url):
+    def seen(self, url):
         # do this with a honking bloom filter?
         # notice when an url without cgi args is popular, maybe probe to
         # see if we can guess tracking args vs real ones.
-        return url.surt in self.crawled_set
+        return url.surt in self.seen_set
 
     # collections.TTLCache is built on collections.OrderedDict and not sortedcontainers :-(
     # so it may need replacing if someone wants to do a survey crawl
@@ -70,7 +70,7 @@ class Datalayer:
 
     def save(self, f):
         pickle.dump(__NAME__, f)
-        pickle.dump(self.crawled_set, f)
+        pickle.dump(self.seen_set, f)
         # don't save robots cache
 
     def load(self, f):
@@ -78,22 +78,22 @@ class Datalayer:
         if name != __NAME__:
             LOGGER.error('save file name does not match datalayer name: %s != %s', name, __NAME__)
             raise ValueError
-        self.crawled_set = pickle.load(f)
+        self.seen_set = pickle.load(f)
 
     def summarize(self):
         '''
         print a human-readable sumary of what's in the datalayer
         '''
-        print('{} crawled'.format(len(self.crawled_set)))
+        print('{} seen'.format(len(self.seen_set)))
 
     def memory(self):
         '''
         Return a dict summarizing the datalayer's memory usage
         '''
-        crawled_set = {}
-        crawled_set['bytes'] = pympler.asizeof.asizesof(self.crawled_set)[0]
-        crawled_set['len'] = len(self.crawled_set)
+        seen_set = {}
+        seen_set['bytes'] = pympler.asizeof.asizesof(self.seen_set)[0]
+        seen_set['len'] = len(self.seen_set)
         robots = {}
         robots['bytes'] = pympler.asizeof.asizesof(self.robots)[0]
         robots['len'] = len(self.robots)
-        return {'crawled_set': crawled_set, 'robots': robots}
+        return {'seen_set': seen_set, 'robots': robots}

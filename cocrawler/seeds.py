@@ -51,7 +51,7 @@ def expand_seeds_config(crawler):
         for h in seeds['CrawledHosts']:
             u = special_seed_handling(h)
             if u is not None:
-                crawler.datalayer.add_crawled(URL(u))
+                crawler.datalayer.add_seen(URL(u))
 
     seed_files = seeds.get('Files', [])
     dedup = set()
@@ -101,7 +101,7 @@ def expand_seeds_config(crawler):
                 for line in f:
                     seed_host, u = sanatize(line, dedup)
                     if seed_host:
-                        crawler.datalayer.add_crawled(URL(u))
+                        crawler.datalayer.add_seen(URL(u))
 
     return seed_some_urls(final_urls, crawler)
 
