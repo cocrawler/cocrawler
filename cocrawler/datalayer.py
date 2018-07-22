@@ -1,29 +1,5 @@
-# datalayer, naieve implemenetion.
-# all in-process-memory
-
-# database layer spec
-
-# domain database
-# host database
-#   counters: urls crawled, urls in queue, seen urls, hostrank info like unique incoming C's
-#   data: landing pages and their anchortext? or in the url db
-#   politeness: current value, last 3 maxes, last N outcomes
-#    outcome: 5xx, 4xx, 200, slow-200
-#    remember the averages for last 10,100,1000,10k,100k,1mm fetches
-# url database
-#   seen urls can be a bloom filter
-#    one of the ones in pypi does % error, 10 billion @ 0.1% was 17 gigabytes
-#   surt url, last-crawl-date, ranking counters
-#    can minimize size by only recording details for externally linked urls
-# per-host crawl frontiers ordered by rank?
-#   lossy? refresh by iterating over url database
-#   python Queue is single-process and not ranked
-# robots cache, with timeout
-# path to seed - naive or accurate?
-
 import pickle
 import logging
-# import sortedcontainers - I wish! not sure if cachetools.ttl is as efficient
 import cachetools.ttl
 
 import pympler.asizeof
@@ -45,22 +21,13 @@ class Datalayer:
 
         memory.register_debug(self.memory)
 
-    # This is the minimum url database:
-    # as part of a "should we add this url to the queue?" process,
-    # we need to remember all queued urls.
-
     def add_seen(self, url):
+        '''A "seen" url is one that we've done something with, such as having
+        queued it or already crawled it.'''
         self.seen_set.add(url.surt)
 
     def seen(self, url):
-        # do this with a honking bloom filter?
-        # notice when an url without cgi args is popular, maybe probe to
-        # see if we can guess tracking args vs real ones.
         return url.surt in self.seen_set
-
-    # collections.TTLCache is built on collections.OrderedDict and not sortedcontainers :-(
-    # so it may need replacing if someone wants to do a survey crawl
-    # XXX may need to become async so other implemtations can do an outcall?
 
     def cache_robots(self, schemenetloc, parsed):
         self.robots[schemenetloc] = parsed
@@ -81,15 +48,11 @@ class Datalayer:
         self.seen_set = pickle.load(f)
 
     def summarize(self):
-        '''
-        print a human-readable sumary of what's in the datalayer
-        '''
+        '''Print a human-readable sumary of what's in the datalayer'''
         print('{} seen'.format(len(self.seen_set)))
 
     def memory(self):
-        '''
-        Return a dict summarizing the datalayer's memory usage
-        '''
+        '''Return a dict summarizing the datalayer's memory usage'''
         seen_set = {}
         seen_set['bytes'] = pympler.asizeof.asizesof(self.seen_set)[0]
         seen_set['len'] = len(self.seen_set)
