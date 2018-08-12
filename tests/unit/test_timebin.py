@@ -20,7 +20,8 @@ def test_timebin():
 
     tuples = timebin1.gettuples('a path')
     assert len(tuples) == 1
-    assert tuples[0] == approx(('a path', (t, 150.)))
+    assert tuples[0][0] == 'a path'
+    assert tuples[0][1] == approx((t, 150.))
 
     timebin30 = TimeBin(30.0)
     # t happens to be divisible by 30.
