@@ -97,8 +97,9 @@ the url shortener to go out of business.
 '''
 
 
-def handle_redirect(f, url, ridealong, priority, rand, host_geoip, json_log, crawler, seed_host=None):
+def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, rand=None):
     resp_headers = f.response.headers
+    seed_host = ridealong.get('seed_host', None)
 
     location = resp_headers.get('location')
     if location is None:
@@ -172,7 +173,7 @@ def handle_redirect(f, url, ridealong, priority, rand, host_geoip, json_log, cra
     # after we return, json_log will get logged
 
 
-async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
+async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
 
     if crawler.warcwriter is not None:  # needs to use the same algo as post_dns for choosing what to warc
         # XXX insert the digest we already computed, instead of computing it again?
@@ -215,6 +216,8 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         facet_log = {'url': url.url, 'facets': facets, 'kind': 'get'}
         facet_log['checksum'] = sha1
         facet_log['time'] = json_log['time']
+
+        seed_host = ridealong.get('seed_host', None)
         if seed_host:
             facet_log['seed_host'] = seed_host
 
@@ -230,13 +233,18 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         queue_embeds = config.read('Crawl', 'QueueEmbeds')
 
         new_links = 0
+        ridealong_skeleton = {'priority': priority+1, 'retries_left': max_tries}
+        if seed_host:
+            ridealong_skeleton['seed_host'] = seed_host
         for u in links:
-            ridealong = {'url': u, 'priority': priority+1, 'retries_left': max_tries}
+            ridealong = {'url': u}
+            ridealong.update(ridealong_skeleton)
             if crawler.add_url(priority + 1, ridealong):
                 new_links += 1
         if queue_embeds:
             for u in embeds:
-                ridealong = {'url': u, 'priority': priority-1, 'retries_left': max_tries}
+                ridealong = {'url': u}
+                ridealong.update(ridealong_skeleton)
                 if crawler.add_url(priority - 1, ridealong):
                     new_links += 1
 

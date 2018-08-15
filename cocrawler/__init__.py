@@ -327,6 +327,10 @@ class Crawler:
             raise ValueError('missing ridealong for surt '+surt)
         url = ridealong['url']
         seed_host = ridealong.get('seed_host', None)
+        if seed_host and ridealong.get('seed'):
+            robots_seed_host = seed_host
+        else:
+            robots_seed_host = None
 
         req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
 
@@ -343,7 +347,7 @@ class Crawler:
                     geoip.lookup_all(addrs, host_geoip)
                 post_fetch.post_dns(addrs, expires, url, self)
 
-        r = await self.robots.check(url, host_geoip=host_geoip, seed_host=seed_host, crawler=self,
+        r = await self.robots.check(url, host_geoip=host_geoip, seed_host=robots_seed_host, crawler=self,
                                     headers=req_headers, proxy=proxy, mock_robots=mock_robots)
         if not r:
             # really, we shouldn't retry a robots.txt rule failure
@@ -373,11 +377,11 @@ class Crawler:
         json_log['status'] = f.response.status
 
         if post_fetch.is_redirect(f.response):
-            post_fetch.handle_redirect(f, url, ridealong, priority, rand, host_geoip, json_log, self, seed_host=seed_host)
+            post_fetch.handle_redirect(f, url, ridealong, priority, host_geoip, json_log, self, rand=rand)
             # meta-http-equiv-redirect will be dealt with in post_fetch
 
         if f.response.status == 200:
-            await post_fetch.post_200(f, url, priority, host_geoip, seed_host, json_log, self)
+            await post_fetch.post_200(f, url, ridealong, priority, host_geoip, json_log, self)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
         LOGGER.debug('size of ridealong now stands at %r urls', self.scheduler.ridealong_size())
