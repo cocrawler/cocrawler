@@ -326,7 +326,7 @@ class Crawler:
         if 'url' not in ridealong:
             raise ValueError('missing ridealong for surt '+surt)
         url = ridealong['url']
-        seed_host = ridealong.get('seed_host', None)
+        seed_host = ridealong.get('seed_host')
         if seed_host and ridealong.get('seed'):
             robots_seed_host = seed_host
         else:

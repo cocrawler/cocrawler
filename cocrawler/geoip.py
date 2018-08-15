@@ -99,7 +99,7 @@ def lookup(ip):
                     ret['ip-special'] = name
 
     if special_orgs:
-        if ret.get('ip-asn-org', None) is not None:
+        if ret.get('ip-asn-org') is not None:
             asn_org = ret['ip-asn-org']
             for org, value in special_orgs.items():
                 for grep in value['greps']:

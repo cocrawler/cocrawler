@@ -99,7 +99,7 @@ the url shortener to go out of business.
 
 def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, rand=None):
     resp_headers = f.response.headers
-    seed_host = ridealong.get('seed_host', None)
+    seed_host = ridealong.get('seed_host')
 
     location = resp_headers.get('location')
     if location is None:
@@ -217,7 +217,7 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         facet_log['checksum'] = sha1
         facet_log['time'] = json_log['time']
 
-        seed_host = ridealong.get('seed_host', None)
+        seed_host = ridealong.get('seed_host')
         if seed_host:
             facet_log['seed_host'] = seed_host
 

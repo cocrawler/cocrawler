@@ -173,6 +173,6 @@ def fail(ridealong, crawler):
         return
 
     two = ridealong['second_chance_url']
-    seed_host = ridealong.get('seed_host', None)
+    seed_host = ridealong.get('seed_host')
 
     seed_some_urls(((seed_host, URL(two), None),), crawler, skip_crawled=True)
