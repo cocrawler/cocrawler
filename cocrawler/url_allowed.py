@@ -39,6 +39,7 @@ not_text_extension = set(('jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
 
 # not yet used
 text_extension = set(('txt', 'html', 'php', 'htm', 'aspx', 'asp', 'shtml', 'jsp'))
+text_embed_extension = set(('js', 'css'))
 
 
 def extension_allowed(url):

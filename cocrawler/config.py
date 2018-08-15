@@ -43,11 +43,12 @@ Crawl:
   MaxHostQPS: 10
   MaxPageSize: 1000000
   PreventCompression: False
-  UpgradeInsecureRequests: 1
+  UpgradeInsecureRequests: 1  # send this http header
   ConnectTimeout: 0.  # seconds, 0.=none
 #  GlobalBudget: None
 #  DomainBudget: None
 #  HostBudget: None
+  QueueEmbeds: False
   DebugMemory: False
 
 UserAgent:

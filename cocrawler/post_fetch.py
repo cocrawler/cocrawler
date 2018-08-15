@@ -227,16 +227,18 @@ async def post_200(f, url, priority, host_geoip, seed_host, json_log, crawler):
         stats.stats_max('max urls found on a page', len(links) + len(embeds))
 
         max_tries = config.read('Crawl', 'MaxTries')
+        queue_embeds = config.read('Crawl', 'QueueEmbeds')
 
         new_links = 0
         for u in links:
             ridealong = {'url': u, 'priority': priority+1, 'retries_left': max_tries}
             if crawler.add_url(priority + 1, ridealong):
                 new_links += 1
-        for u in embeds:
-            ridealong = {'url': u, 'priority': priority-1, 'retries_left': max_tries}
-            if crawler.add_url(priority - 1, ridealong):
-                new_links += 1
+        if queue_embeds:
+            for u in embeds:
+                ridealong = {'url': u, 'priority': priority-1, 'retries_left': max_tries}
+                if crawler.add_url(priority - 1, ridealong):
+                    new_links += 1
 
         if new_links:
             json_log['found_new_links'] = new_links
