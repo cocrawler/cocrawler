@@ -66,15 +66,12 @@ class Scheduler:
             return None
 
     def check_budgets(self, url):
-        hb = self.check_budget('host_budget', url.hostname_without_www)
-        if hb is not None:
-            return hb
-        db = self.check_budget('domain_budget', url.registered_domain)
-        if db is not None:
-            return db
-        gb = self.check_budget('global_budget', None)
-        if gb is not None:
-            return gb
+        for budget, arg in (('host_budget', url.hostname_without_www),
+                            ('domain_budget', url.registered_domain),
+                            ('global_budget', None)):
+            b = self.check_budget(budget, arg)
+            if b is not None:
+                return b
         return True
 
     def max_crawled_urls_exceeded(self):
