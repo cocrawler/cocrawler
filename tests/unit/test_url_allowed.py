@@ -53,3 +53,13 @@ def test_extension_allowed():
     assert url_allowed.extension_allowed(URL('https://example.com/index.html'))
     assert not url_allowed.extension_allowed(URL('https://example.com/foo.jpg'))
     assert not url_allowed.extension_allowed(URL('https://example.com/foo.tar.gz'))
+
+
+def test_setup_seeds_prefix():
+    seeds = {'http://example.com/asdf', 'http://example.com/a', 'http://example.com/a',
+             'http://example.com/b', 'http://example.com/asdff', 'http://example2.com/a'}
+    url_allowed.setup(policy='SeedsPrefix')
+    url_allowed.setup_seeds([URL(s) for s in seeds])
+
+    SEEDS = {'example.com': {'/a', '/b'}, 'example2.com': {'/a'}}
+    assert SEEDS == url_allowed.SEEDS
