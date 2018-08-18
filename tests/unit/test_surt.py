@@ -85,7 +85,7 @@ def test_hostname_to_punycanon():
 @pytest.mark.xfail(reason='turkish lower-case FAIL', strict=True)
 def test_hostname_to_punycanon_turkish_tricky():
     # This one is impossible because you have to know that this is Turkish before you can do
-    # the Turkish-specific down case of dotless I (a normal I) to dotless i.
+    # the Turkish-specific down case of dotless I (a normal I) to dotless i (ı)
     # https://www.w3.org/International/wiki/Case_folding#Turkish_i.2FI_etc.
     assert surt.hostname_to_punycanon('TÜRKİYE.com') == surt.hostname_to_punycanon('türkiye.com')
     assert surt.hostname_to_punycanon('TÜRKİYE.com') != surt.hostname_to_punycanon('türkıye.com')
@@ -146,5 +146,7 @@ def test_surt():
     assert surt.surt("http://Example.Com/Goo/") == 'com,example)/goo/'
     assert surt.surt("http://Example.Com:4445/Goo/") == 'com,example,:4445)/goo/'
     assert surt.surt("http://bücher.Com/Goo/") == 'com,xn--bcher-kva)/goo/'
-    assert surt.surt("http://example.com/goo/;FOO=bar") == 'com,example)/goo/;foo=bar'
-    assert surt.surt("http://example.com/goo/;FOO=bar?a=1&A=1&a=2") == 'com,example)/goo/;foo=bar?A=1&a=1&a=2'
+    assert surt.surt("http://example.com/goo/;FOO=bar") == 'com,example)/goo/'
+    assert surt.surt("http://example.com/goo/;FOO=bar?a=1&A=1&a=2") == 'com,example)/goo/?A=1&a=1&a=2'
+    assert surt.surt("http://example.com/goo/%3bFOO=bar") == 'com,example)/goo/%3bfoo=bar'
+    assert surt.surt("http://example.com/goo/%3bFOO=bar?a=1&A=1&a=2") == 'com,example)/goo/%3bfoo=bar?A=1&a=1&a=2'

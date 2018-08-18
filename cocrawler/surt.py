@@ -209,7 +209,7 @@ def surt(url, parts=None):
 
     netloc = netloc_to_punycanon(scheme, netloc)
     (user, password, hostname, port) = parse_netloc(netloc)
-    # TODO: user, password, port in the surt
+    # TODO: user, password in the surt
     # http://builds.archive.org/javadoc/heritrix-3.1.1/org/archive/util/SURT.html
 
     hostname = discard_www_from_hostname(hostname)
@@ -221,13 +221,14 @@ def surt(url, parts=None):
     if path == '' or path == '/':
         path = '/'
     path = path.lower()
+    path = path.partition(';')[0]  # discard path params, if any e.g. ;jsessionid=0
 
     if query is not '':
         query_parts = sorted(query.split('&'))
     else:
         query_parts = ()
 
-    fragment = ''  # we don't use this anyway
+    # fragment = ''  # we don't use this anyway
 
     ret = ','.join(hostname_parts) + ')' + path
 
