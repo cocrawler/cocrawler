@@ -143,10 +143,14 @@ def test_special_redirect():
     assert sr(url1, URL('http://www.example.com/')) == 'towww'
     assert sr(url1, URL('https://www.example.com/')) == 'towww+tohttps'
 
-    url2 = URL('http://www.example.com/')
+    url2str = 'http://www.example.com/'
+    url2 = URL(url2str)
     assert sr(url2, URL('https://www.example.com/')) == 'tohttps'
     assert sr(url2, URL('http://example.com/')) == 'tononwww'
     assert sr(url2, URL('https://example.com/')) == 'tononwww+tohttps'
+    assert sr(url2str, 'https://www.example.com/') == 'tohttps'
+    assert sr(url2str, 'http://example.com/') == 'tononwww'
+    assert sr(url2str, 'https://example.com/') == 'tononwww+tohttps'
 
     url3 = URL('https://www.example.com/')
     assert sr(url3, URL('http://www.example.com/')) == 'tohttp'

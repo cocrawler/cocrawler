@@ -287,43 +287,54 @@ def special_redirect(url, next_url):
     # XXX note that we are not normalizing unicode other than the surt hostname
     '''
 
-    if abs(len(url.url) - len(next_url.url)) > 5:  # 5 = 'www.' + 's'
+    if not isinstance(url, str):
+        urlsplit = url.urlsplit
+        url = url.url
+    else:
+        urlsplit = urllib.parse.urlsplit(url)
+    if not isinstance(next_url, str):
+        next_urlsplit = next_url.urlsplit
+        next_url = next_url.url
+    else:
+        next_urlsplit = urllib.parse.urlsplit(next_url)
+
+    if abs(len(url) - len(next_url)) > 5:  # 5 = 'www.' + 's'
         return None
 
-    if url.url == next_url.url:
+    if url == next_url:
         return 'same'
 
-    if url.url.casefold() == next_url.url.casefold():
+    if url.casefold() == next_url.casefold():
         return 'case-change'
 
-    if not url.url.endswith('/') and url.url + '/' == next_url.url:
+    if not url.endswith('/') and url + '/' == next_url:
         return 'addslash'
 
-    if url.url.endswith('/') and url.url == next_url.url + '/':
+    if url.endswith('/') and url == next_url + '/':
         return 'removeslash'
 
-    if url.url.replace('http', 'https', 1) == next_url.url:
+    if url.replace('http', 'https', 1) == next_url:
         return 'tohttps'
-    if url.url.startswith('https') and url.url.replace('https', 'http', 1) == next_url.url:
+    if url.startswith('https') and url.replace('https', 'http', 1) == next_url:
         return 'tohttp'
 
-    if url.urlsplit.netloc.startswith('www.'):
-        if url.url.replace('www.', '', 1) == next_url.url:
+    if urlsplit.netloc.startswith('www.'):
+        if url.replace('www.', '', 1) == next_url:
             return 'tononwww'
         else:
-            if url.url.replace('www.', '', 1).replace('http', 'https', 1) == next_url.url:
+            if url.replace('www.', '', 1).replace('http', 'https', 1) == next_url:
                 return 'tononwww+tohttps'
-            elif (url.url.startswith('https') and
-                  url.url.replace('www.', '', 1).replace('https', 'http', 1) == next_url.url):
+            elif (url.startswith('https') and
+                  url.replace('www.', '', 1).replace('https', 'http', 1) == next_url):
                 return 'tononwww+tohttp'
-    elif next_url.urlsplit.netloc.startswith('www.'):
-        if url.url == next_url.url.replace('www.', '', 1):
+    elif next_urlsplit.netloc.startswith('www.'):
+        if url == next_url.replace('www.', '', 1):
             return 'towww'
         else:
-            if next_url.url.replace('www.', '', 1) == url.url.replace('http', 'https', 1):
+            if next_url.replace('www.', '', 1) == url.replace('http', 'https', 1):
                 return 'towww+tohttps'
-            elif (url.url.startswith('https') and
-                  next_url.url.replace('www.', '', 1) == url.url.replace('https', 'http', 1)):
+            elif (url.startswith('https') and
+                  next_url.replace('www.', '', 1) == url.replace('https', 'http', 1)):
                 return 'towww+tohttp'
 
     return None
