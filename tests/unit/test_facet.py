@@ -47,19 +47,18 @@ def test_link_rel():
     t = '''
     <link rel="amphtml" href="http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092" />
     <link rel="alternate" type="application/rss+xml" title="App Links &raquo; FAQs Comments Feed" href="http://applinks.org/faqs/feed/" />
-    <link rel="canonical" href="https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort">
-    <link rel="something" href="https://microformats.org/foo-bar" />
+    <link rel="canonical" href="https://www.bloomberg.com/news/articles/2016-10-31/foo">
     '''
     head_soup = BeautifulSoup(t, 'lxml')
     facets = facet.find_head_facets(t, head_soup)
     assert facets == [('link-rel-amphtml',
-                       ('http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092',
-                        'notype')),
-                      ('link-rel-alternate', ('http://applinks.org/faqs/feed/', 'application/rss+xml')),
+                       {'href': 'http://abcnews.go.com/amp/Politics/russia-trump-political-conflict-zone/story?id=42263092'}),
+                      ('link-rel-alternate',
+                       {'href': 'http://applinks.org/faqs/feed/',
+                        'title': 'App Links \u00bb FAQs Comments Feed',
+                        'type': 'application/rss+xml'}),
                       ('link-rel-canonical',
-                       ('https://www.bloomberg.com/news/articles/2016-10-31/postmates-secures-141-million-in-a-super-super-difficult-fundraising-effort',
-                        'notype')),
-                      ('thing-microformats.org', True)]
+                       {'href': 'https://www.bloomberg.com/news/articles/2016-10-31/foo'})]
 
 
 def test_facebook():
@@ -77,8 +76,8 @@ def test_facebook():
                       ('meta-property-fb:app_id', '4942312939'),
                       ('meta-property-og:site_name', 'ABC News'),
                       ('meta-property-op:markup_version', 'v1.0'),
-                      ('link-rel-opengraph', ('...', 'notype')),
-                      ('link-rel-origin', ('...', 'notype'))]
+                      ('link-rel-opengraph', {'href': '...'}),
+                      ('link-rel-origin', {'href': '...'})]
 
 
 def test_twitter():
@@ -160,13 +159,10 @@ def test_integrity():
 
     <link rel="opengraph" href="http://example.com"
         integrity="sha384-Li9vy3DqF8tnTXuiaAJuML3ky+er10rcgNR/VqsVpcw+ThHmYcwiB1pbOxEbzJr7" />
-
-    <link rel="amphtml" href="http://example.com/amp" />
     '''
     head_soup = BeautifulSoup(t, 'lxml')
     facets = facet.find_head_facets(t, head_soup)
-    assert facets == [('link-rel-opengraph', ('http://example.com', 'notype')),
-                      ('link-rel-amphtml', ('http://example.com/amp', 'notype')),
+    assert facets == [('link-rel-opengraph', {'href': 'http://example.com'}),
                       ('thing-script integrity', 3)]
 
 

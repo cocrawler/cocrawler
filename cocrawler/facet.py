@@ -41,7 +41,7 @@ meta_property_prefix = (('al:', 'applinks'),
                         ('op:', 'fb instant'),
                         ('bt:', 'boomtrain'),)
 
-link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin'))
+link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin', 'next', 'prev', 'previous', 'me'))
 
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
@@ -141,16 +141,12 @@ def find_head_facets(head, head_soup, url=None):
         for rel in l.get('rel'):
             r = rel.lower()
             if r in link_rel:
-                # type is useful if it's something like canonical + type=rss
-                facets.append(('link-rel-'+r, (l.get('href', 'nohref'), l.get('type', 'notype'))))
-            else:
-                # XXX remember the ones we didn't save
-                pass
-            href = l.get('href')
-            if href:
-                if (('http://microformats.org/' in href or
-                     'https://microformats.org/' in href)):
-                    facets.append(('thing-microformats.org', True))
+                things = {}
+                for thing in ('href', 'type', 'title', 'hreflang'):
+                    t = l.get(thing)
+                    if t is not None:
+                        things[thing] = t
+                facets.append(('link-rel-'+r, things))
 
     count = len(head_soup.find_all(integrity=True))
     if count:
