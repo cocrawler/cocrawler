@@ -41,7 +41,7 @@ meta_property_prefix = (('al:', 'applinks'),
                         ('op:', 'fb instant'),
                         ('bt:', 'boomtrain'),)
 
-link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin', 'next', 'prev', 'previous', 'me'))
+link_rel = set(('canonical', 'alternate', 'amphtml', 'opengraph', 'origin', 'next', 'prev', 'previous', 'me', 'shortlink'))
 
 save_response_headers = ('refresh', 'server', 'set-cookie', 'strict-transport-security', 'tk')
 
