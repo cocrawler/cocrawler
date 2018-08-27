@@ -55,6 +55,7 @@ def test_clean_webpage_links():
 
     assert cwl('&amp;') == '&'
     assert cwl('&amp;amp;') == '&amp;'
+    assert cwl('&#038;') == '&'
 
 
 def test_remove_dot_segments():
