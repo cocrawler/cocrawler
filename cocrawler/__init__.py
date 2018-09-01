@@ -82,6 +82,7 @@ class Crawler:
         except DistributionNotFound:
             # this works for an uninstalled git repo, like in the CI infrastructure
             self.version = get_version(root='..', relative_to=__file__)
+        self.warcheader_version = '0.99'
 
         self.robotname, self.ua = useragent.useragent(self.version)
 
@@ -146,7 +147,7 @@ class Crawler:
         else:
             self.facetlogfd = None
 
-        self.warcwriter = warc.setup(self.version, local_addr)
+        self.warcwriter = warc.setup(self.version, self.warcheader_version, local_addr)
 
         url_allowed.setup()
 

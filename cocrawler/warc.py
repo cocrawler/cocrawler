@@ -104,7 +104,7 @@ class CCWARCWriter:
         if self.writer is not None:
             self.f.close()
 
-    def create_default_info(self, version, ip, description=None, creator=None, operator=None):
+    def create_default_info(self, version, warcheader_version, ip, description=None, creator=None, operator=None):
         '''
         creator:  # person, organization, service
         operator:  # person, if creator is an organization
@@ -112,7 +112,7 @@ class CCWARCWriter:
         '''
         info = OrderedDict()
 
-        info['software'] = 'cocrawler/' + version
+        info['software'] = 'cocrawler/' + version + ' cocrawler_warcheader_version/' + warcheader_version
         info['hostname'] = self.hostname
         info['ip'] = ip
         if description:
@@ -250,7 +250,7 @@ def p(prefix):
         return ''
 
 
-def setup(version, local_addr):
+def setup(version, warcheader_version, local_addr):
     warcall = config.read('WARC', 'WARCAll')
     if warcall is not None and warcall:
         max_size = config.read('WARC', 'WARCMaxSize')
@@ -260,7 +260,7 @@ def setup(version, local_addr):
         creator = config.read('WARC', 'WARCCreator')
         operator = config.read('WARC', 'WARCOperator')
         warcwriter = CCWARCWriter(prefix, max_size, subprefix=subprefix)  # XXX get_serial lacks a default
-        warcwriter.create_default_info(version, local_addr,
+        warcwriter.create_default_info(version, warcheader_version, local_addr,
                                        description=description, creator=creator, operator=operator)
     else:
         warcwriter = None

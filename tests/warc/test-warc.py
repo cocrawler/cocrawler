@@ -43,8 +43,8 @@ max_size = 10000
 main = CCWARCWriter(prefix, max_size, get_serial=get_serial)
 sub = CCWARCWriter(prefix, 1000, subprefix=subprefix, gzip=False, get_serial=get_serial)
 
-main.create_default_info('1.0', '127.0.0.1', description='desc', creator='test', operator='alice')
-sub.create_default_info('1.0', '127.0.0.1')
+main.create_default_info('1.0', '0.99', '127.0.0.1', description='desc', creator='test', operator='alice')
+sub.create_default_info('1.0', '0.99', '127.0.0.1')
 
 #main.write_robots('cocrawler.com/robots.txt', 'UserAgent: *\n'
 
