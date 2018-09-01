@@ -192,12 +192,12 @@ class CCWARCWriter:
 
         # XXX WARC-Identified-Payload-Type set from Apache Tika? (done by Common Crawl) (how expensive?)
 
-        req_http_headers = StatusAndHeaders('GET / HTTP/1.1', headers_to_str_headers(req_headers))
+        req_http_headers = StatusAndHeaders('GET / HTTP/1.1', req_headers)
 
         request = self.writer.create_warc_record('http://example.com/', 'request',
                                                  http_headers=req_http_headers)
 
-        resp_http_headers = StatusAndHeaders('200 OK', headers_to_str_headers(resp_headers), protocol='HTTP/1.1')
+        resp_http_headers = StatusAndHeaders('200 OK', resp_headers, protocol='HTTP/1.1')
 
         warc_headers_dict = {}
         if digest is not None:
@@ -219,28 +219,6 @@ class CCWARCWriter:
         self.maybe_close()
         LOGGER.debug('wrote warc request-response pair%s for url %s', p(self.prefix), url)
         stats.stats_sum('warc r/r'+p(self.prefix), 1)
-
-
-def headers_to_str_headers(headers):
-    '''
-    Converts dict or tuple-based headers of bytes or str to
-    tuple-based headers of str, which is the python norm (pep 3333)
-    '''
-    ret = []
-
-    if isinstance(headers, collections_abc.Mapping):
-        h = headers.items()
-    else:
-        h = headers
-
-    for tup in h:
-        k, v = tup
-        if isinstance(k, six.binary_type):
-            k = k.decode('iso-8859-1')
-        if isinstance(v, six.binary_type):
-            v = v.decode('iso-8859-1')
-        ret.append((k, v))
-    return ret
 
 
 def p(prefix):
