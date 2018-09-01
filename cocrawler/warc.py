@@ -15,14 +15,7 @@ from collections import OrderedDict
 from io import BytesIO
 import time
 
-import six
-
 from . import config
-
-try:
-    import collections.abc as collections_abc  # only works on python 3.3+
-except ImportError:
-    import collections as collections_abc
 
 from warcio.statusandheaders import StatusAndHeaders
 from warcio.warcwriter import WARCWriter
@@ -61,7 +54,7 @@ hostname: crawling017.archive.org
 ip: 207.241.227.234
 isPartOf: testcrawl-20050708 {{Dublin Core}}
 description: testcrawl with WARC output {{Dublin Core}}}
-operator: IA\_Admin {XXX why the \_?} {{1.0 standard says should be contact info, name or name and email}}
+operator: IA\_Admin {why the \_?} {{1.0 standard says should be contact info, name or name and email}}
 http-header-user-agent:
  Mozilla/5.0 (compatible; heritrix/1.4.0 +http://crawler.archive.org) {{redundant with info in request record}}
 format: WARC file version 1.0 {{Dublin Core}}
@@ -189,8 +182,6 @@ class CCWARCWriter:
     def write_request_response_pair(self, url, req_headers, resp_headers, is_truncated, payload, digest=None):
         if self.writer is None:
             self.open()
-
-        # XXX WARC-Identified-Payload-Type set from Apache Tika? (done by Common Crawl) (how expensive?)
 
         req_http_headers = StatusAndHeaders('GET / HTTP/1.1', req_headers)
 
