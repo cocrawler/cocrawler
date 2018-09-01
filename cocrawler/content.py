@@ -29,22 +29,25 @@ def decompress(body_bytes, content_encoding, url=None):
         except Exception:
             try:
                 # http://www.gzip.org/zlib/zlib_faq.html#faq38
+                stats.stats_sum('content-encoding deflate fallback try', 1)
                 return zlib.decompress(body_bytes, -zlib.MAX_WBITS)  # no header/checksum
             except Exception as e:
-                # never underestimate the power of positive thinking
                 LOGGER.debug('deflate fail for url %s: %s', url, str(e))
+                stats.stats_sum('content-encoding deflate fail', 1)
                 return body_bytes
     elif content_encoding == 'gzip' or content_encoding == 'x-gzip':
         try:
             return zlib.decompress(body_bytes, 16 + zlib.MAX_WBITS)
         except Exception as e:
             LOGGER.debug('gzip fail for url %s: %s', url, str(e))
+            stats.stats_sum('content-encoding gzip fail', 1)
             return body_bytes
     elif content_encoding == 'br':
         try:
             return brotli.decompress(body_bytes)
         except Exception as e:
             LOGGER.debug('bz fail for url %s: %s', url, str(e))
+            stats.stats_sum('content-encoding brotli fail', 1)
             return body_bytes
     else:
         # 'identity' is in the standard
