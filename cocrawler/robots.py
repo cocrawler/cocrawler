@@ -280,7 +280,7 @@ class Robots:
         body_bytes = f.body_bytes
         content_encoding = f.response.headers.get('content-encoding', 'identity')
         if content_encoding != 'identity':
-            body_bytes = content.decompress(f.body_bytes, content_encoding)
+            body_bytes = content.decompress(f.body_bytes, content_encoding, url=robots_url)
 
         with stats.record_burn('robots sha1'):
             sha1 = 'sha1:' + hashlib.sha1(body_bytes).hexdigest()

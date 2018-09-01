@@ -1,6 +1,7 @@
 '''
 Charset and encoding-related code
 '''
+import logging
 import zlib
 import codecs
 import brotli
@@ -13,12 +14,14 @@ try:
 except ImportError:  # pragma: no cover
     import chardet
 
+LOGGER = logging.getLogger(__name__)
+
 
 def get_accept_encoding():
     return 'identity, deflate, gzip'  # br
 
 
-def decompress(body_bytes, content_encoding):
+def decompress(body_bytes, content_encoding, url=None):
     content_encoding = content_encoding.lower()
     if content_encoding == 'deflate':
         try:
@@ -27,18 +30,21 @@ def decompress(body_bytes, content_encoding):
             try:
                 # http://www.gzip.org/zlib/zlib_faq.html#faq38
                 return zlib.decompress(body_bytes, -zlib.MAX_WBITS)  # no header/checksum
-            except Exception:
+            except Exception as e:
                 # never underestimate the power of positive thinking
+                LOGGER.debug('deflate fail for url %s: %s', url, str(e))
                 return body_bytes
     elif content_encoding == 'gzip' or content_encoding == 'x-gzip':
         try:
             return zlib.decompress(body_bytes, 16 + zlib.MAX_WBITS)
-        except Exception:
+        except Exception as e:
+            LOGGER.debug('gzip fail for url %s: %s', url, str(e))
             return body_bytes
     elif content_encoding == 'br':
         try:
             return brotli.decompress(body_bytes)
-        except Exception:
+        except Exception as e:
+            LOGGER.debug('bz fail for url %s: %s', url, str(e))
             return body_bytes
     else:
         # 'identity' is in the standard
