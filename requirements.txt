@@ -25,6 +25,7 @@ warcio==1.5.3
 geoip2==2.9.0
 objgraph==3.4.0
 Pympler==0.5
+brotlipy==0.7.0
 
 # used to maintain this file
 pur==5.0.0

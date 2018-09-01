@@ -3,7 +3,7 @@ Charset and encoding-related code
 '''
 import zlib
 import codecs
-#import brotli
+import brotli
 import cgi
 
 from . import stats
@@ -35,11 +35,14 @@ def decompress(body_bytes, content_encoding):
             return zlib.decompress(body_bytes, 16 + zlib.MAX_WBITS)
         except Exception:
             return body_bytes
-    #elif content_encoding == 'br':
-    #    return brotli.decompress(body_bytes)
+    elif content_encoding == 'br':
+        try:
+            return brotli.decompress(body_bytes)
+        except Exception:
+            return body_bytes
     else:
-        # fairly common to have 'raw' or 'none'
-        #raise ValueError('unknown content_encoding: '+content_encoding)
+        # 'identity' is in the standard
+        # also fairly common to have 'raw', 'none', or a charset
         return body_bytes
 
 
