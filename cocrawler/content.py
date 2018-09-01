@@ -59,7 +59,7 @@ def parse_headers(resp_headers, json_log):
         charset = None
         stats.stats_sum('content-type-charset=' + 'not specified', 1)
 
-    content_encoding = resp_headers.get('content-encoding', 'identity')
+    content_encoding = resp_headers.get('content-encoding', 'identity').lower()
     if content_encoding != 'identity':
         json_log['content_encoding'] = content_encoding
         stats.stats_sum('content-encoding=' + content_encoding, 1)
