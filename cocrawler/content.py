@@ -76,6 +76,11 @@ def parse_headers(resp_headers, json_log):
         json_log['content_encoding'] = content_encoding
         stats.stats_sum('content-encoding=' + content_encoding, 1)
 
+    transfer_encoding = resp_headers.get('transfer-encoding', 'identity').lower()
+    if transfer_encoding != 'identity':
+        json_log['transfer_encoding'] = transfer_encoding
+        stats.stats_sum('transfer-encoding=' + transfer_encoding, 1)
+
     return content_type, content_encoding, charset
 
 
