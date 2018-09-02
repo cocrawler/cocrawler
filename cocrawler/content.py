@@ -18,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_accept_encoding():
-    return 'identity, deflate, gzip'  # br
+    return 'identity, deflate, gzip, br'
 
 
 def decompress(body_bytes, content_encoding, url=None):
