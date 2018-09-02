@@ -1,26 +1,26 @@
-sudo: false
-group: travis_latest
-
 language: python
+sudo: true
+dist: xenial
+
 python:
   - 3.5.3  # minimum for aiohttp=3 and async-timeout=3
   - 3.5
   - 3.6.0
   - 3.6
+  - 3.7
+  - 3.8-dev
   - nightly
 
 matrix:
   fast_finish: true
   allow_failures:
-  - python: 3.7
+  - python: 3.8-dev
   - python: nightly
   include:
   - python: 3.5.3
     env: COCRAWLER_LOGLEVEL=DEBUG
   - python: 3.5.3
     env: PYTHONASYNCIODEBUG=1
-  - python: 3.7
-    sudo: true
 
 git:
   depth: 9999
