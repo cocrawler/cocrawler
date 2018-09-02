@@ -5,7 +5,7 @@ dist: xenial
 python:
   - 3.5.3  # minimum for aiohttp=3 and async-timeout=3
   - 3.5
-  - 3.6.2
+  - 3.6.3
   - 3.6
   - 3.7
   - 3.8-dev
