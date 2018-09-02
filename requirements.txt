@@ -2,7 +2,7 @@
 
 # used by the cocrawler system
 uvloop==0.11.2
-aiohttp==3.3.2
+aiohttp==3.4.2
 async-timeout==3.0.0
 yarl==1.2.6
 aiodns==1.1.1
@@ -17,14 +17,14 @@ sortedcontainers==2.0.4
 sortedcollections==1.0.1
 psutil==5.4.7
 hdrhistogram==0.6.1
-fakeredis==0.12.0
+fakeredis==0.13.0.1
 beautifulsoup4==4.6.3
 lxml==4.2.4
 extensions==0.4
 warcio==1.5.3
 geoip2==2.9.0
 objgraph==3.4.0
-Pympler==0.5
+Pympler==0.6
 brotlipy==0.7.0
 
 # used to maintain this file
@@ -37,16 +37,16 @@ bottle==0.12.13
 coverage==4.5.1
 pylint==2.1.1
 flake8==3.5.0
-pytest==3.7.2
-attrs==18.1.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
+pytest==3.7.4
+attrs==18.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
 pytest-cov==2.5.1
 pytest-asyncio==0.9.0
 pytest-sugar==0.9.1
-coveralls==1.3.0
+coveralls==1.5.0
 
 # packaging
 wheel==0.31.1
 twine==1.11.0
 pypandoc==1.4
-setuptools==40.1.0
+setuptools==40.2.0
 setuptools-scm==3.1.0
