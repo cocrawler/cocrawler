@@ -180,7 +180,8 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         # insert the digest instead of computing it twice? see sha1 below
         # we delayed decompression so that we could warc the compressed body
         crawler.warcwriter.write_request_response_pair(url.url, f.req_headers,
-                                                       f.response.raw_headers, f.is_truncated, f.body_bytes)
+                                                       f.response.raw_headers, f.is_truncated, f.body_bytes,
+                                                       decompressed=False)
 
     resp_headers = f.response.headers
     content_type, content_encoding, charset = content.parse_headers(resp_headers, json_log)

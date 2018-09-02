@@ -141,7 +141,7 @@ class CCWARCWriter:
 
     def maybe_close(self):
         '''
-        TODO: always close/reopen if subprefix is not None; minimizes open filehandles
+        TODO: always close/reopen if subprefix is not None; to minimize open filehandles?
         '''
         fsize = os.fstat(self.f.fileno()).st_size
         if fsize > self.max_size:
@@ -179,7 +179,31 @@ class CCWARCWriter:
         LOGGER.debug('wrote warc dns response record%s for host %s', p(self.prefix), host)
         stats.stats_sum('warc dns'+p(self.prefix), 1)
 
-    def write_request_response_pair(self, url, req_headers, resp_headers, is_truncated, payload, digest=None):
+    def _fake_resp_headers(self, resp_headers, body_len, decompressed=False):
+        prefix = b'X-Crawler-'
+        ret = []
+        for h, v in resp_headers:
+            hl = h.lower()
+            if hl == b'content-length':
+                if not(v.isdigit() and int(v) == body_len):
+                    ret.append((prefix+h, v))
+                    ret.append((b'Content-Length', str(body_len)))
+            elif hl == b'content-encoding':
+                if decompressed:
+                    ret.append((prefix+h, v))
+                else:
+                    ret.append((h, v))
+            elif hl == b'transfer-encoding':
+                if v.lower() == b'chunked':
+                    # aiohttp always undoes chunking
+                    ret.append((prefix+h, v))
+                else:
+                    ret.append((h, v))
+            else:
+                ret.append((h, v))
+        return ret
+
+    def write_request_response_pair(self, url, req_headers, resp_headers, is_truncated, payload, digest=None, decompressed=False):
         if self.writer is None:
             self.open()
 
@@ -188,7 +212,8 @@ class CCWARCWriter:
         request = self.writer.create_warc_record('http://example.com/', 'request',
                                                  http_headers=req_http_headers)
 
-        resp_http_headers = StatusAndHeaders('200 OK', resp_headers, protocol='HTTP/1.1')
+        fake_resp_headers = self._fake_resp_headers(resp_headers, len(payload), decompressed=decompressed)
+        resp_http_headers = StatusAndHeaders('200 OK', fake_resp_headers, protocol='HTTP/1.1')
 
         warc_headers_dict = {}
         if digest is not None:
