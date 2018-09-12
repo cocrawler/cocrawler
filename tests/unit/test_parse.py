@@ -56,7 +56,7 @@ def test_do_burner_work_html():
     urlj = URL('http://example.com')
     test_html_bytes = test_html.encode(encoding='utf-8', errors='replace')
     headers = {}
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets, base = parse.do_burner_work_html(test_html, test_html_bytes, headers, url=urlj)
     assert len(links) == 4
     assert len(embeds) == 2
     linkset = set(u.url for u in links)
@@ -64,21 +64,22 @@ def test_do_burner_work_html():
     assert 'http://example.com/foo3.html' in linkset
     assert 'http://example.com/foo.gif' in embedset
     assert sha1 == 'sha1:cdcb087d39afd827d5d523e165a6566d65a2e9b3'
+    assert base is None
 
     # as a handwave, let's expect these defective pages to also work.
 
     test_html_bytes = test_html_no_body.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html_no_body, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets, base = parse.do_burner_work_html(test_html_no_body, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 2
 
     test_html_bytes = test_html_no_head.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html_no_head, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets, base = parse.do_burner_work_html(test_html_no_head, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 1
 
     test_html_bytes = test_html_no_nothing.encode(encoding='utf-8', errors='replace')
-    links, embeds, sha1, facets = parse.do_burner_work_html(test_html_no_nothing, test_html_bytes, headers, url=urlj)
+    links, embeds, sha1, facets, base = parse.do_burner_work_html(test_html_no_nothing, test_html_bytes, headers, url=urlj)
     assert len(links) == 3
     assert len(embeds) == 1
 

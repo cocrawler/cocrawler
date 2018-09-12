@@ -42,8 +42,9 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
     base = head_soup.find('base') or {}
     base = base.get('href')
     if base:
-        # base can be relative, e.g. 'subdir/'
+        # base can be relative, e.g. 'subdir/' or '.'
         base = urllib.parse.urljoin(url.url, base)
+        print("base is", repr(base))
     base_or_url = base or url
 
     with stats.record_burn(burn_prefix+'find_head_links_soup', url=url):
@@ -68,7 +69,7 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
         # in that case we might want to analyze body links instead?
         facets = facet.compute_all(html, head, body, headers, links, embeds, head_soup=head_soup, url=url)
 
-    return links, embeds, sha1, facets
+    return links, embeds, sha1, facets, base
 
 
 def clean_urllist(urllist, schemes):

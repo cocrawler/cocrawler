@@ -204,7 +204,7 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         charset_log(json_log, charset, detect, charset_used)
 
         try:
-            links, embeds, sha1, facets = await do_parser(body, body_bytes, resp_headers, url, crawler)
+            links, embeds, sha1, facets, base = await do_parser(body, body_bytes, resp_headers, url, crawler)
         except ValueError as e:
             stats.stats_sum('parser raised', 1)
             LOGGER.info('parser raised %r', e)
@@ -216,6 +216,8 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         geoip.add_facets(facets, host_geoip)
 
         facet_log = {'url': url.url, 'facets': facets, 'kind': 'get'}
+        if base is not None:
+            facet_log['base'] = base
         facet_log['checksum'] = sha1
         facet_log['time'] = json_log['time']
 
@@ -267,17 +269,17 @@ async def do_parser(body, body_bytes, resp_headers, url, crawler):
         # headers is a multidict.CIMultiDictProxy case-blind dict
         # and the Proxy form of it doesn't pickle, so convert to one that does
         resp_headers = multidict.CIMultiDict(resp_headers)
-        links, embeds, sha1, facets = await crawler.burner.burn(
+        links, embeds, sha1, facets, base = await crawler.burner.burn(
             partial(parse.do_burner_work_html, body, body_bytes, resp_headers,
                     burn_prefix='burner ', url=url),
             url=url)
     else:
         stats.stats_sum('parser in main thread', 1)
         # no coroutine state because this is a burn, not an await
-        links, embeds, sha1, facets = parse.do_burner_work_html(
+        links, embeds, sha1, facets, base = parse.do_burner_work_html(
             body, body_bytes, resp_headers, burn_prefix='main ', url=url)
 
-    return links, embeds, sha1, facets
+    return links, embeds, sha1, facets, base
 
 
 def post_dns(dns, expires, url, crawler):
