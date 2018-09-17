@@ -6,7 +6,7 @@ CoCrawler is a versatile web crawler built using modern tools and
 concurrency.
 
 Crawling the web can be easy or hard, depending upon the details.
-Mature crawlers like Nutch and Heretrix work great in many situations,
+Mature crawlers like Nutch and Heritrix work great in many situations,
 and fall short in others. Some of the most demanding crawl situations
 include open-ended crawling of the whole web.
 
