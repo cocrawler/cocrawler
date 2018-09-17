@@ -30,7 +30,7 @@ We recommend that you use pyenv, because (1) CoCrawler requires Python
 
 ```
 git clone https://github.com/cocrawler/cocrawler.git
-cd cocrawl
+cd cocrawler
 make init  # will install requirements using pip
 make pytest
 make test_coverage
