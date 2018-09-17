@@ -3,13 +3,15 @@ Misc unit tests, run first in Makefile.
 '''
 
 import sys
-import magic
+import pytest
+#import magic  # needs libmagic installed in the OS to work
 
 
 def test_python_version():
     assert sys.version_info >= (3, 5), 'Python 3.5+ needed for async def syntax'
 
 
+@pytest.mark.skip(reason='Not currently using magic anyway')
 def test_magic():
     '''
     The python filemagic package requires the OS libmagic package,

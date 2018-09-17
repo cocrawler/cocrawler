@@ -11,7 +11,7 @@ cchardet==2.1.1
 surt==0.3.0
 reppy==0.4.10
 cachetools==2.1.0
-filemagic==1.6
+#filemagic==1.6  # needs libmagic installed in the OS
 tldextract==2.2.0
 sortedcontainers==2.0.4
 sortedcollections==1.0.1
