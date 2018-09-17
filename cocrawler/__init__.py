@@ -533,7 +533,7 @@ class Crawler:
         pass
 
     def update_cpu_stats(self):
-        elapsedc = time.clock()  # should be since process start
+        elapsedc = time.process_time()  # should be since process start
         stats.stats_set('main thread cpu time', elapsedc)
 
     async def crawl(self):

@@ -10,9 +10,9 @@ import cocrawler.config as config
 
 
 def burn(dt, data):
-    t0 = time.clock()
+    t0 = time.process_time()
     end = t0 + dt
-    while time.clock() < end:
+    while time.process_time() < end:
         pass
     return 1,
 
@@ -56,7 +56,7 @@ print('Processing {} items of size {} kbytes and {:.3f} seconds of burn using {}
     args.count, int(args.datasize/1000), args.duration, args.threads))
 
 t0 = time.time()
-c0 = time.clock()
+c0 = time.process_time()
 
 try:
     loop.run_until_complete(crawl())
@@ -76,6 +76,6 @@ print('Expected is {:.1f} seconds.'.format(expected))
 print('Burner-side overhead is {}% or {:.4f} seconds per call'.format(
     int((elapsed - expected)/expected*100), (elapsed - expected)/args.count))
 
-celapsed = time.clock() - c0
+celapsed = time.process_time() - c0
 print('Main-thread overhead is {}%, {:.4f} seconds per call, {} calls per cpu-second'.format(
     int(celapsed/elapsed*100), celapsed/args.count, int(args.count/celapsed)))

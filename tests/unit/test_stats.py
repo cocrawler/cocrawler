@@ -29,8 +29,8 @@ def test_set():
 
 def test_burn():
     with stats.record_burn('foo', url='http://example.com/'):
-        t0 = time.clock()
-        while time.clock() < t0 + 0.001:
+        t0 = time.process_time()
+        while time.process_time() < t0 + 0.001:
             pass
 
     assert stats.burners['foo']['count'] == 1
@@ -38,8 +38,8 @@ def test_burn():
     assert 'list' not in stats.burners['foo']  # first burn never goes on the list
 
     with stats.record_burn('foo', url='http://example.com/'):
-        t0 = time.clock()
-        while time.clock() < t0 + 0.2:
+        t0 = time.process_time()
+        while time.process_time() < t0 + 0.2:
             pass
 
     assert stats.burners['foo']['count'] == 2

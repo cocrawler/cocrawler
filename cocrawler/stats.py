@@ -18,7 +18,7 @@ from . import config
 LOGGER = logging.getLogger(__name__)
 
 start_time = time.time()
-start_cpu = time.clock()
+start_cpu = time.process_time()
 maxes = {}
 sums = {}
 sets = {}
@@ -50,7 +50,7 @@ def stats_set(name, value):
 def record_a_burn(name, start, url=None):
     if isinstance(url, URL):
         url = url.url
-    elapsed = time.clock() - start
+    elapsed = time.process_time() - start
     burn = burners.get(name, {})
     burn['count'] = burn.get('count', 0) + 1
     burn['time'] = burn.get('time', 0.0) + elapsed
@@ -112,7 +112,7 @@ def update_cpu_burn(name, count, t, l):
 @contextmanager
 def record_burn(name, url=None):
     try:
-        start = time.clock()
+        start = time.process_time()
         yield
     finally:
         record_a_burn(name, start, url=url)
@@ -176,7 +176,7 @@ def report():
 
     LOGGER.info('Summary:')
     elapsed = time.time() - start_time
-    elapsedc = time.clock() - start_cpu
+    elapsedc = time.process_time() - start_cpu
     LOGGER.info('  Elapsed time is %.3f seconds', elapsed)
     LOGGER.info('  Main thread cpu time is %.3f seconds', elapsedc)
     stats_set('elapsed', elapsed)  # so it can be used for testing
