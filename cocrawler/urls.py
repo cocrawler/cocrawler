@@ -122,7 +122,7 @@ def clean_webpage_links(link, urljoin=None):
     quote for one of its urls, which can confuse diligent parsers.
 
     There are formal rules for this in html5, by testing I see that FF and Chrome both
-    truncate *undelimited* urls at the first \>\r\n
+    truncate *undelimited* urls at the first >\r\n
 
     We have no idea which urls were delimited or not at this point. So, only molest
     ones which seem awfully long.

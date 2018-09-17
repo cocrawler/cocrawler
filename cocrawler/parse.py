@@ -247,16 +247,16 @@ if the <head> of a webpage is abnormally large
 
 
 def regex_out_comments(html):
-    # I think whitespaace is allowed: < \s* !-- .* -- \s* > XXX
-    return re.sub('<!--.*?-->', '', html, flags=re.S)
+    # I think whitespace is allowed: < \s* !-- .* -- \s* > XXX
+    return re.sub(r'<!--.*?-->', '', html, flags=re.S)
 
 
 def regex_out_some_scripts(html):
     '''
     This nukes <script>...</script>, but does not nuke <script type="...
     '''
-    return re.sub('<script>.*?</script>', '', html, flags=re.S)
+    return re.sub(r'<script>.*?</script>', '', html, flags=re.S)
 
 
 def regex_out_all_scripts(html):
-    return re.sub('<script[\s>].*?</script>', '', html, flags=re.S)
+    return re.sub(r'<script[\s>].*?</script>', '', html, flags=re.S)

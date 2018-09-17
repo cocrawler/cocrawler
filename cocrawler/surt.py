@@ -87,7 +87,7 @@ def discard_www_from_hostname(hostname):
     or www.www672299.com, both of which traditionally surt to 'com'.
     We use the public suffix list to avoid doing that.
 
-    TODO: survey the internets and see how many domains really need www\d+
+    TODO: survey the internets and see how many domains really need www\\d+
     hp splitting into hp/hpe has probably made most of the hp.com links obsolete anyway.
     '''
 

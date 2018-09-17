@@ -54,7 +54,7 @@ hostname: crawling017.archive.org
 ip: 207.241.227.234
 isPartOf: testcrawl-20050708 {{Dublin Core}}
 description: testcrawl with WARC output {{Dublin Core}}}
-operator: IA\_Admin {why the \_?} {{1.0 standard says should be contact info, name or name and email}}
+operator: IA\\_Admin {why the \\_?} {{1.0 standard says should be contact info, name or name and email}}
 http-header-user-agent:
  Mozilla/5.0 (compatible; heritrix/1.4.0 +http://crawler.archive.org) {{redundant with info in request record}}
 format: WARC file version 1.0 {{Dublin Core}}
