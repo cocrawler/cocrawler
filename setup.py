@@ -66,7 +66,7 @@ scripts = ['scripts/aiohttp-fetch.py',
 
 try:
     import pypandoc
-    description = pypandoc.convert('README.md', 'rst')
+    description = pypandoc.convert_file('README.md', 'rst')
 except (IOError, ImportError):
     description = open('README.md').read()
 
@@ -83,7 +83,7 @@ setup(
     install_requires=requires,
     scripts=scripts,
     license='Apache 2.0',
-    classifiers=(
+    classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
         'Intended Audience :: Information Technology',
@@ -94,7 +94,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3 :: Only',
-    ),
+    ],
     cmdclass={'test': PyTest},
     tests_require=test_requirements,
 )
