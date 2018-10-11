@@ -22,6 +22,8 @@ def generate_robots(host):
         abort(404, 'No robots.txt here')
     if host.startswith('500'):
         abort(500, 'I don\'t know what I\'m doing!')
+    if host.startswith('302loop'):
+        redirect('http://127.0.0.1:8080/robots.txt.302loop')  # infinite loop
     if host.startswith('302'):
         # unfortunately, we can't use a fake hostname here.
         # XXX figure out how to get this constant out of here... header?
@@ -33,6 +35,10 @@ def generate_robots(host):
 
 def generate_robots_302(host):
     host = 'do-not-redirect-me'
+    return generate_robots(host)
+
+
+def generate_robots_302loop(host):
     return generate_robots(host)
 
 
@@ -109,6 +115,12 @@ def robots():
 def robots302():
     host = request.get_header('Host')
     return generate_robots_302(host)
+
+
+@route('/robots.txt.302loop')
+def robots302():
+    host = request.get_header('Host')
+    return generate_robots_302loop(host)
 
 
 @route('/sitemap.xml')

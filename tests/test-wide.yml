@@ -13,6 +13,7 @@ Seeds:
   - http://host1.com/ordinary/0
   - http://host2.com/ordinary/3
   - http://503.host99.com/ordinary/0 # good robots, eternal 503s on content
+  - http://302loop.host99.com/  # good robots on infinite redir loop, then 404 content
   Files:
   - test-wide.hosts
 
@@ -32,6 +33,7 @@ Testing:
   StatsEQ:
     fetch http code=200: 11
     fetch http code=303: 1
+    fetch http code=404: 1
     max urls found on a page: 3
     add_url rejected by crawled: 2
     robots denied: 13  # one per crawled plus ... ?

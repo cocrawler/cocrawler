@@ -222,10 +222,18 @@ class Robots:
         json_log = {'action': 'fetch', 'time': time.time()}
 
         if f.last_exception:
-            json_log['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
-            self.jsonlog(schemenetloc, json_log)
-            self.in_progress.discard(schemenetloc)
-            return None
+            if f.last_exception.startswith('ClientError: TooManyRedirects'):
+                # googlebot policy: too many redirs is an empty robots.txt
+                # f.response is None, so we have to bail out early
+                error = 'got too many redirects, treating as empty robots'
+                json_log['error'] = error
+                self.jsonlog(schemenetloc, json_log)
+                return self._cache_empty_robots(schemenetloc, None)
+            else:
+                json_log['error'] = 'max tries exceeded, final exception is: ' + f.last_exception
+                self.jsonlog(schemenetloc, json_log)
+                self.in_progress.discard(schemenetloc)
+                return None
 
         if f.response.history:
             redir_history = [str(h.url) for h in f.response.history]
@@ -253,7 +261,7 @@ class Robots:
             if status >= 400:
                 error = 'got a 4xx, treating as empty robots'
             else:
-                error = 'got too many redirects, treating as empty robots'
+                raise ValueError('redir should have raised an exception')
             json_log['error'] = error
             self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
