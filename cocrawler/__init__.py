@@ -45,24 +45,8 @@ __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2016-2017 Greg Lindahl and others'
 
 
-class FixupEventLoopPolicy(uvloop.EventLoopPolicy):
-    '''
-    pytest-asyncio is weird and hijacking new_event_loop is one way to work around that.
-    https://github.com/pytest-dev/pytest-asyncio/issues/38
-    '''
-    def new_event_loop(self):
-        if self._local._set_called:
-            # raise RuntimeError('An event loop has already been set')
-            loop = super().get_event_loop()
-            if loop.is_closed():
-                loop = super().new_event_loop()
-            return loop
-        return super().new_event_loop()
-
-
 class Crawler:
     def __init__(self, load=None, no_test=False, paused=False):
-        asyncio.set_event_loop_policy(FixupEventLoopPolicy())
         self.loop = asyncio.get_event_loop()
         self.burner = burner.Burner('parser')
         self.stopping = False
