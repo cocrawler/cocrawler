@@ -290,6 +290,12 @@ class Crawler:
             self.facetlogfd.close()
         if self.frontierlogfd:
             self.frontierlogfd.close()
+        if self.warcwriter is not None:
+            del self.warcwriter
+            self.warcwriter = None
+        if self.robots is not None:
+            del self.robots
+            self.robots = None
         if self.scheduler.qsize():
             LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
         await self.session.close()
