@@ -122,7 +122,7 @@ class CCWARCWriter:
     def open(self):
         filename = self.prefix
         if self.subprefix:
-            filename += '-' + self.subprefix
+            filename += '-' + str(self.subprefix)  # don't let yaml leave this as an int
         serial = self.get_serial(filename)
         filename += '-' + serial + '-' + self.hostname + '.warc'
         if self.gzip:
