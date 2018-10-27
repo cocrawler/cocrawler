@@ -19,6 +19,18 @@ anchor</a>
 </body>
 '''
 
+test_html_harder = '''
+<html>
+<head></head>
+<body>
+<iframe src="iframe.html"></iframe>
+<link href="stylesheet.blah" rel="stylesheet">
+<link href="http://example.com" rel="prefetch">
+<link href="do-not-crash-1">
+<link href="do-not-crash-2" rel="one" rel="two">
+</body>
+'''
+
 test_html_no_body = '''
 <html>
 <head><title>Foo</title><link href='link.html'></link></head>
@@ -126,6 +138,14 @@ def test_individual_parsers():
     assert 'torture"\n<url>' in links
     assert 'link.html' in embeds
     assert 'foo.gif' in embeds
+
+    head, body = parse.split_head_body(test_html_harder)
+    body_soup = BeautifulSoup(body, 'lxml')
+    lbody, ebody = parse.find_body_links_soup(body_soup)
+    assert len(lbody) == 1
+    assert len(ebody) == 1
+    assert 'iframe.html' in lbody
+    assert 'stylesheet.blah' in ebody
 
 
 test_css = '''

@@ -150,9 +150,19 @@ def find_body_links_soup(body_soup):
     embeds = set()
     links = set()
     for tag in body_soup.find_all(src=True):
-        embeds.add(tag.get('src'))
+        if tag.name == 'iframe':
+            links.add(tag.get('src'))
+        else:
+            embeds.add(tag.get('src'))
     for tag in body_soup.find_all(href=True):
-        links.add(tag.get('href'))
+        if tag.name == 'link':
+            rel = tag.get('rel', [None])[0]
+            if rel == 'stylesheet':
+                embeds.add(tag.get('href'))
+            else:
+                pass  # other body-ok like 'prefetch'
+        else:
+            links.add(tag.get('href'))
     return links, embeds
 
 
@@ -184,7 +194,7 @@ def split_head_body(html, url=None):
     parsers on each.  There's no point doing this split if it's
     expensive.
 
-    It's legal for webpages to leave off <head> and <body>; the
+    It's legal for webpages to leave off <head> and <body>; the HTML5
     standard requires browsers to figure it out based on the html
     tags. We can't do that efficiently, so we punt for such webpages,
     and return the entire page as body.
