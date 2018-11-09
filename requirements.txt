@@ -1,7 +1,7 @@
 # Install with "python -m pip install -r requirements.txt".
 
 # used by the cocrawler system
-uvloop==0.11.2
+uvloop==0.11.3
 aiohttp==3.4.4
 async-timeout==3.0.1
 yarl==1.2.6
@@ -10,25 +10,25 @@ PyYAML==3.13
 cchardet==2.1.4
 surt==0.3.0
 reppy==0.4.11
-cachetools==2.1.0
+cachetools==3.0.0
 #filemagic==1.6  # needs libmagic installed in the OS
 tldextract==2.2.0
 sortedcontainers==2.0.5
 sortedcollections==1.0.1
-psutil==5.4.7
+psutil==5.4.8
 hdrhistogram==0.6.1
-fakeredis==0.14.0
+fakeredis==0.15.0
 beautifulsoup4==4.6.3
 lxml==4.2.5
 extensions==0.4
-warcio==1.6.1
+warcio==1.6.2
 geoip2==2.9.0
 objgraph==3.4.0
 Pympler==0.6
 brotlipy==0.7.0
 
 # used to maintain this file
-pur==5.0.0
+pur==5.2.0
 
 # used by the mock webserver
 bottle==0.12.13
@@ -37,11 +37,11 @@ bottle==0.12.13
 coverage==4.5.1
 pylint==2.1.1
 flake8==3.6.0
-pytest==3.9.3
+pytest==3.10.0
 attrs==18.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
 pytest-cov==2.6.0
 pytest-asyncio==0.9.0
-pytest-sugar==0.9.1
+pytest-sugar==0.9.2
 coveralls==1.5.1
 
 # packaging
