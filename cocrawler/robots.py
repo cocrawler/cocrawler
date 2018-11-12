@@ -107,8 +107,8 @@ class Robots:
             robots = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
-            robots = await self.fetch_robots(schemenetloc, host_geoip, seed_host, crawler,
-                                             headers=headers, proxy=proxy)
+            robots = await self.fetch_robots(schemenetloc, host_geoip, crawler,
+                                             seed_host=seed_host, headers=headers, proxy=proxy)
         return self._check(url, schemenetloc, robots)
 
     def _check(self, url, schemenetloc, robots, quiet=False):
@@ -175,10 +175,9 @@ class Robots:
         self.in_progress.discard(schemenetloc)
         return parsed
 
-    async def fetch_robots(self, schemenetloc, host_geoip, seed_host, crawler, headers=None, proxy=None):
+    async def fetch_robots(self, schemenetloc, host_geoip, crawler,
+                           seed_host=None, headers=None, proxy=None):
         '''
-        robotexclusionrules fetcher is not async, so fetch the file ourselves
-
         https://developers.google.com/search/reference/robots_txt
         3xx redir == follow up to 5 hops, then consider it a 404.
         4xx errors == no crawl restrictions
