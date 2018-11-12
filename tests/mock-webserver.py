@@ -12,7 +12,8 @@ except ImportError:
 
 import os
 import random
-from bottle import route, run, request, abort, redirect
+from bottle import hook, route, run, request, abort, redirect
+from urllib.parse import urlsplit
 
 
 def generate_robots(host):
@@ -98,6 +99,20 @@ def generate_trap(name, host):
     return header + mylinks + trailer
 
 # bottle stuff ------------------------------------------------------------
+
+
+@hook('before_request')
+def strip_proxy_host():
+    # the test system uses this webserver as a forward proxy.
+    # strip the host from PATH if present, it will still be in the Host: header
+    if 'PATH_INFO' in request.environ:
+        full = request.environ['PATH_INFO']
+        if full.startswith('http://') or full.startswith('https://'):
+            parts = urlsplit(full)
+            url = parts.path
+            if parts.query:
+                url += '?' + parts.query
+            request.environ['PATH_INFO'] = url
 
 
 @route('/hello')
