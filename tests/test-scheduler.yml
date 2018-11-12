@@ -9,6 +9,12 @@ Crawl:
   GlobalBudget: 10
   UserAgent: cocrawler-test/0.01
 
+Fetcher:
+  ProxyAll: http://127.0.0.1:8080
+
+GeoIP:
+  ProxyGeoIP: False
+
 Plugins:
   url_allowed: SeedsHostname
 
@@ -32,8 +38,6 @@ UserAgent:
   URL: http://example.com/cocrawler.html
 
 Testing:
-  TestHostmapAll: 127.0.0.1:8080
-#  TestHostmapAll: localhost:8080 ## aiodns doesn't consult /etc/hosts :-/
   StatsEQ:
     fetch URLs: 10
     fetch http code=200: 10

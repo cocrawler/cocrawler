@@ -3,8 +3,6 @@ async fetching of urls.
 
 Assumes robots checks have already been done.
 
-Supports server mocking; proxies are not yet implemented.
-
 Success returns response object and response bytes (which were already
 read in order to shake out all potential network-related exceptions.)
 
@@ -66,19 +64,10 @@ def establish_filters():
 #    need to directly manipulate domain-level cookie jars to get cookies
 def apply_url_policies(url, crawler):
     headers = {}
-    proxy = None
-    mock_url = None
-    mock_robots = None
 
     headers['User-Agent'] = crawler.ua
 
-    test_host = config.read('Testing', 'TestHostmapAll')
-    if test_host:
-        headers['Host'] = url.urlsplit.netloc
-        (scheme, netloc, path, query, fragment) = url.urlsplit
-        netloc = test_host
-        mock_url = urllib.parse.urlunsplit((scheme, netloc, path, query, fragment))
-        mock_robots = url.urlsplit.scheme + '://' + test_host + '/robots.txt'
+    proxy = config.read('Fetcher', 'ProxyAll')
 
     if crawler.prevent_compression:
         headers['Accept-Encoding'] = 'identity'
@@ -88,7 +77,7 @@ def apply_url_policies(url, crawler):
     if crawler.upgrade_insecure_requests:
         headers['Upgrade-Insecure-Requests'] = '1'
 
-    return headers, proxy, mock_url, mock_robots
+    return headers, proxy
 
 
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_headers',
@@ -96,16 +85,9 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_
                                                  'last_exception'])
 
 
-async def fetch(url, session, headers=None, proxy=None, mock_url=None,
+async def fetch(url, session, headers=None, proxy=None,
                 allow_redirects=None, max_redirects=None,
                 stats_prefix='', max_page_size=-1):
-
-    if proxy:  # pragma: no cover
-        proxy = aiohttp.ProxyConnector(proxy=proxy)
-        # XXX we need to preserve the existing connector config (see cocrawler.__init__ for conn_kwargs)
-        # XXX we should rotate proxies every fetch in case some are borked
-        # XXX use proxy history to decide not to use some
-        raise ValueError('not yet implemented')
 
     last_exception = None
     is_truncated = False
@@ -119,10 +101,10 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
 
         with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
-                response = await session.get(mock_url or url.url,
+                response = await session.get(url.url,
                                              allow_redirects=allow_redirects,
                                              max_redirects=max_redirects,
-                                             headers=headers)
+                                             proxy=proxy, headers=headers)
 
                 # https://aiohttp.readthedocs.io/en/stable/tracing_reference.html
                 # XXX should use tracing events to get t_first_byte
@@ -197,11 +179,11 @@ async def fetch(url, session, headers=None, proxy=None, mock_url=None,
     except Exception as e:
         last_exception = 'Exception: ' + str(e)
         stats.stats_sum('fetch surprising error', 1)
-        LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', mock_url or url.url, last_exception)
+        LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', url.url, last_exception)
         traceback.print_exc()
 
     if last_exception is not None:
-        LOGGER.info('we failed working on %s, the last exception is %s', mock_url or url.url, last_exception)
+        LOGGER.info('we failed working on %s, the last exception is %s', url.url, last_exception)
         return FetcherResponse(None, None, None, None, None, False, last_exception)
 
     fr = FetcherResponse(response, body_bytes, response.request_info.headers,

@@ -74,11 +74,6 @@ class Crawler:
 
         geoip.init()
 
-        proxy = config.read('Fetcher', 'ProxyAll')
-        if proxy:
-            raise ValueError('proxies not yet supported')
-
-        # TODO: save the kwargs in case we want to make a ProxyConnector deeper down
         self.conn_kwargs = {'use_dns_cache': False, 'resolver': self.resolver,
                             'limit': max(1, self.max_workers//2),
                             'enable_cleanup_closed': True}
@@ -323,10 +318,10 @@ class Crawler:
         else:
             robots_seed_host = None
 
-        req_headers, proxy, mock_url, mock_robots = fetcher.apply_url_policies(url, self)
+        req_headers, proxy = fetcher.apply_url_policies(url, self)
 
         host_geoip = {}
-        if not mock_url:
+        if not proxy or config.read('GeoIP', 'ProxyGeoIP'):
             entry = await dns.prefetch(url, self.resolver)
             if not entry:
                 # fail out, we don't want to do DNS in the robots or page fetch
@@ -339,7 +334,7 @@ class Crawler:
                 post_fetch.post_dns(addrs, expires, url, self)
 
         r = await self.robots.check(url, host_geoip=host_geoip, seed_host=robots_seed_host, crawler=self,
-                                    headers=req_headers, proxy=proxy, mock_robots=mock_robots)
+                                    headers=req_headers, proxy=proxy)
         if not r:
             # really, we shouldn't retry a robots.txt rule failure
             # but we do want to retry robots.txt failed to fetch
@@ -347,7 +342,7 @@ class Crawler:
             return
 
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,
-                                headers=req_headers, proxy=proxy, mock_url=mock_url)
+                                headers=req_headers, proxy=proxy)
 
         json_log = {'kind': 'get', 'url': url.url, 'priority': priority,
                     't_first_byte': f.t_first_byte, 'time': time.time()}

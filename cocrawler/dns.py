@@ -189,11 +189,7 @@ async def prefetch_dns(url, mock_url, session):
     If you see a CNAME there should be no NS
     NS records can lie, but, it seems that most hosting companies use 'em "correctly"
     '''
-    if mock_url is None:
-        netloc_parts = url.urlsplit.netloc.split(':', maxsplit=1)
-    else:
-        mockurl_parts = urllib.parse.urlsplit(mock_url)
-        netloc_parts = mockurl_parts.netloc.split(':', maxsplit=1)
+    netloc_parts = url.urlsplit.netloc.split(':', maxsplit=1)
     host = netloc_parts[0]
     try:
         port = int(netloc_parts[1])
@@ -219,7 +215,7 @@ async def prefetch_dns(url, mock_url, session):
 
     for a in answer:
         ip = a['host']
-        if mock_url is None and ipaddress.ip_address(ip).is_private:
+        if ipaddress.ip_address(ip).is_private:
             LOGGER.info('host %s has private ip of %s, ignoring', host, ip)
             continue
         if ':' in ip:  # is this a valid sign of ipv6? XXX policy

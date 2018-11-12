@@ -71,8 +71,10 @@ Fetcher:
   CrawlLocalhost: False  # crawl ips that resolve to localhost
   CrawlPrivate: False  # crawl ips that resolve to private networks (e.g. 10.*/8)
   DNSCacheMaxSize: 1000000
+#  ProxyAll: http://127.0.0.1:8080
 
 GeoIP:
+  ProxyGeoIP: True
   DataDir: None
 
 #CarbonStats:
@@ -111,9 +113,7 @@ Logging:
 #  RejectedAddUrllog: rejectedaddurl.log
 #  Facetlog: facet.log
 
-Testing:
-  TestHostmapAll: False
-#  TestHostmapAll: test.website: localhost:8080
+Testing: {}
 #  StatsEQ:
 #    fetch http code=200: 1000
 #    fetch URLs: 1000
@@ -141,6 +141,8 @@ def merge_dicts(a, b):
     for k1 in b:
         if k1 not in a:
             a[k1] = {}
+        if a[k1] is None:
+            raise ValueError('Top level section should not be none: '+k1)
         a[k1].update(b[k1])
     return a
 

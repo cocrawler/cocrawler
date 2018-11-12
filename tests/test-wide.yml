@@ -5,6 +5,12 @@ Crawl:
   RetryTimeout: 0.1
   DebugMemory: t
 
+Fetcher:
+  ProxyAll: http://127.0.0.1:8080
+
+GeoIP:
+  ProxyGeoIP: False
+
 Plugins:
   url_allowed: OnlySeeds
 
@@ -29,7 +35,6 @@ UserAgent:
   URL: http://example.com/cocrawler.html
 
 Testing:
-  TestHostmapAll: 127.0.0.1:8080
   StatsEQ:
     fetch http code=200: 11
     fetch http code=303: 1
