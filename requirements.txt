@@ -31,11 +31,11 @@ brotlipy==0.7.0
 pur==5.2.1
 
 # used by the mock webserver
-bottle==0.12.13
+bottle==0.12.14
 
 # used by Makefile
 coverage==4.5.2
-pylint==2.1.1
+pylint==2.2.1
 flake8==3.6.0
 pytest==4.0.1
 attrs==18.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
