@@ -44,7 +44,6 @@ requires = [
     'sortedcollections',
     'psutil',
     'hdrhistogram',
-    'fakeredis',
     'beautifulsoup4',
     'lxml',
     'extensions',

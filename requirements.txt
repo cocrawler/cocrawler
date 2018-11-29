@@ -3,7 +3,6 @@
 # used by the cocrawler system
 uvloop==0.11.3
 aiohttp==3.4.4
-async-timeout==3.0.1
 yarl==1.2.6
 aiodns==1.1.1
 PyYAML==3.13
@@ -17,7 +16,6 @@ sortedcontainers==2.1.0
 sortedcollections==1.0.1
 psutil==5.4.8
 hdrhistogram==0.6.1
-fakeredis==0.15.0
 beautifulsoup4==4.6.3
 lxml==4.2.5
 extensions==0.4
