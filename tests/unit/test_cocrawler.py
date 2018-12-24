@@ -2,16 +2,17 @@
 Most testing of cocrawler is done by fake crawling, but there are a few things...
 '''
 
-import asyncio
 import tempfile
 import os
+import pytest
 
 import cocrawler
 import cocrawler.config as config
 from cocrawler.urls import URL
 
 
-def test_cocrawler(capsys):
+@pytest.mark.asyncio
+async def test_cocrawler(capsys):
     config.config(None, None)
 
     # we have to get around the useragent checks
