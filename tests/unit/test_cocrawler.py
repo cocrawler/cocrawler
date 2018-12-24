@@ -56,3 +56,5 @@ async def test_cocrawler(capsys):
 
     assert err == ''
     assert len(out) >= 200  # not a very good test, but at least it is something
+
+    await crawler.close()  # needed for smooth shutdown

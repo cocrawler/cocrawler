@@ -151,10 +151,6 @@ class Crawler:
 
         fetcher.establish_filters()
 
-    def __del__(self):
-        if hasattr(self, 'connector'):
-            self.connector.close()
-
     @property
     def seeds(self):
         return self._seeds
@@ -278,6 +274,7 @@ class Crawler:
         if self.scheduler.qsize():
             LOGGER.warning('at exit, non-zero qsize=%d', self.scheduler.qsize())
         await self.session.close()
+        await self.connector.close()
 
     def _retry_if_able(self, work, ridealong):
         priority, rand, surt = work
