@@ -257,7 +257,8 @@ class Robots:
             if status >= 400:
                 error = 'got a 4xx, treating as empty robots'
             else:
-                raise ValueError('redir should have raised an exception')
+                #raise ValueError('redir should have raised an exception')
+                error = 'too many redirects, treating as empty robots'
             json_log['error'] = error
             self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
