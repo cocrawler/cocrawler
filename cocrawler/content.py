@@ -124,6 +124,10 @@ def my_decode(body_bytes, charset, detect):
             # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd9 in position 15: unexpected end of data
             # or encoding could be wrong, or the page could be defective
             pass
+        except LookupError as e:
+            if e.args[0].startswith('unknown encoding: '):  # e.g. viscii
+                stats.stats_sum('content-encoding unknown: '+cset, 1)
+                pass
     else:
         body = body_bytes.decode(encoding='utf-8', errors='replace')
         cset = 'utf-8 replace'
