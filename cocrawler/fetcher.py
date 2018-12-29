@@ -60,8 +60,7 @@ def establish_filters():
 
 
 # XXX should be a policy plugin
-# XXX cookie handling -- no way to have a cookie jar other than at session level
-#    need to directly manipulate domain-level cookie jars to get cookies
+# XXX cookie handling -- can be per-get -- make per-domain jar
 def apply_url_policies(url, crawler):
     headers = {}
 
