@@ -66,8 +66,6 @@ def apply_url_policies(url, crawler):
 
     headers['User-Agent'] = crawler.ua
 
-    proxy = config.read('Fetcher', 'ProxyAll')
-
     if crawler.prevent_compression:
         headers['Accept-Encoding'] = 'identity'
     else:
@@ -76,7 +74,16 @@ def apply_url_policies(url, crawler):
     if crawler.upgrade_insecure_requests:
         headers['Upgrade-Insecure-Requests'] = '1'
 
-    return headers, proxy
+    proxy, prefetch_dns = global_policies()
+
+    return headers, proxy, prefetch_dns
+
+
+def global_policies():
+    proxy = config.read('Fetcher', 'ProxyAll')
+    prefetch_dns = not proxy or config.read('GeoIP', 'ProxyGeoIP')
+
+    return proxy, prefetch_dns
 
 
 FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_headers',

@@ -55,3 +55,10 @@ async def test_resolver():
 
     iplist = await dns.query('www.blogger.com', 'CNAME')
     assert len(iplist) > 0
+
+
+def test_entry_to_ip_key():
+    addrs = [{'host': '4.3.2.1'}, {'host': '8.8.8.8'}, {'host': '1.2.3.4'}]
+    result = '1.2.3.4,4.3.2.1,8.8.8.8'
+    assert dns.entry_to_ip_key([addrs, None]) == result
+    assert dns.entry_to_ip_key(None) is None

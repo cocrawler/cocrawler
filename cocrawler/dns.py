@@ -78,6 +78,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss begun', 1)
             stats.stats_sum('DNS external queries', 1)
             self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
+            # no A's is a ValueError so we do not cache them
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss success', 1)
 
         addrs = self._cache[host][0]
@@ -165,6 +166,13 @@ def get_resolver(**kwargs):
 
     return CoCrawler_Caching_AsyncResolver(nameservers=ns, tries=ns_tries,
                                            timeout=ns_timeout, rotate=True)
+
+
+def entry_to_ip_key(entry):
+    if entry is None:
+        return
+    addrs = entry[0]
+    return ','.join(sorted([a['host'] for a in addrs]))
 
 
 '''

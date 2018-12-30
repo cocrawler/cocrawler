@@ -22,12 +22,17 @@ import pympler.asizeof
 from . import config
 from . import stats
 from . import memory
+from . import dns
+from . import fetcher
 
 LOGGER = logging.getLogger(__name__)
 
 
 class Scheduler:
-    def __init__(self, robots):
+    def __init__(self, robots, resolver):
+        self.robots = robots
+        self.resolver = resolver
+
         self.q = asyncio.PriorityQueue()
         self.ridealong = {}
         self.awaiting_work = 0
@@ -38,8 +43,9 @@ class Scheduler:
         self.maxhostqps = float(config.read('Crawl', 'MaxHostQPS'))
         self.delta_t = 1./self.maxhostqps
         self.initialize_budgets()
-        self.robots = robots
 
+        _, prefetch_dns = fetcher.global_policies()
+        self.use_ip_key = prefetch_dns
         memory.register_debug(self.memory)
 
     def initialize_budgets(self):
@@ -105,12 +111,11 @@ class Scheduler:
                 self.q.task_done()
                 raise asyncio.CancelledError  # cancel this one worker
 
-            now = time.time()
             surt = work[2]
             surt_host, _, _ = surt.partition(')')
             ridealong = self.get_ridealong(surt)
 
-            recycle, why, dt = self.schedule_work(now, surt, surt_host, ridealong)
+            recycle, why, dt = await self.schedule_work(surt, surt_host, ridealong)
 
             if recycle:
                 # sleep then requeue
@@ -129,29 +134,34 @@ class Scheduler:
 
             return work
 
-    def schedule_work(self, now, surt, surt_host, ridealong):
+    def next_slot(self, now, keys):
+        times = [0.]
+        for key in keys:
+            if key in self.next_fetch:
+                times.append(self.next_fetch[key] - now)
+        return max(times)
+
+    async def schedule_work(self, surt, surt_host, ridealong):
         recycle, why, dt = False, None, 0
 
-        # does host have cached dns? XXX
-        # if not, and we're The One, fetch it
-        # if not, and we aren't The One, recycle
-
-        # does host have cached robots? XXX
-        # if not, and we're The One, fetch it
-        # if not, and we aren't The One, recycle
-
         if not self.robots.check_cached(ridealong['url'], quiet=True):
-            # do use a slot; fall through so that the fetch will fail robots
+            # immediately fetch, it will fail robots
             recycle = False
             why = 'scheduler cached robots deny'
             return recycle, why, 0.
 
-        # when's the next available rate limit slot?
-        now = time.time()
-        if surt_host in self.next_fetch:
-            dt = max(self.next_fetch[surt_host] - now, 0.)
+        if self.use_ip_key:
+            entry = await dns.prefetch(ridealong['url'], self.resolver)
+            ip_key = dns.entry_to_ip_key(entry)
         else:
-            dt = 0
+            ip_key = None
+
+        now = time.time()  # get time after potentially waiting for dns
+
+        keys = [k for k in (ip_key, surt_host) if k]
+        LOGGER.debug('keys are %r', keys)
+        dt = self.next_slot(now, keys)
+        LOGGER.debug('dt is %f', dt)
 
         if dt > 3.0:
             recycle = True
@@ -159,9 +169,11 @@ class Scheduler:
             dt = 3.0
         elif dt > 0:
             why = 'scheduler ratelimit short sleep'
-            self.next_fetch[surt_host] = now + dt + self.delta_t
+            for k in keys:
+                self.next_fetch[k] = now + dt + self.delta_t
         else:
-            self.next_fetch[surt_host] = now + self.delta_t
+            for k in keys:
+                self.next_fetch[k] = now + self.delta_t
 
         return recycle, why, dt
 

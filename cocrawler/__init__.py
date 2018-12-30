@@ -100,7 +100,7 @@ class Crawler:
 
         self.datalayer = datalayer.Datalayer()
         self.robots = robots.Robots(self.robotname, self.session, self.datalayer)
-        self.scheduler = scheduler.Scheduler(self.robots)
+        self.scheduler = scheduler.Scheduler(self.robots, self.resolver)
 
         self.crawllog = config.read('Logging', 'Crawllog')
         if self.crawllog:
@@ -315,10 +315,10 @@ class Crawler:
         else:
             robots_seed_host = None
 
-        req_headers, proxy = fetcher.apply_url_policies(url, self)
+        req_headers, proxy, prefetch_dns = fetcher.apply_url_policies(url, self)
 
         host_geoip = {}
-        if not proxy or config.read('GeoIP', 'ProxyGeoIP'):
+        if prefetch_dns:
             entry = await dns.prefetch(url, self.resolver)
             if not entry:
                 # fail out, we don't want to do DNS in the robots or page fetch
@@ -387,7 +387,6 @@ class Crawler:
                     await self.fetch_and_process(work)
                 except concurrent.futures._base.CancelledError:  # seen with ^C
                     pass
-                # ValueError('no A records found') should not be a mystery
                 except Exception as e:
                     # this catches any buggy code that executes in the main thread
                     LOGGER.error('Something bad happened working on %s, it\'s a mystery:\n%s', work[2], e)
