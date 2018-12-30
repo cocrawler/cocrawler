@@ -348,7 +348,7 @@ class Crawler:
         if f.is_truncated:
             json_log['truncated'] = f.is_truncated
 
-        if f.last_exception is not None or f.response.status >= 500:
+        if f.last_exception is not None or f.response.status >= 500 or f.response.status == 429:
             self._retry_if_able(work, ridealong)
             return
 
