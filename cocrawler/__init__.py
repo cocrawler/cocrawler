@@ -392,7 +392,7 @@ class Crawler:
                     LOGGER.error('Something bad happened working on %s, it\'s a mystery:\n%s', work[2], e)
                     traceback.print_exc()
                     # falling through causes this work item to get marked done, and we continue
-
+                    # note that this leaks the ridealong
                 self.scheduler.work_done()
 
                 if self.stopping:
