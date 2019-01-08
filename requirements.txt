@@ -16,8 +16,8 @@ sortedcontainers==2.1.0
 sortedcollections==1.1.1
 psutil==5.4.8
 hdrhistogram==0.6.1
-beautifulsoup4==4.7.0
-lxml==4.2.5
+beautifulsoup4==4.7.1
+lxml==4.3.0
 extensions==0.4
 warcio==1.6.3
 geoip2==2.9.0
@@ -35,10 +35,10 @@ bottle==0.12.16
 coverage==4.5.2
 pylint==2.2.2
 flake8==3.6.0
-pytest==4.0.2
+pytest==4.1.0
 attrs==18.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
-pytest-cov==2.6.0
-pytest-asyncio==0.9.0
+pytest-cov==2.6.1
+pytest-asyncio==0.10.0
 pytest-sugar==0.9.2
 coveralls==1.5.1
 
