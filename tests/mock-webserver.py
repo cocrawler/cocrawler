@@ -90,6 +90,10 @@ def generate_ordinary_503s(name, host):
     return generate_ordinary(name, host)
 
 
+def generate_ordinary_redir(name, host):
+    redirect('/ordinary/{}'.format(name))
+
+
 def generate_code(code, host):
     abort(code, 'Here is your code {}; host is {}\n'.format(code, host))
 
@@ -153,7 +157,13 @@ def ordinary(name):
 @route('/ordinary-with-503s/<name:int>')
 def ordinary503(name):
     host = request.get_header('Host')
-    return generate_ordinary_503s(name, host, ua)
+    return generate_ordinary_503s(name, host)
+
+
+@route('/ordinary-with-redir/<name:int>')
+def ordinary503(name):
+    host = request.get_header('Host')
+    return generate_ordinary_redir(name, host)
 
 
 @route('/code/<code:int>')

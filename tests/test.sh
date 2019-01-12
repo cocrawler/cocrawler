@@ -90,6 +90,7 @@ echo
 echo aiohttp-fetch
 echo
 $COVERAGE ../scripts/aiohttp-fetch.py http://127.0.0.1:8080/hello > /dev/null
+$COVERAGE ../scripts/aiohttp-fetch.py http://127.0.0.1:8080/ordinary-with-redir/0 > /dev/null
 echo
 echo aiohttp-fetch -- expect dns fail
 echo
