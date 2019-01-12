@@ -97,6 +97,11 @@ echo
 $COVERAGE ../scripts/aiohttp-fetch.py http://this-dns-lookup-will-fail-and-raise.com:8080/hello
 
 echo
+echo dump-soup
+echo
+$COVERAGE ../scripts/dump-soup.py http://127.0.0.1:8080/ordinary/0 > /dev/null
+
+echo
 echo tearing down mock webserver
 echo
 
