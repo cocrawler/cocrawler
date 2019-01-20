@@ -10,10 +10,10 @@ import itertools
 
 from hdrh.histogram import HdrHistogram
 from sortedcollections import ValueSortedDict
-import pympler
 
 from .urls import URL
 from . import config
+from . import memory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +26,10 @@ burners = {}
 latencies = {}
 coroutine_states = {}
 exitstatus = 0
+
+
+def init():
+    memory.register_debug(mymemory)
 
 
 def stats_max(name, value):
@@ -346,24 +350,24 @@ def load(f):
     sums = pickle.load(f)
 
 
-def memory():
+def mymemory():
         maxes = {}
-        maxes['bytes'] = pympler.asizeof.asizesof(maxes)[0]
+        maxes['bytes'] = memory.total_size(maxes)
         maxes['len'] = len(maxes)
         sums = {}
-        sums['bytes'] = pympler.asizeof.asizesof(sums)[0]
+        sums['bytes'] = memory.total_size(sums)
         sums['len'] = len(sums)
         sets = {}
-        sets['bytes'] = pympler.asizeof.asizesof(sets)[0]
+        sets['bytes'] = memory.total_size(sets)
         sets['len'] = len(sets)
         burners = {}
-        burners['bytes'] = pympler.asizeof.asizesof(burners)[0]
+        burners['bytes'] = memory.total_size(burners)
         burners['len'] = len(burners)
         latencies = {}
-        latencies['bytes'] = pympler.asizeof.asizesof(latencies)[0]
+        latencies['bytes'] = memory.total_size(latencies)
         latencies['len'] = len(latencies)
         coroutine_stats = {}
-        coroutine_stats['bytes'] = pympler.asizeof.asizesof(coroutine_stats)[0]
+        coroutine_stats['bytes'] = memory.total_size(coroutine_stats)
         coroutine_stats['len'] = len(coroutine_stats)
         return {'maxes': maxes, 'sums': sums, 'sets': sets, 'burners': burners,
-                'latencies': latencies, 'coroutine_stats': coroutine_states}
+                'latencies': latencies, 'coroutine_stats': coroutine_stats}

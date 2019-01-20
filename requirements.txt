@@ -22,7 +22,6 @@ extensions==0.4
 warcio==1.6.3
 geoip2==2.9.0
 objgraph==3.4.0
-Pympler==0.6
 brotlipy==0.7.0
 
 # used to maintain this file

@@ -5,8 +5,6 @@ Generic implementation of url_allowed.
 import logging
 from collections import defaultdict
 
-import pympler
-
 from . import config
 from . import memory
 
@@ -151,6 +149,6 @@ def mymemory():
         Return a dict summarizing the our memory usage
         '''
         seeds = {}
-        seeds['bytes'] = pympler.asizeof.asizesof(SEEDS)[0]
+        seeds['bytes'] = memory.total_size(SEEDS)
         seeds['len'] = len(SEEDS)
         return {'seeds': seeds}

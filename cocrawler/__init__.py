@@ -129,6 +129,7 @@ class Crawler:
         self.warcwriter = warc.setup(self.version, self.warcheader_version, local_addr)
 
         url_allowed.setup()
+        stats.init()
 
         if load is not None:
             self.load_all(load)

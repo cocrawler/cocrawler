@@ -10,7 +10,6 @@ import ipaddress
 import cachetools
 import aiohttp
 import aiodns
-import pympler
 
 from . import stats
 from . import config
@@ -142,7 +141,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
 
     def memory(self):
         resolver_cache = {}
-        resolver_cache['bytes'] = pympler.asizeof.asizesof(self._cache)[0]
+        resolver_cache['bytes'] = memory.total_size(self._cache)
         resolver_cache['len'] = len(self._cache)
         return {'resolver_cache': resolver_cache}
 

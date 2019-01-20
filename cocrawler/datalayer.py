@@ -2,8 +2,6 @@ import pickle
 import logging
 import cachetools.ttl
 
-import pympler.asizeof
-
 from . import config
 from . import memory
 
@@ -54,9 +52,9 @@ class Datalayer:
     def memory(self):
         '''Return a dict summarizing the datalayer's memory usage'''
         seen_set = {}
-        seen_set['bytes'] = pympler.asizeof.asizesof(self.seen_set)[0]
+        seen_set['bytes'] = memory.total_size(self.seen_set)
         seen_set['len'] = len(self.seen_set)
         robots = {}
-        robots['bytes'] = pympler.asizeof.asizesof(self.robots)[0]
+        robots['bytes'] = memory.total_size(self.robots)
         robots['len'] = len(self.robots)
         return {'seen_set': seen_set, 'robots': robots}

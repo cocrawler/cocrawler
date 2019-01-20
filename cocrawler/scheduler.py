@@ -17,8 +17,6 @@ import logging
 import cachetools.ttl
 import json
 
-import pympler.asizeof
-
 from . import config
 from . import stats
 from . import memory
@@ -311,16 +309,16 @@ class Scheduler:
         Return a dict summarizing the scheduler's memory usage
         '''
         q = {}
-        q['bytes'] = pympler.asizeof.asizesof(self.q)[0]
+        q['bytes'] = memory.total_size(self.q)
         q['len'] = self.q.qsize()
         ridealong = {}
-        ridealong['bytes'] = pympler.asizeof.asizesof(self.ridealong)[0]
+        ridealong['bytes'] = memory.total_size(self.ridealong)
         ridealong['len'] = len(self.ridealong)
         next_fetch = {}
-        next_fetch['bytes'] = pympler.asizeof.asizesof(self.next_fetch)[0]
+        next_fetch['bytes'] = memory.total_size(self.next_fetch)
         next_fetch['len'] = len(self.next_fetch)
         frozen_until = {}
-        frozen_until['bytes'] = pympler.asizeof.asizesof(self.frozen_until)[0]
+        frozen_until['bytes'] = memory.total_size(self.frozen_until)
         frozen_until['len'] = len(self.frozen_until)
         return {'q': q, 'ridealong': ridealong,
                 'next_fetch': next_fetch, 'frozen_until': frozen_until}
