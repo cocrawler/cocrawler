@@ -128,11 +128,5 @@ echo
 $COVERAGE ../scripts/bench_dns.py --count=3 --config Fetcher.Nameservers:4.2.2.1 --expect-not-suitable
 
 echo
-echo dns-fetch
-echo
-
-$COVERAGE ../scripts/dns-fetch.py example.com --config Fetcher.Nameservers:8.8.8.8
-
-echo
 echo reached test.sh exit
 echo
