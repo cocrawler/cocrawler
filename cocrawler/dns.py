@@ -56,7 +56,7 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
 
         memory.register_debug(self.memory)
 
-    async def resolve(self, host, port, stats_prefix='fetch ', **kwargs):
+    async def resolve(self, host, port=0, stats_prefix='fetch ', **kwargs):
         t = time.time()
         if host in self._cache:
             stats.stats_sum(stats_prefix+'DNS cache hit', 1)
@@ -71,13 +71,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
                 self._refresh_in_progress.add(host)
                 stats.stats_sum(stats_prefix+'DNS refresh lookup', 1)
                 stats.stats_sum('DNS external queries', 1)
-                self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
+                self._cache[host] = await self.actual_async_lookup(host, port=port, **kwargs)
                 self._refresh_in_progress.remove(host)
 
         if host not in self._cache:
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss begun', 1)
             stats.stats_sum('DNS external queries', 1)
-            self._cache[host] = await self.actual_async_lookup(host, port, **kwargs)
+            self._cache[host] = await self.actual_async_lookup(host, port=port, **kwargs)
             # no A's is a ValueError so we do not cache them
             stats.stats_sum(stats_prefix+'DNS lookup after cache miss success', 1)
 
@@ -88,13 +88,13 @@ class CoCrawler_Caching_AsyncResolver(aiohttp.resolver.AsyncResolver):
                 a['port'] = port
         return addrs
 
-    async def actual_async_lookup(self, host, port, **kwargs):
+    async def actual_async_lookup(self, host, port=0, **kwargs):
         '''
         Do an actual lookup. Always raise if it fails.
         '''
-        # this will raise OSError: Domain name not found
-        # which ends up being ClientConnectError if inside an aiohttp .get
-        addrs = await super().resolve(host, port, **kwargs)
+        # can raise OSError: Domain name not found
+        # (which ends up being ClientConnectError if inside an aiohttp .get)
+        addrs = await super().resolve(host, port=port, **kwargs)
 
         # filter return value to exclude unwanted ip addrs
         ret = []
