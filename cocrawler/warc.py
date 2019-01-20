@@ -166,7 +166,7 @@ class CCWARCWriter:
 
         for r in dns:
             try:
-                payload += host + '.\t' + str(ttl) + '\tIN\t' + kind + '\t' + r['host'] + '\r\n'
+                payload += '\t'.join((host+'.', str(ttl), 'IN', kind, r['host'])) + '\r\n'
             except Exception as e:
                 LOGGER.info('problem converting dns reply for warcing', host, r, e)
                 pass
