@@ -19,6 +19,8 @@ async def test_prefetch():
 
     iplist = await dns.prefetch(url, resolver)
     assert len(iplist) > 0
+    iplist2 = await dns.prefetch(url, resolver)
+    assert iplist == iplist2
 
 
 def test_entry_to_ip_key():
