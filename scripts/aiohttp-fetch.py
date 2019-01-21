@@ -26,8 +26,8 @@ async def main(urls):
         print(url, '\n')
         try:
             response = await session.get(url, allow_redirects=True)
-        except aiohttp.client_exceptions.ClientConnectorError:
-            print('saw DNS error for', url)
+        except aiohttp.client_exceptions.ClientConnectorError as e:
+            print('saw connect error for', url, ':', e, file=sys.stderr)
             continue
         except Exception as e:
             print('Saw an exception thrown by session.get:')
@@ -73,10 +73,11 @@ async def main(urls):
         try:
             #print(await response.text(errors='ignore'))
             pass
-        except Exception as e:
+        except Exception:
             print_exc()
 
     await session.close()
+    await connector.close()
 
 loop = asyncio.get_event_loop()
 
