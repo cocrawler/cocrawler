@@ -101,9 +101,9 @@ def main():
             webserver.close(app)
         if config.read('CarbonStats'):
             timer.close()
-        # apparently this is needed for full aiohttp cleanup -- or is it cargo cult
-        loop.stop()
-        loop.run_forever()
+        # vodoo recommended by advanced aiohttp docs for graceful shutdown
+        # https://github.com/aio-libs/aiohttp/issues/1925
+        loop.run_until_complete(asyncio.sleep(0.250))
         loop.close()
 
 

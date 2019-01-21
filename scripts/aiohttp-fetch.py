@@ -78,8 +78,12 @@ async def main(urls):
             print_exc()
 
     await session.close()
-    await connector.close()
 
 loop = asyncio.get_event_loop()
 
 loop.run_until_complete(main(sys.argv[1:]))
+
+# vodoo recommended by advanced aiohttp docs for graceful shutdown
+# https://github.com/aio-libs/aiohttp/issues/1925
+loop.run_until_complete(asyncio.sleep(0.250))
+loop.close()
