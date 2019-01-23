@@ -147,7 +147,7 @@ def hostname_to_punycanon(hostname):
     try:
         ret = puny.decode('ascii')
     except UnicodeDecodeError:
-        LOGGER.error('punycod of hostname={} is somehow invalid: {!r}'.format(hostname, puny))
+        LOGGER.error('punycode of hostname={} is somehow invalid: {!r}'.format(hostname, puny))
         return hostname
 
     return ret
