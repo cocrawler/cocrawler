@@ -44,7 +44,6 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
     if base:
         # base can be relative, e.g. 'subdir/' or '.'
         base = urllib.parse.urljoin(url.url, base)
-        print("base is", repr(base))
     base_or_url = base or url
 
     with stats.record_burn(burn_prefix+'find_head_links_soup', url=url):
