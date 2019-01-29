@@ -14,7 +14,7 @@ cachetools==3.0.0
 tldextract==2.2.0
 sortedcontainers==2.1.0
 sortedcollections==1.1.2
-psutil==5.4.8
+psutil==5.5.0
 hdrhistogram==0.6.1
 beautifulsoup4==4.7.1
 lxml==4.3.0
@@ -45,5 +45,5 @@ coveralls==1.5.1
 wheel==0.32.3
 twine==1.12.1
 pypandoc==1.4
-setuptools==40.6.3
+setuptools==40.7.1
 setuptools-scm==3.2.0
