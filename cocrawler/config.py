@@ -37,14 +37,14 @@ REST: {}
 Crawl:
   MaxDepth: 3
   MaxTries: 4
-  PageTimeout: 30
+  ConnectTimeout: 0.  # seconds, 0.=none
+  PageTimeout: 30.  # seconds, 0.=none
   RetryTimeout: 5
   MaxWorkers: 10
   MaxHostQPS: 10
   MaxPageSize: 1000000
   PreventCompression: False
   UpgradeInsecureRequests: 1  # send this http header
-  ConnectTimeout: 0.  # seconds, 0.=none
 #  GlobalBudget: None
 #  DomainBudget: None
 #  HostBudget: None

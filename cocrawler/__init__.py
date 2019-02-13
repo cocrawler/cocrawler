@@ -85,7 +85,7 @@ class Crawler:
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn
 
-        connect_timeout = config.read('Crawl', 'ConnectTimeout')
+        connect_timeout = float(config.read('Crawl', 'ConnectTimeout'))
         page_timeout = float(config.read('Crawl', 'PageTimeout'))
         timeout_kwargs = {}
         if connect_timeout:
