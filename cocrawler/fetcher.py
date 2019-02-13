@@ -140,9 +140,6 @@ async def fetch(url, session, headers=None, proxy=None,
             is_truncated = 'time'  # testme WARC
             stats.stats_sum(stats_prefix+'fetch timeout body bytes found', 1)
             stats.stats_sum(stats_prefix+'fetch timeout body bytes found bytes', len(body_bytes))
-#    except (aiohttp.ClientError.ClientResponseError.TooManyRedirects) as e:
-#        # XXX remove me when I stop using redirects for robots.txt fetching
-#        raise
     except (aiohttp.ClientError) as e:
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
@@ -163,15 +160,12 @@ async def fetch(url, session, headers=None, proxy=None,
         # so this doesn't go off much
         stats.stats_sum(stats_prefix+'fetch SSL error', 1)
         last_exception = 'CertificateError: ' + str(e)
-    #except (ValueError, AttributeError, RuntimeError) as e:
-        # supposedly aiohttp 2.1 only fires these on programmer error, but here's what I've seen in the past:
+    except ValueError as e:
+        # no A records found -- raised by our dns code
+        # aiohttp raises:
         # ValueError Location: https:/// 'Host could not be detected' -- robots fetch
         # ValueError Location: http:// /URL should be absolute/ -- robots fetch
         # ValueError 'Can redirect only to http or https' -- robots fetch -- looked OK to curl!
-        # AttributeError: ?
-        # RuntimeError: ?
-    except ValueError as e:
-        # no A records found -- raised by my dns code
         stats.stats_sum(stats_prefix+'fetch other error - ValueError', 1)
         last_exception = 'ValueErorr: ' + str(e)
     except AttributeError as e:
