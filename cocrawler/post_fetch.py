@@ -30,7 +30,16 @@ LOGGER = logging.getLogger(__name__)
 
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
-    return 'Location' in response.headers and response.status in (301, 302, 303, 307, 308)
+    return 'Location' in response.headers and response.status in {301, 302, 303, 307, 308}
+
+
+def should_retry(f):
+    if f.last_exception is not None:
+        return True
+    if f.response.status >= 500:
+        return True
+    if f.response.status in {403, 429}:
+        return True
 
 
 def charset_log(json_log, charset, detect, charset_used):
