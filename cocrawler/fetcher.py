@@ -86,7 +86,7 @@ def global_policies():
     return proxy, prefetch_dns
 
 
-FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'req_headers',
+FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'ip', 'req_headers',
                                                  't_first_byte', 't_last_byte', 'is_truncated',
                                                  'last_exception'])
 
@@ -104,6 +104,7 @@ async def fetch(url, session, headers=None, proxy=None,
         body_bytes = b''
         blocks = []
         left = max_page_size
+        ip = None
 
         with stats.coroutine_state(stats_prefix+'fetcher fetching'):
             with stats.record_latency(stats_prefix+'fetcher fetching', url=url.url):
@@ -115,6 +116,12 @@ async def fetch(url, session, headers=None, proxy=None,
                 # https://aiohttp.readthedocs.io/en/stable/tracing_reference.html
                 # XXX should use tracing events to get t_first_byte
                 t_first_byte = '{:.3f}'.format(time.time() - t0)
+
+                if not proxy:
+                    try:
+                        ip, _ = response.connection.transport.get_extra_info('peername', default=None)
+                    except AttributeError:
+                        pass
 
                 while left > 0:
                     block = await response.content.read(left)
@@ -184,9 +191,9 @@ async def fetch(url, session, headers=None, proxy=None,
 
     if last_exception is not None:
         LOGGER.info('we failed working on %s, the last exception is %s', url.url, last_exception)
-        return FetcherResponse(None, None, None, None, None, False, last_exception)
+        return FetcherResponse(None, None, None, None, None, None, False, last_exception)
 
-    fr = FetcherResponse(response, body_bytes, response.request_info.headers,
+    fr = FetcherResponse(response, body_bytes, ip, response.request_info.headers,
                          t_first_byte, t_last_byte, is_truncated, None)
 
     if response.status >= 500:

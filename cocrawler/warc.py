@@ -202,7 +202,7 @@ class CCWARCWriter:
                 ret.append((h, v))
         return ret
 
-    def write_request_response_pair(self, url, req_headers, resp_headers, is_truncated, payload, digest=None, decompressed=False):
+    def write_request_response_pair(self, url, ip, req_headers, resp_headers, is_truncated, payload, digest=None, decompressed=False):
         if self.writer is None:
             self.open()
 
@@ -215,6 +215,9 @@ class CCWARCWriter:
         resp_http_headers = StatusAndHeaders('200 OK', fake_resp_headers, protocol='HTTP/1.1')
 
         warc_headers_dict = {}
+        if ip is not None:
+            # ip should be here unless we crawl through a proxy
+            warc_headers_dict['WARC-IP-Address'] = ip
         if digest is not None:
             warc_headers_dict['WARC-Payload-Digest'] = digest
         if is_truncated:

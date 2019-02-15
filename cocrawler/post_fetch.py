@@ -180,7 +180,7 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         # needs to use the same algo as post_dns for choosing what to warc
         # insert the digest instead of computing it twice? see sha1 below
         # we delayed decompression so that we could warc the compressed body
-        crawler.warcwriter.write_request_response_pair(url.url, f.req_headers,
+        crawler.warcwriter.write_request_response_pair(url.url, f.ip, f.req_headers,
                                                        f.response.raw_headers, f.is_truncated, f.body_bytes,
                                                        decompressed=False)
 
