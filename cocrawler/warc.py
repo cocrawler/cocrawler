@@ -214,7 +214,7 @@ class CCWARCWriter:
         fake_resp_headers = self._fake_resp_headers(resp_headers, len(payload), decompressed=decompressed)
         resp_http_headers = StatusAndHeaders('200 OK', fake_resp_headers, protocol='HTTP/1.1')
 
-        warc_headers_dict = {}
+        warc_headers_dict = OrderedDict()
         if ip is not None:
             # ip should be here unless we crawl through a proxy
             warc_headers_dict['WARC-IP-Address'] = ip
