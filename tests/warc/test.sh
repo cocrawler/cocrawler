@@ -13,7 +13,7 @@ echo
 # pre-cleanup
 rm -f CC-TEST-01-FOO-00001-*.warc
 rm -f CC-TEST-01-FOO-00002-*.warc
-rm -f CC-TEST-01-00001-*.warc.g
+rm -f CC-TEST-01-00001-*.warc.gz
 
 $COVERAGE ./test-warc.py
 
