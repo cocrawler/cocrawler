@@ -11,6 +11,7 @@ parent subsequently calls add_url on them -- cocrawler.cocrawler
 import logging
 from functools import partial
 import json
+import time
 
 import multidict
 from bs4 import BeautifulSoup
@@ -284,4 +285,5 @@ async def do_parser(body, body_bytes, resp_headers, url, crawler):
 
 def post_dns(dns, expires, url, crawler):
     if crawler.warcwriter is not None:  # needs to use the same algo as post_200 for choosing what to warc
-        crawler.warcwriter.write_dns(dns, expires, url)
+        now = time.time()
+        crawler.warcwriter.write_dns(dns, expires-now, url)
