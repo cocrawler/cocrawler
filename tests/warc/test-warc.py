@@ -1,4 +1,5 @@
 import hashlib
+import socket
 import unittest.mock as mock
 
 from cocrawler.warc import CCWARCWriter
@@ -16,6 +17,8 @@ def get_serial(name):
 prefix = 'CC-TEST-01'
 subprefix = 'FOO'
 max_size = 10000
+
+socket.gethostname = mock.MagicMock(return_value='hostname')
 
 main = CCWARCWriter(prefix, max_size, get_serial=get_serial)
 sub = CCWARCWriter(prefix, 1000, subprefix=subprefix, gzip=False, get_serial=get_serial)

@@ -1,13 +1,13 @@
 WARC/1.0
 WARC-Type: warcinfo
-WARC-Record-ID: <urn:uuid:eec513d0-6d66-47b6-b692-9121779d2144>
-WARC-Filename: CC-TEST-01-FOO-00002-rd.bx9.net.warc
-WARC-Date: 2019-02-15T17:13:17Z
+WARC-Record-ID: <urn:uuid:58b7cdc2-8219-4361-89ec-4595c7965d44>
+WARC-Filename: CC-TEST-01-FOO-00002-hostname.warc
+WARC-Date: 2019-02-15T19:10:51Z
 Content-Type: application/warc-fields
-Content-Length: 149
+Content-Length: 147
 
 software: cocrawler/1.0 cocrawler_warcheader_version/0.99
-hostname: rd.bx9.net
+hostname: hostname
 ip: 127.0.0.1
 isPartOf: CC-TEST-01
 format: WARC file version 1.0
@@ -15,9 +15,9 @@ format: WARC file version 1.0
 
 WARC/1.0
 WARC-Type: response
-WARC-Record-ID: <urn:uuid:aa1f1c86-fba6-4fd7-807f-9333fb95f205>
+WARC-Record-ID: <urn:uuid:fc766ae1-f39b-40bf-8ccc-eeee511a7e68>
 WARC-Target-URI: https://www.google.com/
-WARC-Date: 2019-02-15T17:13:17Z
+WARC-Date: 2019-02-15T19:10:51Z
 WARC-Payload-Digest: sha1:BP4ZFPB44H65DQUFZSDZ3DP622PWZLCY
 WARC-Block-Digest: sha1:VNO24WLDAW236YN5SZVRZQRL4L5YUSEM
 Content-Type: application/http; msgtype=response
@@ -43,11 +43,11 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 WARC/1.0
 WARC-Type: request
-WARC-Record-ID: <urn:uuid:fca4da83-412c-4a9c-ba3f-770f5cf99e4a>
+WARC-Record-ID: <urn:uuid:2d7ee522-d22e-49d2-ab5f-2b343d143f60>
 WARC-Target-URI: https://www.google.com/
-WARC-Date: 2019-02-15T17:13:17Z
+WARC-Date: 2019-02-15T19:10:51Z
 WARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ
-WARC-Concurrent-To: <urn:uuid:aa1f1c86-fba6-4fd7-807f-9333fb95f205>
+WARC-Concurrent-To: <urn:uuid:fc766ae1-f39b-40bf-8ccc-eeee511a7e68>
 WARC-Block-Digest: sha1:UJGS6RHATKUCRYB7LBWO3N6A2VZHN7SZ
 Content-Type: application/http; msgtype=request
 Content-Length: 40

@@ -11,16 +11,11 @@ echo test-warc
 echo
 
 # pre-cleanup
-rm -f CC-TEST-01-FOO-00001-*.warc
-rm -f CC-TEST-01-FOO-00002-*.warc
-rm -f CC-TEST-01-00001-*.warc.gz
+rm -f CC-TEST-01-FOO-00001-hostname.warc
+rm -f CC-TEST-01-FOO-00002-hostname.warc
+rm -f CC-TEST-01-00001-hostname.warc.gz
 
 $COVERAGE ./test-warc.py
-
-# there are 3 output files to diff... move them to canonical names
-mv CC-TEST-01-FOO-00001-*.warc CC-TEST-01-FOO-00001-hostname.warc
-mv CC-TEST-01-FOO-00002-*.warc CC-TEST-01-FOO-00002-hostname.warc
-mv CC-TEST-01-00001-*.warc.gz CC-TEST-01-00001-hostname.warc.gz
 
 # diffs
 

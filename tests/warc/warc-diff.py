@@ -21,8 +21,6 @@ def munge(s):
             line, _, _ = line.partition(':uuid:')
         elif line.startswith('WARC-Date:'):
             line = 'WARC-Date:'
-        elif line.startswith('hostname:'):
-            continue
         elif line.startswith('software:'):
             continue
         out += line
