@@ -349,8 +349,11 @@ class Crawler:
             json_log['seed_host'] = seed_host
         if f.is_truncated:
             json_log['truncated'] = f.is_truncated
+        json_log['status'] = f.response.status
 
         if post_fetch.should_retry(f):
+            if self.crawllogfd:
+                print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             self._retry_if_able(work, ridealong)
             return
 
@@ -358,8 +361,6 @@ class Crawler:
 
         if f.response.status >= 400 and 'seed' in ridealong:
             seeds.fail(ridealong, self)
-
-        json_log['status'] = f.response.status
 
         if post_fetch.is_redirect(f.response):
             post_fetch.handle_redirect(f, url, ridealong, priority, host_geoip, json_log, self, rand=rand)
