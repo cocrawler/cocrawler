@@ -27,11 +27,12 @@ faulthandler.enable()
 ARGS = argparse.ArgumentParser(description='CoCrawler web crawler')
 ARGS.add_argument('--config', action='append')
 ARGS.add_argument('--configfile', action='store')
-ARGS.add_argument('--no-test', action='store_true')
-ARGS.add_argument('--printdefault', action='store_true')
-ARGS.add_argument('--printfinal', action='store_true')
-ARGS.add_argument('--loglevel', action='store', default='INFO')
-ARGS.add_argument('--load', action='store')
+ARGS.add_argument('--no-test', action='store_true', help='do not check stats at the end of crawling')
+ARGS.add_argument('--printdefault', action='store_true', help='print the default configuration')
+ARGS.add_argument('--printfinal', action='store_true', help='print the final configuration')
+ARGS.add_argument('--load', action='store', help='load saved crawl')
+ARGS.add_argument('--loglevel', action='store', default='INFO', help='set logging level, default INFO')
+ARGS.add_argument('--verbose', '-v', action='count', help='set logging level to DEBUG')
 
 
 def main():
@@ -45,7 +46,12 @@ def main():
         config.print_default()
         sys.exit(1)
 
-    loglevel = os.getenv('COCRAWLER_LOGLEVEL') or args.loglevel
+    loglevel = os.getenv('COCRAWLER_LOGLEVEL')
+    if loglevel is None and args.loglevel:
+        loglevel = args.loglevel
+    if loglevel is None and args.verbose:
+        loglevel = 'DEBUG'
+
     logging.basicConfig(level=loglevel)
 
     config.config(args.configfile, args.config)
