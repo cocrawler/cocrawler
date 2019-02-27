@@ -101,6 +101,18 @@ echo dump-soup
 echo
 $COVERAGE ../scripts/dump-soup.py http://127.0.0.1:8080/ordinary/0 > /dev/null
 
+# last because it leaves the mock webserver in a sleep
+echo
+echo test-timeout
+echo expect a lot of mock webserver spew
+echo
+$COVERAGE ../scripts/crawl.py --configfile test-timeout.yml
+sleep 3
+echo
+echo end of expected mock webserver spew
+echo
+rm -f robotslog.jsonl crawllog.jsonl
+
 echo
 echo tearing down mock webserver
 echo

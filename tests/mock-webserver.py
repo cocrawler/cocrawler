@@ -14,6 +14,7 @@ import os
 import random
 from bottle import hook, route, run, request, abort, redirect
 from urllib.parse import urlsplit
+import time
 
 
 def generate_robots(host):
@@ -79,6 +80,8 @@ def generate_ordinary(name, host):
         redirect('/ordinary/{}'.format(name+1))
     if host.startswith('503'):
         abort(503, 'Slow down, you move too fast. You got to make the morning last.\n')
+    if host.startswith('pagetimeout'):
+        time.sleep(6)  # see PageTimeout in test-timeout.yml
 
     mylinks = links.format((name+1) % 1000, (2*name) % 1000)
     return header + mylinks + trailer
