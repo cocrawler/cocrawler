@@ -352,7 +352,8 @@ class Crawler:
             json_log['seed_host'] = seed_host
         if f.is_truncated:
             json_log['truncated'] = f.is_truncated
-        json_log['status'] = f.response.status
+        if f.response:
+            json_log['status'] = f.response.status
 
         if post_fetch.should_retry(f):
             self._retry_if_able(work, ridealong, json_log=json_log)
