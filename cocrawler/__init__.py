@@ -335,8 +335,9 @@ class Crawler:
         r = await self.robots.check(url, host_geoip=host_geoip, seed_host=robots_seed_host, crawler=self,
                                     headers=req_headers, proxy=proxy)
         if not r:
-            # really, we shouldn't retry a robots.txt rule failure
+            # we don't really want to retry a robots.txt disallow,
             # but we do want to retry robots.txt failed to fetch
+            # logging was done in robots.check
             self._retry_if_able(work, ridealong)
             return
 
