@@ -277,9 +277,11 @@ class Crawler:
         await self.session.close()
         await self.connector.close()
 
-    def _retry_if_able(self, work, ridealong):
+    def _retry_if_able(self, work, ridealong, json_log=None):
         priority, rand, surt = work
         retries_left = ridealong.get('retries_left', 0) - 1
+        if json_log:
+            json_log['retries_left'] = retries_left
         if retries_left <= 0:
             # XXX jsonlog hard fail
             # XXX remember that this host had a hard fail
@@ -353,9 +355,9 @@ class Crawler:
         json_log['status'] = f.response.status
 
         if post_fetch.should_retry(f):
+            self._retry_if_able(work, ridealong, json_log=json_log)
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
-            self._retry_if_able(work, ridealong)
             return
 
         self.scheduler.del_ridealong(surt)
