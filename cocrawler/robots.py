@@ -219,8 +219,6 @@ class Robots:
 
         if f.last_exception:
             if f.last_exception.startswith('ClientError: TooManyRedirects'):
-                # googlebot policy: too many redirs is an empty robots.txt
-                # f.response is None, so we have to bail out early
                 error = 'got too many redirects, treating as empty robots'
                 json_log['error'] = error
                 self.jsonlog(schemenetloc, json_log)
@@ -251,19 +249,15 @@ class Robots:
         json_log['status'] = status
         json_log['t_first_byte'] = f.t_first_byte
 
-        # if the final status is a redirect, we exceeded max redirects -- treat as a 404, same as googlebot
-        # Googlebot treats all 4xx as an empty robots.txt
         if str(status).startswith('3') or str(status).startswith('4'):
             if status >= 400:
                 error = 'got a 4xx, treating as empty robots'
             else:
-                #raise ValueError('redir should have raised an exception')
                 error = 'too many redirects, treating as empty robots'
             json_log['error'] = error
             self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
-        # Googlebot treats all 5xx as deny, unless they think the host returns 5xx instead of 404:
         # XXX implement googlebot strategy
         if str(status).startswith('5'):
             json_log['error'] = 'got a 5xx, treating as deny'
