@@ -460,10 +460,10 @@ class Crawler:
             last = t
 
             if limit != old_limit:
-                LOGGER.info('control_limit: elapsed = %f, adjusting limit by %+d to %d',
-                            elapsed, limit - old_limit, limit)
+                LOGGER.debug('control_limit: elapsed = %f, adjusting limit by %+d to %d',
+                             elapsed, limit - old_limit, limit)
             else:
-                LOGGER.info('control_limit: elapsed = %f', elapsed)
+                LOGGER.debug('control_limit: elapsed = %f', elapsed)
 
     def summarize(self):
         self.scheduler.summarize()
