@@ -346,8 +346,7 @@ class Crawler:
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,
                                 headers=req_headers, proxy=proxy)
 
-        json_log = {'kind': 'get', 'url': url.url, 'priority': priority,
-                    't_first_byte': f.t_first_byte, 'time': time.time()}
+        json_log = {'kind': 'get', 'url': url.url, 'priority': priority, 'time': time.time()}
         if seed_host:
             json_log['seed_host'] = seed_host
         if f.is_truncated:
@@ -356,6 +355,8 @@ class Crawler:
             json_log['status'] = f.response.status
         if f.last_exception:
             json_log['exception'] = f.last_exception
+        if f.t_first_byte is not None:
+            json_log['t_first_byte'] = f.t_first_byte
 
         if post_fetch.should_retry(f):
             self._retry_if_able(work, ridealong, json_log=json_log)
