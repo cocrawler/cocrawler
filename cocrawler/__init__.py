@@ -357,6 +357,8 @@ class Crawler:
             json_log['exception'] = f.last_exception
         if f.t_first_byte is not None:
             json_log['t_first_byte'] = f.t_first_byte
+        if f.ip is not None:
+            json_log['ip'] = f.ip
 
         if post_fetch.should_retry(f):
             self._retry_if_able(work, ridealong, json_log=json_log)
