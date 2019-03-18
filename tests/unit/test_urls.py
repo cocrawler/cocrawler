@@ -173,7 +173,7 @@ def test_get_domain():
     assert urls.get_domain('http://sub.nhs.uk') == 'sub.nhs.uk'  # ditto
     assert urls.get_domain('http://www.example.com') == 'example.com'
     assert urls.get_domain('http://sub.example.com') == 'example.com'
-    assert urls.get_domain('http://sub.blogspot.com') == 'sub.blogspot.com'  # we want this behavior
+    assert urls.get_domain('http://sub.blogspot.com') == 'sub.blogspot.com', "make sure private domains are included"
     # if the blogspot test doesn't work, try this from the shell: "tldextract -u -p"
     # unfortunately, all tldextract users use the same cache
     # https://github.com/john-kurkowski/tldextract/issues/66
