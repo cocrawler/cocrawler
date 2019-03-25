@@ -371,7 +371,7 @@ class URL(object):
     Precomputes a lot of stuff upon creation, which is usually done in a burner thread.
     Currently idempotent.
     '''
-    def __init__(self, url, urljoin=None):
+    def __init__(self, url, urljoin=None, surt_strip_trailing_slash=False):
         url = clean_webpage_links(url, urljoin=urljoin)
 
         if urljoin:
@@ -410,7 +410,7 @@ class URL(object):
         self._netloc = netloc
         self._hostname = surt.hostname_to_punycanon(netloc)
         self._hostname_without_www = surt.discard_www_from_hostname(self._hostname)
-        self._surt = surt.surt(url)
+        self._surt = surt.surt(url, surt_strip_trailing_slash=surt_strip_trailing_slash)
 
         self._urlsplit = SplitResult(scheme, netloc, path, query, '')
         self._url = urllib.parse.urlunsplit(self._urlsplit)  # final canonicalization

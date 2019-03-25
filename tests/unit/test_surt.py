@@ -121,6 +121,11 @@ def test_surt():
     assert surt.surt("http://archive.org/goo/?b&a") == 'org,archive)/goo/?a&b'
     assert surt.surt("http://archive.org/goo/?a=2&b&a=1") == 'org,archive)/goo/?a=1&a=2&b'
 
+    assert surt.surt("http://www.archive.org/", surt_strip_trailing_slash=True) == 'org,archive)'
+    assert surt.surt("http://archive.org/goo/", surt_strip_trailing_slash=True) == 'org,archive)/goo'
+    assert surt.surt("http://archive.org/goo/?", surt_strip_trailing_slash=True) == 'org,archive)/goo'
+    assert surt.surt("http://archive.org/goo/?b&a", surt_strip_trailing_slash=True) == 'org,archive)/goo?a&b'
+
     # trailing comma mode
     #assert surt.surt("http://archive.org/goo/?a=2&b&a=1", trailing_comma=True) == 'org,archive,)/goo?a=1&a=2&b'
     #assert surt.surt("dns:archive.org", trailing_comma=True) == 'dns:archive.org'

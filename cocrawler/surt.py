@@ -171,7 +171,7 @@ def reverse_hostname_parts(hostname):
 no_action_schemes = set(('filedesc', 'warcinfo', 'dns'))
 
 
-def surt(url, parts=None):
+def surt(url, parts=None, surt_strip_trailing_slash=False):
     if url is None or url == '':
         return '-'
 
@@ -223,7 +223,7 @@ def surt(url, parts=None):
     path = path.lower()
     path = path.partition(';')[0]  # discard path params, if any e.g. ;jsessionid=0
 
-    if query is not '':
+    if query != '':
         query_parts = sorted(query.split('&'))
     else:
         query_parts = ()
@@ -231,6 +231,9 @@ def surt(url, parts=None):
     # fragment = ''  # we don't use this anyway
 
     ret = ','.join(hostname_parts) + ')' + path
+
+    if surt_strip_trailing_slash and ret.endswith('/'):
+        ret = ret[:-1]
 
     if len(query_parts) > 0:
         ret += '?' + '&'.join(query_parts)
