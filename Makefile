@@ -2,7 +2,6 @@
 
 init:
 	pip install -r requirements.txt
-	#pip install git+https://github.com/yaml/pyyaml.git
 	-pip install -r optional-requirements.txt
 
 pur:
