@@ -375,12 +375,12 @@ class Crawler:
         if f.response.status >= 400 and 'seed' in ridealong:
             seeds.fail(ridealong, self)
 
+        if f.response.status == 200:
+            await post_fetch.post_200(f, url, ridealong, priority, host_geoip, json_log, self)
+
         if post_fetch.is_redirect(f.response):
             post_fetch.handle_redirect(f, url, ridealong, priority, host_geoip, json_log, self, rand=rand)
             # meta-http-equiv-redirect will be dealt with in post_fetch
-
-        if f.response.status == 200:
-            await post_fetch.post_200(f, url, ridealong, priority, host_geoip, json_log, self)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
         LOGGER.debug('size of ridealong now stands at %r urls', self.scheduler.ridealong_size())
