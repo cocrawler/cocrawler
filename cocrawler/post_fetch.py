@@ -9,11 +9,9 @@ parent subsequently calls add_url on them -- cocrawler.cocrawler
 '''
 
 import logging
-from functools import partial
 import json
 import time
 
-import multidict
 from bs4 import BeautifulSoup
 
 from . import urls
@@ -214,7 +212,7 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         charset_log(json_log, charset, detect, charset_used)
 
         try:
-            links, embeds, sha1, facets, base = await do_parser(body, body_bytes, resp_headers, url, crawler)
+            links, embeds, sha1, facets, base = await parse.do_parser(body, body_bytes, resp_headers, url, crawler)
         except ValueError as e:
             stats.stats_sum('parser raised', 1)
             LOGGER.info('parser raised %r', e)
@@ -271,25 +269,6 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
         # neah stick that in add_url!
 
         # actual jsonlog is emitted after the return
-
-
-async def do_parser(body, body_bytes, resp_headers, url, crawler):
-    if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
-        stats.stats_sum('parser in burner thread', 1)
-        # headers is a multidict.CIMultiDictProxy case-blind dict
-        # and the Proxy form of it doesn't pickle, so convert to one that does
-        resp_headers = multidict.CIMultiDict(resp_headers)
-        links, embeds, sha1, facets, base = await crawler.burner.burn(
-            partial(parse.do_burner_work_html, body, body_bytes, resp_headers,
-                    burn_prefix='burner ', url=url),
-            url=url)
-    else:
-        stats.stats_sum('parser in main thread', 1)
-        # no coroutine state because this is a burn, not an await
-        links, embeds, sha1, facets, base = parse.do_burner_work_html(
-            body, body_bytes, resp_headers, burn_prefix='main ', url=url)
-
-    return links, embeds, sha1, facets, base
 
 
 def post_dns(dns, expires, url, crawler):

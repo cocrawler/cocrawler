@@ -6,14 +6,36 @@ import logging
 import re
 import hashlib
 import urllib.parse
+from functools import partial
+import multidict
 
 from bs4 import BeautifulSoup
 
 from . import stats
 from .urls import URL
 from . import facet
+from . import config
 
 LOGGER = logging.getLogger(__name__)
+
+
+async def do_parser(body, body_bytes, resp_headers, url, crawler):
+    if len(body) > int(config.read('Multiprocess', 'ParseInBurnerSize')):
+        stats.stats_sum('parser in burner thread', 1)
+        # headers is a multidict.CIMultiDictProxy case-blind dict
+        # and the Proxy form of it doesn't pickle, so convert to one that does
+        resp_headers = multidict.CIMultiDict(resp_headers)
+        links, embeds, sha1, facets, base = await crawler.burner.burn(
+            partial(do_burner_work_html, body, body_bytes, resp_headers,
+                    burn_prefix='burner ', url=url),
+            url=url)
+    else:
+        stats.stats_sum('parser in main thread', 1)
+        # no coroutine state because this is a burn, not an await
+        links, embeds, sha1, facets, base = do_burner_work_html(
+            body, body_bytes, resp_headers, burn_prefix='main ', url=url)
+
+    return links, embeds, sha1, facets, base
 
 
 def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
