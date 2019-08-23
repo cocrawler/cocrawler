@@ -18,8 +18,12 @@ queue = asyncio.Queue()
 
 
 def parse_all(name, string):
-    links1, _ = parse.find_html_links(string)
-    links2, embeds2 = parse.find_html_links_and_embeds(string)
+    links1, _ = parse.find_html_links_re(string)
+    links2, embeds2 = parse.find_html_links_re(string)  # XXX
+
+    links1 = set(links1)
+    links2 = set(links2)
+    embeds2 = set(embeds2)
 
     all2 = links2.union(embeds2)
 

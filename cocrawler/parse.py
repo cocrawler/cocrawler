@@ -8,6 +8,7 @@ import hashlib
 import urllib.parse
 from functools import partial
 import multidict
+from collections.abc import Mapping
 
 from bs4 import BeautifulSoup
 
@@ -73,8 +74,8 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
 
     with stats.record_burn(burn_prefix+'find_body_links_re', url=url):
         lbody, ebody = find_body_links_re(body)
-        links.update(lbody)
-        embeds.update(ebody)
+        links += lbody
+        embeds += ebody
 
     embeds = clean_urllist(embeds, ('javascript:', 'data:'))
 
@@ -90,13 +91,28 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
         # in that case we might want to analyze body links instead?
         facets = facet.compute_all(html, head, body, headers, links, embeds, head_soup=head_soup, url=url)
 
+    links = dedup_links(links)
+
     return links, embeds, sha1, facets, base
+
+
+def dedup_links(links):
+    ret = []
+    for link in links:
+        if isinstance(link, Mapping):
+            l = link.get('href')
+            if not l:
+                l = link.get('src')
+            if l:
+                ret.append(l)
+        else:
+            ret.append(link)
+    return ret
 
 
 def clean_urllist(urllist, schemes):
     '''
-    Drop all elemnts of the urllist that aren't in schemes.
-    Used to drop javascript: and data: and whatnot from the list of embeds.
+    Drop all elements of the urllist that are in schemes.
     '''
     schemes = tuple(schemes)
     return [url for url in urllist if not url.startswith(schemes)]
@@ -110,7 +126,7 @@ def find_html_links_re(html):
 
     On a 3.4ghz x86 core, runs at ~ 50 megabytes/sec.
     '''
-    stats.stats_sum('html parser bytes', len(html))
+    stats.stats_sum('html_links_re parser bytes', len(html))
 
     delims = set(
         [m[1] for m in re.findall(r'''\s(?:href|src)\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', html, re.I | re.S)]
@@ -119,7 +135,7 @@ def find_html_links_re(html):
 
     links = delims.union(no_delims)
 
-    return links, set()
+    return list(links), []
 
 
 def find_body_links_re(body):
@@ -128,7 +144,7 @@ def find_body_links_re(body):
 
     On a 3.4 ghz x86 core, runs at ~ 25 megabyte/sec.
     '''
-    stats.stats_sum('html parser body bytes', len(body))
+    stats.stats_sum('body_links_re parser bytes', len(body))
 
     embeds_delims = set(
         [m[1] for m in re.findall(r'''\ssrc\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I | re.S)]
@@ -141,21 +157,21 @@ def find_body_links_re(body):
     links_no_delims = set(re.findall(r'''\shref\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
     links = links_delims.union(links_no_delims)
 
-    return links, embeds
+    return list(links), list(embeds)
 
 
 def find_css_links_re(css):
     '''
     Finds the links embedded in css files
     '''
-    stats.stats_sum('html parser css bytes', len(css))
+    stats.stats_sum('css_links_re parser bytes', len(css))
 
     embeds_delims = set(
         [m[1] for m in re.findall(r'''\surl\(\s?(?P<delim>['"])(.*?)(?P=delim)''', css, re.I | re.S)]
     )
     embeds_no_delims = set(re.findall(r'''\surl\(\s?([^\s'"<>()]+)''', css, re.I))
 
-    return set(), embeds_delims.union(embeds_no_delims)
+    return [], list(embeds_delims.union(embeds_no_delims))
 
 
 def find_head_links_soup(head_soup):
@@ -164,15 +180,41 @@ def find_head_links_soup(head_soup):
         embeds.add(tag.get('src'))
     for tag in head_soup.find_all(href=True):
         embeds.add(tag.get('href'))
-    return set(), embeds
+    return [], list(embeds)
+
+
+def build_link_object(tag):
+    ret = {'tag': tag.name}
+    if tag.name == 'a':
+        ret['href'] = tag.get('href')
+        try:
+            parts = tag.itertext(with_tail=False)
+        except TypeError:
+            parts = None
+        if parts:
+            anchortext = ' '.join(parts)
+            anchortext = re.sub(r'\s+', ' ', anchortext).strip()
+            if len(anchortext) > 100:
+                anchortext = anchortext[:100]
+                ret['anchortext_truncated'] = True
+            ret['anchortext'] = anchortext
+        if tag.get('target'):
+            ret['target'] = tag.get('target')
+        return ret
+
+    if tag.name == 'iframe':
+        ret['src'] = tag.get('src')
+        if tag.get('name'):  # XXX how does this work in Beautiful Soup??? name attr vs tag.name
+            ret['name'] = tag.get('name')
+        return ret
 
 
 def find_body_links_soup(body_soup):
     embeds = set()
-    links = set()
+    links = []
     for tag in body_soup.find_all(src=True):
         if tag.name == 'iframe':
-            links.add(tag.get('src'))
+            links.append(build_link_object(tag))
         else:
             embeds.add(tag.get('src'))
     for tag in body_soup.find_all(href=True):
@@ -183,18 +225,43 @@ def find_body_links_soup(body_soup):
             else:
                 pass  # other body-ok like 'prefetch'
         else:
-            links.add(tag.get('href'))
-    return links, embeds
+            links.append(build_link_object(tag))
+    return links, list(embeds)
 
 
 def url_clean_join(links, url=None):
     ret = set()
     for u in links:
-        ret.add(URL(u, urljoin=url))
+        if isinstance(u, Mapping):
+            if 'href' in u:
+                u['href'] = URL(u['href'], urljoin=url)
+            elif 'src' in u:
+                u['src'] = URL(u['src'], urljoin=url)
+            ret.add(u)
+        else:
+            ret.add(URL(u, urljoin=url))
+    return ret
+
+
+def url_dedup(urllist):
+    ret = []
+    dedup = set()
+    for url in urllist:
+        if isinstance(url, Mapping):
+            link = url.get('href') or url.get('src')
+        else:
+            link = url
+        if link:
+            if link in dedup:
+                continue
+            dedup.add(link)
+            ret.append(url)
     return ret
 
 
 def report():
+    # XXX fix these names
+    # XXX how does this get just the burner thread? use the prefix
     b = stats.stat_value('parser html bytes')
     c = stats.stat_value('find_html_links re')
     LOGGER.info('Burner thread report:')
@@ -233,7 +300,7 @@ def split_head_body(html, url=None):
         else:
             return '', html
 
-    # having seen <head>, we're willing to parse for a long time
+    # having seen <head>, we're willing to parse for a long time for </head or <body
     m = re.search(r'<(?:/head>|body[\s>])', html[:1000000], re.I)
     if not m:
         stats.stats_sum('parser split long fail', 1)

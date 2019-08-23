@@ -106,46 +106,52 @@ def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
     assert len(links) == 6
     assert len(embeds) == 0
-    assert 'foo2.htm' in links
-    assert 'foo3.html ' in links
-    assert 'foo.gif' in links
-    assert 'torture"\n<url>' in links
+    linkset = set(links)
+    assert 'foo2.htm' in linkset
+    assert 'foo3.html ' in linkset
+    assert 'foo.gif' in linkset
+    assert 'torture"\n<url>' in linkset
 
     head, body = parse.split_head_body(test_html)
     links, embeds = parse.find_body_links_re(body)
     assert len(links) == 4
     assert len(embeds) == 1
-    assert 'foo2.htm' in links
-    assert 'foo3.html ' in links
-    assert 'torture"\n<url>' in links
-    assert 'foo.gif' in embeds
+    linkset = set(links)
+    embedset = set(embeds)
+    assert 'foo2.htm' in linkset
+    assert 'foo3.html ' in linkset
+    assert 'torture"\n<url>' in linkset
+    assert 'foo.gif' in embedset
     head_soup = BeautifulSoup(head, 'lxml')
     links, embeds = parse.find_head_links_soup(head_soup)
+    embedset = set(embeds)
     assert len(links) == 0
     assert len(embeds) == 1
-    assert 'link.html' in embeds
+    assert 'link.html' in embedset
 
     head_soup = BeautifulSoup(head, 'lxml')
     body_soup = BeautifulSoup(body, 'lxml')
     links, embeds = parse.find_head_links_soup(head_soup)
     lbody, ebody = parse.find_body_links_soup(body_soup)
-    links.update(lbody)
-    embeds.update(ebody)
+    links += lbody
+    embeds += ebody
+    linkset = set([link['href'] for link in links])
+    embedset = set(embeds)
     assert len(links) == 4
     assert len(embeds) == 2
-    assert 'foo2.htm' in links
-    assert 'foo3.html ' in links
-    assert 'torture"\n<url>' in links
-    assert 'link.html' in embeds
-    assert 'foo.gif' in embeds
+    assert 'foo2.htm' in linkset
+    assert 'foo3.html ' in linkset
+    assert 'torture"\n<url>' in linkset
+    assert 'link.html' in embedset
+    assert 'foo.gif' in embedset
 
     head, body = parse.split_head_body(test_html_harder)
     body_soup = BeautifulSoup(body, 'lxml')
     lbody, ebody = parse.find_body_links_soup(body_soup)
     assert len(lbody) == 1
     assert len(ebody) == 1
-    assert 'iframe.html' in lbody
-    assert 'stylesheet.blah' in ebody
+    assert 'iframe.html' == lbody[0]['src']
+    assert 'stylesheet.blah' == ebody[0]
 
 
 test_css = '''
