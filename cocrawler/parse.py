@@ -330,6 +330,10 @@ def parse_refresh(s):
             url = url[:url.index('"')]
         if sep and sep.endswith("'") and "'" in url:
             url = url[:url.index("'")]
+        try:
+            t = int(t)
+        except ValueError:
+            t = None
     else:
         if s.isdigit():
             t = int(s)
