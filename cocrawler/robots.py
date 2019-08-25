@@ -216,6 +216,8 @@ class Robots:
                                 allow_redirects=True, max_redirects=5, stats_prefix='robots ')
 
         json_log = {'action': 'fetch', 'time': time.time()}
+        if f.ip is not None:
+            json_log['ip'] = f.ip
 
         if f.last_exception:
             if f.last_exception.startswith('ClientError: TooManyRedirects'):
