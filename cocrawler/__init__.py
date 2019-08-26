@@ -361,6 +361,7 @@ class Crawler:
         if f.ip is not None:
             json_log['ip'] = f.ip
         else:
+            # in cases of failure, the ip will not be set in f
             dns_entry = self.resolver.get_cache_entry(url.hostname)
             if dns_entry:
                 json_log['ip'] = dns.entry_to_ip_key(dns_entry)
