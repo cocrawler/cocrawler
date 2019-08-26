@@ -20,7 +20,7 @@ def stats_wrap(partial, name, url=None):
     stats.clear()
     with stats.record_burn(name, url=url):
         try:
-            ret = list(partial())  # XXX what's pythonic here?
+            ret = list(partial())
         except Exception as e:
             LOGGER.info('burner thread sees an exception %r', e)
             traceback.print_exc()
@@ -68,8 +68,8 @@ class Burner:
                 f = asyncio.ensure_future(
                     self.loop.run_in_executor(self.executor, wrap))  # pylint: disable=unused-variable
                 self.f.append(f)
-                # I can't await f because I'm not async, and the StackOverflow
-                # answers I see regarding this issue in __init__ look ugly
+                # I can't await f because I'm not async
+                # todo: "from asyncinit import asyncinit" and @asyncinit decorator
         else:
             if thread_count > len(p.cpu_affinity()):
                 LOGGER.warning('fewer cpus (%d) than burner threads (%d), performance will suffer',
