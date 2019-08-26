@@ -190,7 +190,7 @@ class Robots:
         if schemenetloc in self.in_progress:
             while schemenetloc in self.in_progress:
                 LOGGER.debug('sleeping because someone beat me to the robots punch')
-                # XXX make this a stat?
+                stats.stats_sum('robots sleep for collision')
                 with stats.coroutine_state('robots collision sleep'):
                     interval = random.uniform(0.2, 0.3)
                     await asyncio.sleep(interval)
@@ -206,7 +206,8 @@ class Robots:
             # ok, so it's not in the cache -- and the other guy's fetch failed.
             # if we just fell through, there would be a big race.
             # treat this as a "no data" failure.
-            LOGGER.debug('some other fetch of robots has failed.')  # XXX make this a stat
+            LOGGER.debug('some other fetch of robots has failed.')
+            stats.stats_sum('robots sleep then cache miss', 1)
             return None
 
         self.in_progress.add(schemenetloc)
@@ -260,9 +261,8 @@ class Robots:
             self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
-        # XXX implement googlebot strategy
         if str(status).startswith('5'):
-            json_log['error'] = 'got a 5xx, treating as deny'
+            json_log['error'] = 'got a 5xx, treating as deny'  # same as google
             self.jsonlog(schemenetloc, json_log)
             self.in_progress.discard(schemenetloc)
             return None
@@ -301,8 +301,6 @@ class Robots:
             self.jsonlog(schemenetloc, json_log)
             return self._cache_empty_robots(schemenetloc, final_schemenetloc)
 
-        # go from bytes to a string, despite bogus utf8
-        # XXX what about non-utf8?
         try:
             body = body_bytes.decode(encoding='utf8', errors='replace')
         except asyncio.CancelledError:
