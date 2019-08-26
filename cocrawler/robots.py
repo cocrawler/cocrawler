@@ -190,7 +190,7 @@ class Robots:
         if schemenetloc in self.in_progress:
             while schemenetloc in self.in_progress:
                 LOGGER.debug('sleeping because someone beat me to the robots punch')
-                stats.stats_sum('robots sleep for collision')
+                stats.stats_sum('robots sleep for collision', 1)
                 with stats.coroutine_state('robots collision sleep'):
                     interval = random.uniform(0.2, 0.3)
                     await asyncio.sleep(interval)
