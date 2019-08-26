@@ -149,8 +149,8 @@ class Scheduler:
             return recycle, why, 0.
 
         if self.use_ip_key:
-            entry = await dns.prefetch(ridealong['url'], self.resolver)
-            ip_key = dns.entry_to_ip_key(entry)
+            dns_entry = await dns.prefetch(ridealong['url'], self.resolver)
+            ip_key = dns.entry_to_ip_key(dns_entry)
         else:
             ip_key = None
 

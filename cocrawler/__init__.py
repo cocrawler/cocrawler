@@ -321,20 +321,21 @@ class Crawler:
         req_headers, proxy, prefetch_dns = fetcher.apply_url_policies(url, self)
 
         host_geoip = {}
+        dns_entry = None
         if prefetch_dns:
-            entry = await dns.prefetch(url, self.resolver)
-            if not entry:
+            dns_entry = await dns.prefetch(url, self.resolver)
+            if not dns_entry:
                 # fail out, we don't want to do DNS in the robots or page fetch
                 # XXX log something
                 self._retry_if_able(work, ridealong)
                 return
-            addrs, expires, _, host_geoip = entry
+            addrs, expires, _, host_geoip = dns_entry
             if not host_geoip:
                 with stats.record_burn('geoip lookup'):
                     geoip.lookup_all(addrs, host_geoip)
                 post_fetch.post_dns(addrs, expires, url, self)
 
-        r = await self.robots.check(url, host_geoip=host_geoip, seed_host=robots_seed_host, crawler=self,
+        r = await self.robots.check(url, dns_entry=dns_entry, seed_host=robots_seed_host, crawler=self,
                                     headers=req_headers, proxy=proxy)
         if not r:
             # we don't really want to retry a robots.txt disallow,
@@ -360,9 +361,9 @@ class Crawler:
         if f.ip is not None:
             json_log['ip'] = f.ip
         else:
-            entry = self.resolver.get_cache_entry(url.hostname)
-            if entry:
-                json_log['ip'] = dns.entry_to_ip_key(entry)
+            dns_entry = self.resolver.get_cache_entry(url.hostname)
+            if dns_entry:
+                json_log['ip'] = dns.entry_to_ip_key(dns_entry)
 
         if post_fetch.should_retry(f):
             self._retry_if_able(work, ridealong, json_log=json_log)

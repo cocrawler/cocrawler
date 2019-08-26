@@ -99,7 +99,7 @@ class Robots:
             return True
         return self._check(url, schemenetloc, robots, quiet=quiet)
 
-    async def check(self, url, host_geoip=None, seed_host=None, crawler=None,
+    async def check(self, url, dns_entry=None, seed_host=None, crawler=None,
                     headers=None, proxy=None):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
@@ -107,7 +107,7 @@ class Robots:
             robots = self.datalayer.read_robots_cache(schemenetloc)
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
-            robots = await self.fetch_robots(schemenetloc, host_geoip, crawler,
+            robots = await self.fetch_robots(schemenetloc, dns_entry, crawler,
                                              seed_host=seed_host, headers=headers, proxy=proxy)
         return self._check(url, schemenetloc, robots)
 
@@ -175,7 +175,7 @@ class Robots:
         self.in_progress.discard(schemenetloc)
         return parsed
 
-    async def fetch_robots(self, schemenetloc, host_geoip, crawler,
+    async def fetch_robots(self, schemenetloc, dns_entry, crawler,
                            seed_host=None, headers=None, proxy=None):
         '''
         https://developers.google.com/search/reference/robots_txt
@@ -268,15 +268,19 @@ class Robots:
             return None
 
         # we got a 2xx, so let's use the final headers to facet the final server
+        if dns_entry:
+            host_geoip = dns_entry[3]
+        else:
+            host_geoip = {}
         if final_schemenetloc:
-            robots_url = final_schemenetloc + '/robots.txt'
+            final_robots_url = final_schemenetloc + '/robots.txt'
             # if the hostname is the same and only the scheme is different, that's ok
-            if ((robots_url.replace('https://', 'http://', 1) != url.url and
-                 robots_url.replace('http://', 'https://', 1) != url.url)):
+            if ((final_robots_url.replace('https://', 'http://', 1) != url.url and
+                 final_robots_url.replace('http://', 'https://', 1) != url.url)):
                 host_geoip = {}  # the passed-in one is for the initial server
         else:
-            robots_url = url.url
-        post_fetch.post_robots_txt(f, robots_url, host_geoip, json_log['time'], crawler, seed_host=seed_host)
+            final_robots_url = url.url
+        post_fetch.post_robots_txt(f, final_robots_url, host_geoip, json_log['time'], crawler, seed_host=seed_host)
 
         body_bytes = f.body_bytes
         content_encoding = f.response.headers.get('content-encoding', 'identity')
