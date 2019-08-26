@@ -216,7 +216,8 @@ class CCWARCWriter:
 
         warc_headers_dict = OrderedDict()
         if ip is not None:
-            # ip should be here unless we crawl through a proxy
+            if not isinstance(ip, str):
+                ip = ip[0]
             warc_headers_dict['WARC-IP-Address'] = ip
         if digest is not None:
             warc_headers_dict['WARC-Payload-Digest'] = digest

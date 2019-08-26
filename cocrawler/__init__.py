@@ -364,7 +364,7 @@ class Crawler:
             # in cases of failure, the ip will not be set in f
             dns_entry = self.resolver.get_cache_entry(url.hostname)
             if dns_entry:
-                json_log['ip'] = dns.entry_to_ip_key(dns_entry)
+                json_log['ip'] = dns.entry_to_as(dns_entry)
 
         if post_fetch.should_retry(f):
             self._retry_if_able(work, ridealong, json_log=json_log)

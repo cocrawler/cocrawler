@@ -167,6 +167,13 @@ def get_resolver(**kwargs):
                                            timeout=ns_timeout, rotate=True)
 
 
+def entry_to_as(entry):
+    if entry is None:
+        return
+    addrs = entry[0]
+    return list(sorted([a['host'] for a in addrs]))
+
+
 def entry_to_ip_key(entry):
     if entry is None:
         return
