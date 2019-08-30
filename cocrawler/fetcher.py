@@ -122,6 +122,9 @@ async def fetch(url, session, headers=None, proxy=None,
                         ip, _ = response.connection.transport.get_extra_info('peername', default=None)
                     except AttributeError:
                         pass
+                    finally:
+                        if isinstance(ip, str):
+                            ip = [ip]
 
                 while left > 0:
                     block = await response.content.read(left)
