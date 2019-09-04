@@ -32,7 +32,7 @@ echo
 
 # and the WARC
 COUNT=`warcio index Testing-000000-*.warc.gz | wc -l`
-if [ "$COUNT" != "1999" ]; then
+if [ "$COUNT" != "2001" ]; then
    echo "warc index is the wrong size: saw $COUNT"
    exit 1
 fi

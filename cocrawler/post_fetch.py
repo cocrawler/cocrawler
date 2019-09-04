@@ -92,6 +92,11 @@ def post_robots_txt(f, url, host_geoip, t, crawler, seed_host=None):
     resp_headers = f.response.headers
     minimal_facet_me(resp_headers, url, host_geoip, 'robots.txt', t, crawler, seed_host=seed_host)
 
+    if crawler.warcwriter is not None:  # needs to use the same algo as post_200 for choosing what to warc
+        crawler.warcwriter.write_request_response_pair(url, f.ip, f.req_headers,
+                                                       f.response.raw_headers, f.is_truncated, f.body_bytes,
+                                                       decompressed=False)
+
 
 '''
 Study redirs at the host level to see if we're systematically getting

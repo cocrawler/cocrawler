@@ -41,7 +41,7 @@ Testing:
     fetch http code=200: 999
     max urls found on a page: 3
     robots denied: 999  # the url ^/denied/ is on every page
-    warc r/r (prefix Testing): 999
+    warc r/r (prefix Testing): 1000  # includes robots.txt
     parser in burner thread: 999
     parser in main thread: 0
 
