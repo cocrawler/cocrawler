@@ -43,11 +43,11 @@ def robots_facets(text, robotname, json_log):
     mentions_us = robotname.lower() in user_agents
 
     if mentions_us:
-        json_log['mentions-us'] = True
+        json_log['mentions_us'] = True
     if user_agents:
-        json_log['user-agents'] = len(user_agents)
+        json_log['user_agents'] = len(user_agents)
     if action_lines:
-        json_log['action-lines'] = action_lines
+        json_log['action_lines'] = action_lines
     if text:
         json_log['size'] = len(text)
 
@@ -158,10 +158,10 @@ class Robots:
         json_log = {'url': pathplus, 'action': 'deny'}
 
         if google_check:
-            json_log['google-action'] = 'allow'
+            json_log['google_action'] = 'allow'
             stats.stats_sum('robots denied - but googlebot allowed', 1)
         if generic_check is not None and generic_check:
-            json_log['generic-action'] = 'allow'
+            json_log['generic_action'] = 'allow'
             stats.stats_sum('robots denied - but * allowed', 1)
 
         self.jsonlog(schemenetloc, json_log)
@@ -320,9 +320,9 @@ class Robots:
         with stats.record_burn('robots is_allowed', url=schemenetloc):
             check = robots.allowed('/', '*')
             if not check:
-                json_log['generic-deny-slash'] = True
+                json_log['generic_deny_slash'] = True
                 check = robots.allowed('/', 'googlebot')
-                json_log['google-deny-slash'] = not check
+                json_log['google_deny_slash'] = not check
 
         self.datalayer.cache_robots(schemenetloc, robots)
         self.in_progress.discard(schemenetloc)
@@ -332,7 +332,7 @@ class Robots:
             self.in_progress.discard(final_schemenetloc)
         sitemaps = list(robots.sitemaps)
         if sitemaps:
-            json_log['has-sitemaps'] = len(sitemaps)
+            json_log['sitemap_lines'] = len(sitemaps)
 
         self.jsonlog(schemenetloc, json_log)
         return robots

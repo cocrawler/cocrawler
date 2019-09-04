@@ -8,7 +8,7 @@ def test_robots_facets():
     robots_txt = 'User-AgEnT: cOcRaWlEr\nAllow: /'
     json_log = {}
     robots_facets(robots_txt, 'CoCrAwLeR', json_log)
-    assert json_log == {'action-lines': 1, 'mentions-us': True, 'size': 30, 'user-agents': 1}
+    assert json_log == {'action_lines': 1, 'mentions_us': True, 'size': 30, 'user_agents': 1}
 
 
 def test_strip_bom():
