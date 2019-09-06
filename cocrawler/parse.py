@@ -189,7 +189,6 @@ def find_body_links_anchors_re(body):
     links = links_delims.union(links_no_delims)
 
     embeds = [{'src': s} for s in embeds]
-    print('GREG links', links)
     links = [{'href': h[0], 'anchor': h[1]} for h in links]
 
     return links, embeds
