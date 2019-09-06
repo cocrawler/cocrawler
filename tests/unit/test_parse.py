@@ -123,6 +123,18 @@ def test_individual_parsers():
     assert 'foo3.html ' in linkset
     assert 'torture"\n<url>' in linkset
     assert 'foo.gif' in embedset
+
+    links, embeds = parse.find_body_links_anchors_re(body)
+    print('GREG links are', links)
+    assert len(links) == 4
+    assert len(embeds) == 1
+    linkdict = dict([(l['href'], l['anchor']) for l in links])
+    # {('foo1.html', 'Anchor 1'), ('foo3.html ', 'Anchor 3'), ('foo2.htm', 'Anchor 2'), ('torture"\n<url>', 'torture\nanchor')}
+    assert linkdict['foo2.htm'] == 'Anchor 2'
+    assert linkdict['foo3.html '] == 'Anchor 3'
+    assert linkdict['torture"\n<url>'] == 'torture\nanchor'
+    assert 'foo.gif' in embeds[0]['src']
+
     head_soup = BeautifulSoup(head, 'lxml')
     links, embeds = parse.find_head_links_soup(head_soup)
     embedset = set(cocrawler.parse.collapse_links(embeds))

@@ -166,6 +166,35 @@ def find_body_links_re(body):
     return links, embeds
 
 
+def find_body_links_anchors_re(body):
+    '''
+    Find links and anchors in an html body, divided among links and embeds.
+
+    On a 3.4 ghz x86 core, runs at ~ NN megabyte/sec.
+    '''
+    stats.stats_sum('body_links_re parser bytes', len(body))
+
+    embeds_delims = set(
+        [m[1] for m in re.findall(r'''\ssrc\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I | re.S | re.X)]
+    )
+    embeds_no_delims = set(re.findall(r'''\ssrc\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I | re.X))
+    embeds = embeds_delims.union(embeds_no_delims)
+
+    links_delims = set(
+        [(m[1], m[2]) for m in re.findall(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,200} > ([^<]*)''', body, re.I | re.S | re.X)]
+    )
+    links_no_delims = set(
+        [(m[0], m[1]) for m in re.findall(r'''\shref\s{,3}=\s{,3}([^\s'"<>]+) [^>]{,200} > ([^<]*)''', body, re.I | re.X)]
+    )
+    links = links_delims.union(links_no_delims)
+
+    embeds = [{'src': s} for s in embeds]
+    print('GREG links', links)
+    links = [{'href': h[0], 'anchor': h[1]} for h in links]
+
+    return links, embeds
+
+
 def find_css_links_re(css):
     '''
     Finds the links embedded in css files
