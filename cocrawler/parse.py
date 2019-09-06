@@ -189,7 +189,7 @@ def find_body_links_anchors_re(body):
     links = links_delims.union(links_no_delims)
 
     embeds = [{'src': s} for s in embeds]
-    links = [{'href': h[0], 'anchor': h[1]} for h in links]
+    links = [dict((('href', h[0]), *trim_anchor(h[1]))) for h in links]
 
     return links, embeds
 
@@ -217,6 +217,15 @@ def find_head_links_soup(head_soup):
     return [], embeds
 
 
+def trim_anchor(anchor):
+    ret = []
+    if len(anchor) > 100:
+        anchor = anchor[:100]
+        ret.append(('anchor_truncated', True))
+    ret.append(('anchor', anchor))
+    return ret
+
+
 def build_link_object(tag):
     ret = {'tag': tag.name}
 
@@ -231,12 +240,9 @@ def build_link_object(tag):
         except TypeError:
             parts = None
         if parts:
-            anchortext = ' '.join(parts)
-            anchortext = re.sub(r'\s+', ' ', anchortext).strip()
-            if len(anchortext) > 100:
-                anchortext = anchortext[:100]
-                ret['anchortext_truncated'] = True
-            ret['anchortext'] = anchortext
+            anchor = ' '.join(parts)
+            anchor = re.sub(r'\s+', ' ', anchor).strip()
+            ret.update(*trim_anchor(anchor))
         if tag.get('target'):
             ret['target'] = tag.get('target')
 
