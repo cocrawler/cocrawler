@@ -8,7 +8,6 @@ import hashlib
 import urllib.parse
 from functools import partial
 import multidict
-from collections.abc import Mapping
 
 from bs4 import BeautifulSoup
 
@@ -77,7 +76,7 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
         links += lbody
         embeds += ebody
 
-    embeds = clean_urllist(embeds, ('javascript:', 'data:'))
+    embeds = clean_link_objects(embeds, ('javascript:', 'data:'))
 
     with stats.record_burn(burn_prefix+'url_clean_join', url=url):
         links = url_clean_join(links, url=base_or_url)
@@ -87,35 +86,37 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
         sha1 = 'sha1:' + hashlib.sha1(html_bytes).hexdigest()
 
     with stats.record_burn(burn_prefix+'facets', url=url):
-        # XXX if we are using find_body_links_re we don't have any body embeds
-        # in that case we might want to analyze body links instead?
         facets = facet.compute_all(html, head, body, headers, links, embeds, head_soup=head_soup, url=url)
 
-    links = dedup_links(links)
+    links = collapse_links(links)
+    embeds = collapse_links(embeds)
 
     return links, embeds, sha1, facets, base
 
 
-def dedup_links(links):
+def collapse_links(links):
     ret = []
     for link in links:
-        if isinstance(link, Mapping):
-            l = link.get('href')
-            if not l:
-                l = link.get('src')
-            if l:
-                ret.append(l)
-        else:
-            ret.append(link)
+        l = link.get('href')
+        if not l:
+            l = link.get('src')
+        if l:
+            ret.append(l)
     return ret
 
 
-def clean_urllist(urllist, schemes):
+def clean_link_objects(link_objects, schemes):
     '''
-    Drop all elements of the urllist that are in schemes.
+    Drop all elements of the link_objects that are in schemes.
     '''
     schemes = tuple(schemes)
-    return [url for url in urllist if not url.startswith(schemes)]
+    ret = []
+    for link_object in link_objects:
+        u = link_object.get('href') or link_object.get('src')
+        if u and u.startswith(schemes):
+            continue
+        ret.append(link_object)
+    return ret
 
 
 def find_html_links_re(html):
@@ -135,7 +136,8 @@ def find_html_links_re(html):
 
     links = delims.union(no_delims)
 
-    return list(links), []
+    links = [{'href': h} for h in links]
+    return links, []
 
 
 def find_body_links_re(body):
@@ -151,13 +153,17 @@ def find_body_links_re(body):
     )
     embeds_no_delims = set(re.findall(r'''\ssrc\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
     embeds = embeds_delims.union(embeds_no_delims)
+
     links_delims = set(
         [m[1] for m in re.findall(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I | re.S)]
     )
     links_no_delims = set(re.findall(r'''\shref\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I))
     links = links_delims.union(links_no_delims)
 
-    return list(links), list(embeds)
+    embeds = [{'src': s} for s in embeds]
+    links = [{'href': h} for h in links]
+
+    return links, embeds
 
 
 def find_css_links_re(css):
@@ -175,18 +181,23 @@ def find_css_links_re(css):
 
 
 def find_head_links_soup(head_soup):
-    embeds = set()
+    embeds = []
     for tag in head_soup.find_all(src=True):
-        embeds.add(tag.get('src'))
+        embeds.append(build_link_object(tag))
     for tag in head_soup.find_all(href=True):
-        embeds.add(tag.get('href'))
-    return [], list(embeds)
+        embeds.append(build_link_object(tag))
+    return [], embeds
 
 
 def build_link_object(tag):
     ret = {'tag': tag.name}
-    if tag.name == 'a':
+
+    if tag.get('href'):
         ret['href'] = tag.get('href')
+    if tag.get('src'):
+        ret['src'] = tag.get('src')
+
+    if tag.name == 'a':
         try:
             parts = tag.itertext(with_tail=False)
         except TypeError:
@@ -200,62 +211,55 @@ def build_link_object(tag):
             ret['anchortext'] = anchortext
         if tag.get('target'):
             ret['target'] = tag.get('target')
-        return ret
 
     if tag.name == 'iframe':
-        ret['src'] = tag.get('src')
         if tag.get('name'):  # XXX how does this work in Beautiful Soup??? name attr vs tag.name
             ret['name'] = tag.get('name')
-        return ret
+
+    return ret
 
 
 def find_body_links_soup(body_soup):
-    embeds = set()
+    embeds = []
     links = []
     for tag in body_soup.find_all(src=True):
         if tag.name == 'iframe':
             links.append(build_link_object(tag))
         else:
-            embeds.add(tag.get('src'))
+            embeds.append(build_link_object(tag))
     for tag in body_soup.find_all(href=True):
         if tag.name == 'link':
             rel = tag.get('rel', [None])[0]
             if rel == 'stylesheet':
-                embeds.add(tag.get('href'))
+                embeds.append(build_link_object(tag))
             else:
-                pass  # other body-ok like 'prefetch'
+                pass  # discard other body-ok like 'prefetch'
         else:
             links.append(build_link_object(tag))
-    return links, list(embeds)
+    return links, embeds
 
 
 def url_clean_join(links, url=None):
-    ret = set()
-    for u in links:
-        if isinstance(u, Mapping):
-            if 'href' in u:
-                u['href'] = URL(u['href'], urljoin=url)
-            elif 'src' in u:
-                u['src'] = URL(u['src'], urljoin=url)
-            ret.add(u)
-        else:
-            ret.add(URL(u, urljoin=url))
+    ret = []
+    for link in links:
+        if 'href' in link:
+            link['href'] = URL(link['href'], urljoin=url)
+        elif 'src' in link:
+            link['src'] = URL(link['src'], urljoin=url)
+        ret.append(link)
     return ret
 
 
-def url_dedup(urllist):
+def url_dedup(link_objects):
     ret = []
     dedup = set()
-    for url in urllist:
-        if isinstance(url, Mapping):
-            link = url.get('href') or url.get('src')
-        else:
-            link = url
+    for link_object in link_objects:
+        link = link_object.get('href') or link_object.get('src')
         if link:
             if link in dedup:
                 continue
             dedup.add(link)
-            ret.append(url)
+            ret.append(link_object)
     return ret
 
 

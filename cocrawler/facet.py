@@ -63,11 +63,20 @@ def compute_all(html, head, body, headers, links, embeds, head_soup=None, url=No
     facets = [*fhf, *fgh, *fgb, *frh, *fe]
 
     for l in links:
-        facets.append(('link', l.url))
+        facets.append(('link', fixup_link_object(l)))
     for e in embeds:
-        facets.append(('embed', e.url))
+        facets.append(('embed', fixup_link_object(e)))
 
     return facet_dedup(facets)
+
+
+def fixup_link_object(obj):
+    ret = obj.copy()
+    if 'href' in ret:
+        ret['href'] = ret['href'].url
+    if 'src' in ret:
+        ret['src'] = ret['src'].url
+    return ret
 
 
 def find_head_facets(head, head_soup, url=None):
@@ -251,7 +260,10 @@ def facets_from_response_headers(headers):
 
 def facets_from_embeds(embeds):
     facets = []
-    for url in embeds:  # this is both href and src embeds, but whatever
+    for link_object in embeds:  # this is both href and src embeds, but whatever
+        url = link_object.get('href') or link_object.get('src')
+        if not url:
+            continue
         u = url.url
         if 'cdn.ampproject.org' in u:
             facets.append(('thing-google amp', True))

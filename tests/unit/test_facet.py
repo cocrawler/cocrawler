@@ -223,10 +223,10 @@ def test_response_header_facets():
 
 
 def test_facets_from_embeds():
-    embeds = (URL('http://example.com'),
-              URL('http://cdn.ampproject.org'),
-              URL('googletagmanager.com?asdf&id=GTM-ZZZXXX&fdsa'),
-              URL('https://www.facebook.com/tr?foo&id=1234567890123456'))
+    embeds = ({'src': URL('http://example.com')},
+              {'src': URL('http://cdn.ampproject.org')},
+              {'src': URL('googletagmanager.com?asdf&id=GTM-ZZZXXX&fdsa')},
+              {'src': URL('https://www.facebook.com/tr?foo&id=1234567890123456')})
     facets = facet.facets_from_embeds(embeds)
     assert facets == [('thing-google amp', True),
                       ('thing-google tag manager', 'GTM-ZZZXXX'),

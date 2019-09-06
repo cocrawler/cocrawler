@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 
 import cocrawler.parse as parse
 from cocrawler.urls import URL
+import cocrawler.parse
 
 test_html = '''
 <html>
@@ -72,7 +73,7 @@ def test_do_burner_work_html():
     assert len(links) == 4
     assert len(embeds) == 2
     linkset = set(u.url for u in links)
-    embedset = set(u.url for u in embeds)
+    embedset = set(e.url for e in embeds)
     assert 'http://example.com/foo3.html' in linkset
     assert 'http://example.com/foo.gif' in embedset
     assert sha1 == 'sha1:cdcb087d39afd827d5d523e165a6566d65a2e9b3'
@@ -96,17 +97,17 @@ def test_do_burner_work_html():
     assert len(embeds) == 1
 
 
-def test_clean_urllist():
-    test = ['http://example.com', 'data:46532656', 'https://example.com']
-    ret = ['http://example.com', 'https://example.com']
-    assert parse.clean_urllist(test, ('data:', 'javascript:')) == ret
+def test_clean_link_objects():
+    test = [{'href': 'http://example.com'}, {'href': 'data:46532656'}, {'href': 'https://example.com'}]
+    ret = [{'href': 'http://example.com'}, {'href': 'https://example.com'}]
+    assert parse.clean_link_objects(test, ('data:', 'javascript:')) == ret
 
 
 def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
     assert len(links) == 6
     assert len(embeds) == 0
-    linkset = set(links)
+    linkset = set(cocrawler.parse.collapse_links(links))
     assert 'foo2.htm' in linkset
     assert 'foo3.html ' in linkset
     assert 'foo.gif' in linkset
@@ -116,15 +117,15 @@ def test_individual_parsers():
     links, embeds = parse.find_body_links_re(body)
     assert len(links) == 4
     assert len(embeds) == 1
-    linkset = set(links)
-    embedset = set(embeds)
+    linkset = set(cocrawler.parse.collapse_links(links))
+    embedset = set(cocrawler.parse.collapse_links(embeds))
     assert 'foo2.htm' in linkset
     assert 'foo3.html ' in linkset
     assert 'torture"\n<url>' in linkset
     assert 'foo.gif' in embedset
     head_soup = BeautifulSoup(head, 'lxml')
     links, embeds = parse.find_head_links_soup(head_soup)
-    embedset = set(embeds)
+    embedset = set(cocrawler.parse.collapse_links(embeds))
     assert len(links) == 0
     assert len(embeds) == 1
     assert 'link.html' in embedset
@@ -135,8 +136,8 @@ def test_individual_parsers():
     lbody, ebody = parse.find_body_links_soup(body_soup)
     links += lbody
     embeds += ebody
-    linkset = set([link['href'] for link in links])
-    embedset = set(embeds)
+    linkset = set(cocrawler.parse.collapse_links(links))
+    embedset = set(cocrawler.parse.collapse_links(embeds))
     assert len(links) == 4
     assert len(embeds) == 2
     assert 'foo2.htm' in linkset
@@ -151,7 +152,7 @@ def test_individual_parsers():
     assert len(lbody) == 1
     assert len(ebody) == 1
     assert 'iframe.html' == lbody[0]['src']
-    assert 'stylesheet.blah' == ebody[0]
+    assert 'stylesheet.blah' == ebody[0]['href']
 
 
 test_css = '''
