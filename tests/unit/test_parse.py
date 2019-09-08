@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 
 import cocrawler.parse as parse
 from cocrawler.urls import URL
-import cocrawler.parse
 
 test_html = '''
 <html>
@@ -107,7 +106,7 @@ def test_individual_parsers():
     links, embeds = parse.find_html_links_re(test_html)
     assert len(links) == 6
     assert len(embeds) == 0
-    linkset = set(cocrawler.parse.collapse_links(links))
+    linkset = set(parse.collapse_links(links))
     assert 'foo2.htm' in linkset
     assert 'foo3.html ' in linkset
     assert 'foo.gif' in linkset
@@ -117,15 +116,14 @@ def test_individual_parsers():
     links, embeds = parse.find_body_links_re(body)
     assert len(links) == 4
     assert len(embeds) == 1
-    linkset = set(cocrawler.parse.collapse_links(links))
-    embedset = set(cocrawler.parse.collapse_links(embeds))
+    linkset = set(parse.collapse_links(links))
+    embedset = set(parse.collapse_links(embeds))
     assert 'foo2.htm' in linkset
     assert 'foo3.html ' in linkset
     assert 'torture"\n<url>' in linkset
     assert 'foo.gif' in embedset
 
     links, embeds = parse.find_body_links_anchors_re(body)
-    print('GREG links are', links)
     assert len(links) == 4
     assert len(embeds) == 1
     linkdict = dict([(l['href'], l['anchor']) for l in links])
@@ -137,7 +135,7 @@ def test_individual_parsers():
 
     head_soup = BeautifulSoup(head, 'lxml')
     links, embeds = parse.find_head_links_soup(head_soup)
-    embedset = set(cocrawler.parse.collapse_links(embeds))
+    embedset = set(parse.collapse_links(embeds))
     assert len(links) == 0
     assert len(embeds) == 1
     assert 'link.html' in embedset
@@ -148,8 +146,8 @@ def test_individual_parsers():
     lbody, ebody = parse.find_body_links_soup(body_soup)
     links += lbody
     embeds += ebody
-    linkset = set(cocrawler.parse.collapse_links(links))
-    embedset = set(cocrawler.parse.collapse_links(embeds))
+    linkset = set(parse.collapse_links(links))
+    embedset = set(parse.collapse_links(embeds))
     assert len(links) == 4
     assert len(embeds) == 2
     assert 'foo2.htm' in linkset
