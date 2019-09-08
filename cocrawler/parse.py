@@ -180,12 +180,34 @@ def find_body_links_anchors_re(body):
     embeds_no_delims = set(re.findall(r'''\ssrc\s{,3}=\s{,3}([^\s'"<>]+)''', body, re.I | re.X))
     embeds = embeds_delims.union(embeds_no_delims)
 
-    links_delims = set(
-        [(m[1], m[2]) for m in re.findall(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,200} > ([^<]*)''', body, re.I | re.S | re.X)]
-    )
-    links_no_delims = set(
-        [(m[0], m[1]) for m in re.findall(r'''\shref\s{,3}=\s{,3}([^\s'"<>]+) [^>]{,200} > ([^<]*)''', body, re.I | re.X)]
-    )
+    links_delims = set()
+    for m in re.finditer(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,200} >''', body, re.I | re.S | re.X):
+        href = m[2]
+        if href == '#':
+            continue
+        end = m.end(0)
+        anchor = body[end:]
+        mm = re.match(r'(.{,101}?)</a>', anchor, re.I | re.S)
+        if mm:
+            anchor = mm[1]
+        else:
+            anchor = anchor.split('<', 1)[0]
+        links_delims.add((href, anchor))
+
+    links_no_delims = set()
+    for m in re.finditer(r'''\shref\s{,3}=\s{,3}([^'">\s]+) [^>]{,200} >''', body, re.I | re.S | re.X):
+        href = m[1]
+        if href == '#':
+            continue
+        end = m.end(0)
+        anchor = body[end:]
+        mm = re.match(r'(.{,101}?)</a>', anchor, re.I | re.S)
+        if mm:
+            anchor = mm[1]
+        else:
+            anchor = anchor.split('<', 1)[0]
+        links_no_delims.add((href, anchor))
+
     links = links_delims.union(links_no_delims)
 
     embeds = [{'src': s} for s in embeds]
@@ -219,10 +241,12 @@ def find_head_links_soup(head_soup):
 
 def trim_anchor(anchor):
     ret = []
+    anchor = anchor.strip()
     if len(anchor) > 100:
         anchor = anchor[:100]
         ret.append(('anchor_truncated', True))
-    ret.append(('anchor', anchor))
+    if anchor:
+        ret.append(('anchor', anchor))
     return ret
 
 
