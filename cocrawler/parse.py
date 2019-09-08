@@ -182,28 +182,28 @@ def find_body_links_anchors_re(body):
 
     links_delims = set()
     for m in re.finditer(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,200} >''', body, re.I | re.S | re.X):
-        href = m[2]
+        href = m.group(2)
         if href == '#':
             continue
         end = m.end(0)
         anchor = body[end:]
         mm = re.match(r'(.{,101}?)</a>', anchor, re.I | re.S)
         if mm:
-            anchor = mm[1]
+            anchor = mm.group(1)
         else:
             anchor = anchor.split('<', 1)[0]
         links_delims.add((href, anchor))
 
     links_no_delims = set()
     for m in re.finditer(r'''\shref\s{,3}=\s{,3}([^'">\s]+) [^>]{,200} >''', body, re.I | re.S | re.X):
-        href = m[1]
+        href = m.group(1)
         if href == '#':
             continue
         end = m.end(0)
         anchor = body[end:]
         mm = re.match(r'(.{,101}?)</a>', anchor, re.I | re.S)
         if mm:
-            anchor = mm[1]
+            anchor = mm.group(1)
         else:
             anchor = anchor.split('<', 1)[0]
         links_no_delims.add((href, anchor))
