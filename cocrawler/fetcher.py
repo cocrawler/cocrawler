@@ -139,15 +139,16 @@ async def fetch(url, session, headers=None, proxy=None,
                 if not response.content.at_eof():
                     stats.stats_sum(stats_prefix+'fetch truncated length', 1)
                     response.close()  # this does interrupt the network transfer
-                    is_truncated = 'length'  # testme WARC
+                    is_truncated = 'length'
 
                 t_last_byte = '{:.3f}'.format(time.time() - t0)
-    except asyncio.TimeoutError as e:
+    except asyncio.TimeoutError:
         stats.stats_sum(stats_prefix+'fetch timeout', 1)
         last_exception = 'TimeoutError'
         body_bytes = b''.join(blocks)
         if len(body_bytes):
-            is_truncated = 'time'  # testme WARC
+            # these body_bytes are currently dropped because last_exception is set
+            is_truncated = 'time'
             stats.stats_sum(stats_prefix+'fetch timeout body bytes found', 1)
             stats.stats_sum(stats_prefix+'fetch timeout body bytes found bytes', len(body_bytes))
     except (aiohttp.ClientError) as e:
@@ -162,13 +163,13 @@ async def fetch(url, session, headers=None, proxy=None,
         last_exception = 'ClientError: ' + detailed_name + ': ' + str(e)
         body_bytes = b''.join(blocks)
         if len(body_bytes):
-            is_truncated = 'disconnect'  # testme WARC
+            # these body_bytes are currently dropped because last_exception is set
+            is_truncated = 'disconnect'
             stats.stats_sum(stats_prefix+'fetch ClientError body bytes found', 1)
             stats.stats_sum(stats_prefix+'fetch ClientError body bytes found bytes', len(body_bytes))
     except ssl.CertificateError as e:
-        # unfortunately many ssl errors raise and have tracebacks printed deep in aiohttp
-        # so this doesn't go off much
-        stats.stats_sum(stats_prefix+'fetch SSL error', 1)
+        # many ssl errors raise and have tracebacks printed deep in python, fixed in 3.8
+        stats.stats_sum(stats_prefix+'fetch SSL CertificateError', 1)
         last_exception = 'CertificateError: ' + str(e)
     except ValueError as e:
         # no A records found -- raised by our dns code
