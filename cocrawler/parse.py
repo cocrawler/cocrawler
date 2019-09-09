@@ -244,7 +244,7 @@ def find_head_links_soup(head_soup):
 def trim_anchor(anchor):
     ret = []
     # pull out <img alt=""> here?
-    anchor = re.sub(r'<.*?>', '', anchor).strip()
+    anchor = re.sub(r'<.*?>', '', anchor, re.S).strip()
     anchor = html.unescape(anchor)
 
     if len(anchor) > 100:
