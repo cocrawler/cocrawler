@@ -8,6 +8,7 @@ import hashlib
 import urllib.parse
 from functools import partial
 import multidict
+import html
 
 from bs4 import BeautifulSoup
 
@@ -242,7 +243,10 @@ def find_head_links_soup(head_soup):
 
 def trim_anchor(anchor):
     ret = []
-    anchor = anchor.strip()
+    # pull out <img alt=""> here?
+    anchor = re.sub(r'<.*?>', '', anchor).strip()
+    anchor = html.unescape(anchor)
+
     if len(anchor) > 100:
         anchor = anchor[:100]
         ret.append(('anchor_truncated', True))
