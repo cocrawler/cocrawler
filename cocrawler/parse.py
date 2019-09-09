@@ -77,6 +77,7 @@ def do_burner_work_html(html, html_bytes, headers, burn_prefix='', url=None):
         embeds += ebody
 
     embeds = clean_link_objects(embeds, ('javascript:', 'data:'))
+    links = clean_link_objects(links, ('javascript:',))
 
     with stats.record_burn(burn_prefix+'url_clean_join', url=url):
         links = url_clean_join(links, url=base_or_url)
