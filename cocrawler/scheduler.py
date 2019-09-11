@@ -142,8 +142,8 @@ class Scheduler:
     async def schedule_work(self, surt, surt_host, ridealong):
         recycle, why, dt = False, None, 0
 
-        if not self.robots.check_cached(ridealong['url'], quiet=True):
-            # immediately fetch, it will fail robots
+        if self.robots.check_cached(ridealong['url'], quiet=True) == 'denied':
+            # immediately fetch, it will fail robots and be logged
             recycle = False
             why = 'scheduler cached robots deny'
             return recycle, why, 0.

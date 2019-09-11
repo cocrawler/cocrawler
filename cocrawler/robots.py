@@ -93,7 +93,7 @@ class Robots:
 
         try:
             robots = self.datalayer.read_robots_cache(schemenetloc)
-            stats.stats_sum('robots cache hit', 1)
+            stats.stats_sum('robots cached_only hit', 1)
         except KeyError:
             stats.stats_sum('robots cached_only miss', 1)
             return True
@@ -121,13 +121,13 @@ class Robots:
 
         if robots is None:
             if quiet:
-                return False
+                return 'no robots'
 
             LOGGER.debug('no robots info known for %s, failing %s%s', schemenetloc, schemenetloc, pathplus)
-            self.jsonlog(schemenetloc, {'error': 'no robots info known', 'action': 'deny'})
+            self.jsonlog(schemenetloc, {'error': 'no robots info known', 'action': 'denied'})
             stats.stats_sum('robots denied - robots info not known', 1)
             stats.stats_sum('robots denied', 1)
-            return False
+            return 'no robots'
 
         me = self.robotname
 
@@ -135,7 +135,10 @@ class Robots:
             if pathplus.startswith('//') and ':' in pathplus:
                 pathplus = 'htp://' + pathplus
             check = robots.allowed(pathplus, me)
-            if not check:
+            if check:
+                check = 'allowed'
+            else:
+                check = 'denied'
                 google_check = robots.allowed(pathplus, 'googlebot')
                 if me != '*':
                     generic_check = robots.allowed(pathplus, '*')
@@ -147,25 +150,25 @@ class Robots:
 
         # just logging from here on down
 
-        if check:
+        if check == 'allowed':
             LOGGER.debug('robots allowed for %s%s', schemenetloc, pathplus)
             stats.stats_sum('robots allowed', 1)
-            return True
+            return check
 
         LOGGER.debug('robots denied for %s%s', schemenetloc, pathplus)
         stats.stats_sum('robots denied', 1)
 
-        json_log = {'url': pathplus, 'action': 'deny'}
+        json_log = {'url': pathplus, 'action': 'denied'}
 
         if google_check:
-            json_log['google_action'] = 'allow'
+            json_log['google_action'] = 'allowed'
             stats.stats_sum('robots denied - but googlebot allowed', 1)
         if generic_check is not None and generic_check:
-            json_log['generic_action'] = 'allow'
+            json_log['generic_action'] = 'allowed'
             stats.stats_sum('robots denied - but * allowed', 1)
 
         self.jsonlog(schemenetloc, json_log)
-        return False
+        return check
 
     def _cache_empty_robots(self, schemenetloc, final_schemenetloc):
         parsed = reppy.robots.Robots.parse('', '')
@@ -319,10 +322,10 @@ class Robots:
 
         with stats.record_burn('robots is_allowed', url=schemenetloc):
             check = robots.allowed('/', '*')
-            if not check:
+            if check == 'denied':
                 json_log['generic_deny_slash'] = True
                 check = robots.allowed('/', 'googlebot')
-                json_log['google_deny_slash'] = not check
+                json_log['google_deny_slash'] = check == 'denied'
 
         self.datalayer.cache_robots(schemenetloc, robots)
         self.in_progress.discard(schemenetloc)

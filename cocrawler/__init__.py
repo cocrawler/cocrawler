@@ -183,8 +183,8 @@ class Crawler:
             seeds.seed_from_redir(url)
 
         # XXX allow/deny plugin modules go here
-        if not self.robots.check_cached(url):
-            reason = 'rejected by cached robots'
+        if self.robots.check_cached(url) == 'denied':
+            reason = 'denied by cached robots'
             stats.stats_sum('add_url '+reason, 1)
             self.log_rejected_add_url(url, reason)
             return
@@ -344,11 +344,12 @@ class Crawler:
 
         r = await self.robots.check(url, dns_entry=dns_entry, seed_host=robots_seed_host, crawler=self,
                                     headers=req_headers, proxy=proxy)
-        if not r:
-            # we don't really want to retry a robots.txt disallow,
-            # but we do want to retry robots.txt failed to fetch
-            self._retry_if_able(work, ridealong, json_log, stats_prefix='robots ')
-            json_log['fail'] = 'robots deny or missing'  # make this specific
+        if r != 'allowed':
+            if r == 'no robots':
+                self._retry_if_able(work, ridealong, json_log, stats_prefix='robots ')
+                json_log['fail'] = 'no robots'
+            else:
+                json_log['fail'] = 'robots denied'
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             return
