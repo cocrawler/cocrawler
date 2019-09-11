@@ -116,7 +116,7 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
 
     location = resp_headers.get('location')
     if location is None:
-        seeds.fail(ridealong, crawler)
+        seeds.fail(ridealong, crawler, json_log)
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
         raise ValueError(url.url + ' sent a redirect with no Location: header')
     next_url = urls.URL(location, urljoin=url)
@@ -151,7 +151,7 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
             stats.stats_sum(prefix+' same with set-cookie', 1)
         else:
             stats.stats_sum(prefix+' same without set-cookie', 1)
-        seeds.fail(ridealong, crawler)
+        seeds.fail(ridealong, crawler, json_log)
         queue_next = False
     else:
         LOGGER.debug('special redirect of type %s for url %s', redir_kind, url.url)

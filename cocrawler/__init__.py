@@ -377,7 +377,7 @@ class Crawler:
         self.scheduler.del_ridealong(surt)
 
         if f.response.status >= 400 and 'seed' in ridealong:
-            seeds.fail(ridealong, self)
+            seeds.fail(ridealong, self, json_log)
 
         if f.response.status == 200:
             await post_fetch.post_200(f, url, ridealong, priority, host_geoip, json_log, self)
