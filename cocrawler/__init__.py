@@ -277,19 +277,16 @@ class Crawler:
         await self.session.close()
         await self.connector.close()
 
-    def _retry_if_able(self, work, ridealong, json_log=None):
+    def _retry_if_able(self, work, ridealong, json_log, stats_prefix=''):
         priority, rand, surt = work
         retries_left = ridealong.get('retries_left', 0) - 1
         if json_log:
             json_log['retries_left'] = retries_left
         if retries_left <= 0:
-            # XXX jsonlog hard fail
-            # XXX remember that this host had a hard fail
-            stats.stats_sum('retries completely exhausted', 1)
+            stats.stats_sum(stats_prefix+'retries completely exhausted', 1)
             self.scheduler.del_ridealong(surt)
-            seeds.fail(ridealong, self)
+            seeds.fail(ridealong, self, json_log)
             return
-        # XXX jsonlog this soft fail
         ridealong['retries_left'] = retries_left
         self.scheduler.set_ridealong(surt, ridealong)
         # increment random so that we don't immediately retry
@@ -320,14 +317,24 @@ class Crawler:
 
         req_headers, proxy, prefetch_dns = fetcher.apply_url_policies(url, self)
 
+        json_log = {'kind': 'get', 'url': url.url, 'priority': priority, 'time': time.time()}
+        if proxy:
+            json_log['proxy'] = True
+        if seed_host:
+            json_log['seed_host'] = seed_host
+
         host_geoip = {}
         dns_entry = None
         if prefetch_dns:
             dns_entry = await dns.prefetch(url, self.resolver)
-            if not dns_entry:
-                # fail out, we don't want to do DNS in the robots or page fetch
-                # XXX log something
-                self._retry_if_able(work, ridealong)
+            if dns_entry:
+                json_log['ip'] = dns.entry_to_as(dns_entry)
+            else:
+                # fail out: we don't want to do DNS in the robots or page fetch
+                self._retry_if_able(work, ridealong, json_log)
+                json_log['fail'] = 'no dns info'
+                if self.crawllogfd:
+                    print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
                 return
             addrs, expires, _, host_geoip = dns_entry
             if not host_geoip:
@@ -340,16 +347,15 @@ class Crawler:
         if not r:
             # we don't really want to retry a robots.txt disallow,
             # but we do want to retry robots.txt failed to fetch
-            # logging was done in robots.check
-            self._retry_if_able(work, ridealong)
+            self._retry_if_able(work, ridealong, json_log, stats_prefix='robots ')
+            json_log['fail'] = 'robots deny or missing'  # make this specific
+            if self.crawllogfd:
+                print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             return
 
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,
                                 headers=req_headers, proxy=proxy)
 
-        json_log = {'kind': 'get', 'url': url.url, 'priority': priority, 'time': time.time()}
-        if seed_host:
-            json_log['seed_host'] = seed_host
         if f.is_truncated:
             json_log['truncated'] = f.is_truncated
         if f.response:
@@ -360,14 +366,9 @@ class Crawler:
             json_log['t_first_byte'] = f.t_first_byte
         if f.ip is not None:
             json_log['ip'] = f.ip
-        else:
-            # in cases of failure, the ip will not be set in f
-            dns_entry = self.resolver.get_cache_entry(url.hostname)
-            if dns_entry:
-                json_log['ip'] = dns.entry_to_as(dns_entry)
 
         if post_fetch.should_retry(f):
-            self._retry_if_able(work, ridealong, json_log=json_log)
+            self._retry_if_able(work, ridealong, json_log)
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             return

@@ -159,7 +159,7 @@ def special_seed_handling(url):
     return url
 
 
-def fail(ridealong, crawler):
+def fail(ridealong, crawler, json_log):
     '''
     Called for all final failures
     '''
@@ -169,10 +169,14 @@ def fail(ridealong, crawler):
     url = ridealong['url']
     if 'second_chance_url' not in ridealong:
         LOGGER.info('Received a final failure for seed url %s', url.url)
-        stats.stats_sum('seeds failed', 1)
+        stats.stats_sum('seeds completely failed', 1)
+        if json_log:
+            json_log['seed_completely_failed'] = True
         return
 
     two = ridealong['second_chance_url']
     seed_host = ridealong.get('seed_host')
+    if json_log:
+        json_log['seed_second_chance_activated'] = True
 
     seed_some_urls(((seed_host, URL(two), None),), crawler, skip_crawled=True)
