@@ -113,20 +113,17 @@ async def fetch(url, session, headers=None, proxy=None,
                                              max_redirects=max_redirects,
                                              proxy=proxy, headers=headers)
 
-                # https://aiohttp.readthedocs.io/en/stable/tracing_reference.html
-                # XXX should use tracing events to get t_first_byte
                 t_first_byte = '{:.3f}'.format(time.time() - t0)
 
-                if not proxy:
-                    try:
-                        ip, _ = response.connection.transport.get_extra_info('peername', default=None)
-                    except AttributeError:
-                        pass
-                    finally:
-                        if isinstance(ip, str):
-                            ip = [ip]
+                if not proxy and response.connection:
+                    # this is racy, often the connection is already None unless the crawler is busy
+                    addr = response.connection.transport.get_extra_info('peername')
+                    if addr:
+                        ip = [addr[0]]  # ipv4 or ipv6
 
                 while left > 0:
+                    # reading stream directly to dodge decompression and limit size.
+                    # this means that aiohttp tracing on_response_chunk_receive doesn't work
                     block = await response.content.read(left)
                     if not block:
                         body_bytes = b''.join(blocks)
@@ -194,7 +191,10 @@ async def fetch(url, session, headers=None, proxy=None,
         traceback.print_exc()
 
     if last_exception is not None:
-        LOGGER.info('we failed working on %s, the last exception is %s', url.url, last_exception)
+        if body_bytes:
+            LOGGER.info('we failed working on %s, the last exception is %s, dropped %d body bytes', url.url, last_exception, len(body_bytes))
+        else:
+            LOGGER.info('we failed working on %s, the last exception is %s', url.url, last_exception)
         return FetcherResponse(None, None, None, None, None, None, False, last_exception)
 
     fr = FetcherResponse(response, body_bytes, ip, response.request_info.headers,
