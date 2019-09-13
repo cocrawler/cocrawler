@@ -346,10 +346,10 @@ class Crawler:
                                     headers=req_headers, proxy=proxy)
         if r != 'allowed':
             if r == 'no robots':
-                self._retry_if_able(work, ridealong, json_log, stats_prefix='robots ')
                 json_log['fail'] = 'no robots'
             else:
                 json_log['fail'] = 'robots denied'
+            self._retry_if_able(work, ridealong, json_log, stats_prefix='robots ')
             if self.crawllogfd:
                 print(json.dumps(json_log, sort_keys=True), file=self.crawllogfd)
             return
@@ -367,6 +367,8 @@ class Crawler:
             json_log['t_first_byte'] = f.t_first_byte
         if f.ip is not None:
             json_log['ip'] = f.ip
+        elif 'ip' in json_log:
+            stats.stats_sum('fetch ip from dns', 1)
 
         if post_fetch.should_retry(f):
             self._retry_if_able(work, ridealong, json_log)

@@ -119,6 +119,7 @@ async def fetch(url, session, headers=None, proxy=None,
                     # this is racy, often the connection is already None unless the crawler is busy
                     addr = response.connection.transport.get_extra_info('peername')
                     if addr:
+                        stats.stats_sum(stats_prefix+'fetch ip from connection', 1)
                         ip = [addr[0]]  # ipv4 or ipv6
 
                 while left > 0:
