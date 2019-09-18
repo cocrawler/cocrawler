@@ -319,10 +319,10 @@ class Crawler:
         else:
             robots_seed_host = None
 
-        req_headers, proxy, prefetch_dns = fetcher.apply_url_policies(url, self)
+        prefetch_dns, get_kwargs = fetcher.apply_url_policies(url, self)
 
         json_log = {'kind': 'get', 'url': url.url, 'priority': priority, 'time': time.time()}
-        if proxy:
+        if get_kwargs['proxy']:
             json_log['proxy'] = True
         if seed_host:
             json_log['seed_host'] = seed_host
@@ -346,8 +346,8 @@ class Crawler:
                     geoip.lookup_all(addrs, host_geoip)
                 post_fetch.post_dns(addrs, expires, url, self)
 
-        r = await self.robots.check(url, dns_entry=dns_entry, seed_host=robots_seed_host, crawler=self,
-                                    headers=req_headers, proxy=proxy)
+        r = await self.robots.check(url, dns_entry=dns_entry, seed_host=robots_seed_host,
+                                    crawler=self, get_kwargs=get_kwargs)
         if r != 'allowed':
             if r == 'no robots':
                 json_log['fail'] = 'no robots'
@@ -359,7 +359,7 @@ class Crawler:
             return
 
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_page_size,
-                                headers=req_headers, proxy=proxy)
+                                get_kwargs=get_kwargs)
 
         if f.is_truncated:
             json_log['truncated'] = f.is_truncated

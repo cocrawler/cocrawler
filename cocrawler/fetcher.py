@@ -76,7 +76,7 @@ def apply_url_policies(url, crawler):
 
     proxy, prefetch_dns = global_policies()
 
-    return headers, proxy, prefetch_dns
+    return prefetch_dns, {'headers': headers, 'proxy': proxy}
 
 
 def global_policies():
@@ -91,9 +91,9 @@ FetcherResponse = namedtuple('FetcherResponse', ['response', 'body_bytes', 'ip',
                                                  'last_exception'])
 
 
-async def fetch(url, session, headers=None, proxy=None,
+async def fetch(url, session,
                 allow_redirects=None, max_redirects=None,
-                stats_prefix='', max_page_size=-1):
+                stats_prefix='', max_page_size=-1, get_kwargs={}):
 
     last_exception = None
     is_truncated = False
@@ -111,11 +111,11 @@ async def fetch(url, session, headers=None, proxy=None,
                 response = await session.get(url.url,
                                              allow_redirects=allow_redirects,
                                              max_redirects=max_redirects,
-                                             proxy=proxy, headers=headers)
+                                             **get_kwargs)
 
                 t_first_byte = '{:.3f}'.format(time.time() - t0)
 
-                if not proxy and response.connection:
+                if 'proxy' not in get_kwargs and response.connection:
                     # this is racy, often the connection is already None unless the crawler is busy
                     addr = response.connection.transport.get_extra_info('peername')
                     if addr:

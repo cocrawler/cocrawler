@@ -100,7 +100,7 @@ class Robots:
         return self._check(url, schemenetloc, robots, quiet=quiet)
 
     async def check(self, url, dns_entry=None, seed_host=None, crawler=None,
-                    headers=None, proxy=None):
+                    get_kwargs={}):
         schemenetloc = url.urlsplit.scheme + '://' + url.urlsplit.netloc
 
         try:
@@ -108,7 +108,7 @@ class Robots:
             stats.stats_sum('robots cache hit', 1)
         except KeyError:
             robots = await self.fetch_robots(schemenetloc, dns_entry, crawler,
-                                             seed_host=seed_host, headers=headers, proxy=proxy)
+                                             seed_host=seed_host, get_kwargs=get_kwargs)
         return self._check(url, schemenetloc, robots)
 
     def _check(self, url, schemenetloc, robots, quiet=False):
@@ -179,7 +179,7 @@ class Robots:
         return parsed
 
     async def fetch_robots(self, schemenetloc, dns_entry, crawler,
-                           seed_host=None, headers=None, proxy=None):
+                           seed_host=None, get_kwargs={}):
         '''
         https://developers.google.com/search/reference/robots_txt
         3xx redir == follow up to 5 hops, then consider it a 404.
@@ -216,8 +216,8 @@ class Robots:
         self.in_progress.add(schemenetloc)
 
         f = await fetcher.fetch(url, self.session, max_page_size=self.max_robots_page_size,
-                                headers=headers, proxy=proxy,
-                                allow_redirects=True, max_redirects=5, stats_prefix='robots ')
+                                allow_redirects=True, max_redirects=5, stats_prefix='robots ',
+                                get_kwargs=get_kwargs)
 
         json_log = {'action': 'fetch', 'time': time.time()}
         if f.ip is not None:
