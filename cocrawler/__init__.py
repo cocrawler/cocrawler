@@ -12,6 +12,7 @@ import json
 import traceback
 import concurrent
 import resource
+import ssl
 
 import asyncio
 import uvloop
@@ -20,6 +21,7 @@ import aiohttp
 import aiohttp.resolver
 import aiohttp.connector
 import psutil
+import certifi
 
 from . import scheduler
 from . import stats
@@ -81,6 +83,8 @@ class Crawler:
         if local_addr:
             self.conn_kwargs['local_addr'] = (local_addr, 0)
         self.conn_kwargs['family'] = socket.AF_INET  # XXX config option -- this is ipv4 only
+        self.conn_kwargs['ssl_context'] = ssl.create_default_context(cafile=certifi.where())
+        # see https://bugs.python.org/issue27970 for python not handling missing intermediates
 
         conn = aiohttp.connector.TCPConnector(**self.conn_kwargs)
         self.connector = conn

@@ -153,6 +153,7 @@ async def fetch(url, session, headers=None, proxy=None,
         # ClientError is a catchall for a bunch of things
         # e.g. DNS errors, '400' errors for http parser errors
         # ClientConnectorCertificateError for an SSL cert that doesn't match hostname
+        # ClientConnectorSSLError see https://bugs.python.org/issue27970 for python not handling missing intermediate certs
         # ClientConnectorError(None, None) caused by robots redir to DNS fail
         # ServerDisconnectedError(None,) caused by servers that return 0 bytes for robots.txt fetches
         # TooManyRedirects("0, message=''",) caused by too many robots.txt redirs 
