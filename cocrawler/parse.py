@@ -185,7 +185,7 @@ def find_body_links_anchors_re(body):
     links_delims = set()
     for m in re.finditer(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,200} >''', body, re.I | re.S | re.X):
         href = m.group(2)
-        if href == '#':
+        if href.startswith('#'):
             continue
         end = m.end(0)
         anchor = body[end:]
