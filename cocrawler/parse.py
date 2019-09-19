@@ -174,7 +174,7 @@ def find_body_links_anchors_re(body):
 
     On a 3.4 ghz x86 core, runs at ~ NN megabyte/sec.
     '''
-    stats.stats_sum('body_links_re parser bytes', len(body))
+    stats.stats_sum('body_links_anchors_re parser bytes', len(body))
 
     embeds_delims = set(
         [m[1] for m in re.findall(r'''\ssrc\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim)''', body, re.I | re.S | re.X)]
@@ -183,8 +183,15 @@ def find_body_links_anchors_re(body):
     embeds = embeds_delims.union(embeds_no_delims)
 
     links_delims = set()
-    for m in re.finditer(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,200} >''', body, re.I | re.S | re.X):
+    for m in re.finditer(r'''\shref\s{,3}=\s{,3}(?P<delim>['"])(.*?)(?P=delim) [^>]{,400} >''', body, re.I | re.S | re.X):
+        delim = m.group(1)
         href = m.group(2)
+
+        if delim in href:
+            # this happens when the size above isn't big enough.
+            href = href.split(delim, 1)[0]
+            stats.stats_sum('body_links_anchors_re parser extra delim split needed', 1)
+
         if href.startswith('#'):
             continue
         end = m.end(0)
