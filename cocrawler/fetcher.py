@@ -25,6 +25,7 @@ import aiohttp
 from . import stats
 from . import config
 from . import content
+from .urls import URL
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class AsyncioSSLFilter(logging.Filter):
             msg = record.getMessage()
             for ae in aiohttp_errors:
                 if msg.startswith(ae):
+                    stats.stats_sum('suppressed a python lib or aiohttp log line', 1)
                     return False
         return True
 
@@ -76,7 +78,9 @@ def apply_url_policies(url, crawler):
 
     proxy, prefetch_dns = global_policies()
 
-    return prefetch_dns, {'headers': headers, 'proxy': proxy}
+    get_kwargs = {'headers': headers, 'proxy': proxy}
+
+    return prefetch_dns, get_kwargs
 
 
 def global_policies():
@@ -97,6 +101,7 @@ async def fetch(url, session,
 
     last_exception = None
     is_truncated = False
+    response = None
 
     try:
         t0 = time.time()
@@ -191,6 +196,13 @@ async def fetch(url, session,
         stats.stats_sum(stats_prefix+'fetch surprising error', 1)
         LOGGER.info('Saw surprising exception in fetcher working on %s:\n%s', url.url, last_exception)
         traceback.print_exc()
+
+    # if redirs are allowed the url must be set to the final url
+    if response and str(response.url) != url.url:
+        if allow_redirects:
+            url = URL(str(response.url))
+        else:
+            LOGGER.error('Surprised that I fetched %s and got %s', url.url, str(response.url))
 
     if last_exception is not None:
         if body_bytes:
