@@ -276,19 +276,17 @@ class Robots:
         else:
             host_geoip = {}
         if final_schemenetloc:
-            final_robots_url = final_schemenetloc + '/robots.txt'
             # if the hostname is the same and only the scheme is different, that's ok
-            if ((final_robots_url.replace('https://', 'http://', 1) != url.url and
-                 final_robots_url.replace('http://', 'https://', 1) != url.url)):
+            # TODO: use URL.hostname
+            if ((final_url.replace('https://', 'http://', 1) != url.url and
+                 final_url.replace('http://', 'https://', 1) != url.url)):
                 host_geoip = {}  # the passed-in one is for the initial server
-        else:
-            final_robots_url = url.url
-        post_fetch.post_robots_txt(f, final_robots_url, host_geoip, json_log['time'], crawler, seed_host=seed_host)
+        post_fetch.post_robots_txt(f, final_url, host_geoip, json_log['time'], crawler, seed_host=seed_host)
 
         body_bytes = f.body_bytes
         content_encoding = f.response.headers.get('content-encoding', 'identity')
         if content_encoding != 'identity':
-            body_bytes = content.decompress(f.body_bytes, content_encoding, url=final_robots_url)
+            body_bytes = content.decompress(f.body_bytes, content_encoding, url=final_url)
 
         with stats.record_burn('robots sha1'):
             sha1 = 'sha1:' + hashlib.sha1(body_bytes).hexdigest()
