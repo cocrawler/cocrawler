@@ -47,11 +47,12 @@ aiohttp_errors = {
 
 class AsyncioSSLFilter(logging.Filter):
     def filter(self, record):
+        stats.stats_sum('filter examined a %s %s log line'.format(record.name, record.levelname), 1)
         if record.name == 'asyncio' and record.levelname == 'ERROR':
             msg = record.getMessage()
             for ae in aiohttp_errors:
                 if msg.startswith(ae):
-                    stats.stats_sum('suppressed a python lib or aiohttp log line', 1)
+                    stats.stats_sum('filter suppressed a asyncio ERROR log line', 1)
                     return False
         return True
 
