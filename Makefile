@@ -53,6 +53,7 @@ distclean:
 	rm dist/*
 
 dist: distclean
+	echo "did you remember to git tag v0.x.x and also git push --tags?"
 	python ./setup.py --long-description | rst2html --exit-status=2 2>&1 > /dev/null
 	python ./setup.py bdist_wheel
 	twine upload dist/* -r pypi
