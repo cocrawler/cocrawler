@@ -90,7 +90,7 @@ def post_robots_txt(f, url, host_geoip, t, crawler, seed_host=None):
     But, if we redirected to a non-robots.txt, usually /, don't. That's an
     invalid robots.txt and we'll crawl the site.
     '''
-    if url.urlsplit.path == '/':
+    if url.endswith('/'):
         return
 
     resp_headers = f.response.headers
