@@ -82,13 +82,17 @@ def minimal_facet_me(resp_headers, url, host_geoip, kind, t, crawler, seed_host=
     print(json.dumps(facet_log, sort_keys=True), file=crawler.facetlogfd)
 
 
-'''
-If we're robots blocked, the only 200 we're ever going to get is
-for robots.txt. So, facet it.
-'''
-
-
 def post_robots_txt(f, url, host_geoip, t, crawler, seed_host=None):
+    '''
+    If we're robots blocked, the only 200 we're ever going to get is
+    for robots.txt. So, facet it.
+
+    But, if we redirected to a non-robots.txt, usually /, don't. That's an
+    invalid robots.txt and we'll crawl the site.
+    '''
+    if url.urlsplit.path == '/':
+        return
+
     resp_headers = f.response.headers
     minimal_facet_me(resp_headers, url, host_geoip, 'robots.txt', t, crawler, seed_host=seed_host)
 
