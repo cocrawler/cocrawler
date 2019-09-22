@@ -36,6 +36,7 @@ requires = [
     'pyyaml',
     'cchardet',
     'surt',
+    'reppy',
     'robotexclusionrulesparser',
     'cachetools',
     'filemagic',
@@ -48,7 +49,10 @@ requires = [
     'lxml',
     'extensions',
     'warcio',
-    'geoip2']
+    'geoip2',
+    'objgraph',
+    'brotlipy',
+    'setuptools_scm']
 
 test_requirements = ['bottle', 'pytest>=3.0.0', 'coverage', 'pytest-cov']
 

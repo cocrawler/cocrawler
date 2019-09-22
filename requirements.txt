@@ -23,6 +23,7 @@ warcio==1.7.1
 geoip2==2.9.0
 objgraph==3.4.1
 brotlipy==0.7.0
+setuptools-scm==3.3.3
 
 # used to maintain this file
 pur==5.2.2
@@ -46,4 +47,3 @@ wheel==0.33.6
 twine==1.13.0
 pypandoc==1.4
 setuptools==41.2.0
-setuptools-scm==3.3.3
