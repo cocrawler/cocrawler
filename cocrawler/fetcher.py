@@ -203,6 +203,7 @@ async def fetch(url, session,
         if allow_redirects:
             url = URL(str(response.url))
         else:
+            # TODO: this fires for quoting: {{%20data.src%20}} comes out %7B%7B%20data.src%20%7D%7D
             LOGGER.error('Surprised that I fetched %s and got %s', url.url, str(response.url))
 
     if last_exception is not None:
