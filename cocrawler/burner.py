@@ -22,6 +22,7 @@ def stats_wrap(partial, name, url=None):
         try:
             ret = list(partial())
         except Exception as e:
+            stats.stats_sum('burner thread raised', 1)
             LOGGER.info('burner thread sees an exception %r', e)
             traceback.print_exc()
             ret = []

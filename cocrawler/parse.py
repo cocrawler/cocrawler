@@ -314,7 +314,7 @@ def url_clean_join(links, url=None):
     for link in links:
         if 'href' in link:
             link['href'] = URL(link['href'], urljoin=url)
-        elif 'src' in link:
+        if 'src' in link:
             link['src'] = URL(link['src'], urljoin=url)
         ret.append(link)
     return ret
