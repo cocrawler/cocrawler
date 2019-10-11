@@ -283,7 +283,7 @@ def build_link_object(tag):
             ret['target'] = tag.get('target')
 
     if tag.name == 'iframe':
-        if tag.get('name'):  # XXX how does this work in Beautiful Soup??? name attr vs tag.name
+        if tag.get('name'):
             ret['name'] = tag.get('name')
 
     return ret
@@ -312,6 +312,7 @@ def find_body_links_soup(body_soup):
 def url_clean_join(links, url=None):
     ret = []
     for link in links:
+        # you can have both, for example <link> tags occasionally incorectly have both in the wild
         if 'href' in link:
             link['href'] = URL(link['href'], urljoin=url)
         if 'src' in link:
