@@ -212,6 +212,12 @@ class Scheduler:
         return self.awaiting_work == worker_count and self.q.qsize() == 0
 
     async def close(self):
+        # we got here in a sligthly racy fashion, which occasionally results in hangs
+        # work around it a little
+        while self.q.qsize() != 0:
+            LOGGER.error('Got to scheduler.close and the queue was not empty')
+            stats.coroutine_report()
+            await asyncio.sleep(30.)
         await self.q.join()
 
     def save(self, crawler, f):
