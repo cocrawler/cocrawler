@@ -96,7 +96,7 @@ def post_robots_txt(f, url, host_geoip, t, crawler, seed_host=None):
     resp_headers = f.response.headers
     minimal_facet_me(resp_headers, url, host_geoip, 'robots.txt', t, crawler, seed_host=seed_host)
 
-    if crawler.warcwriter is not None:  # needs to use the same algo as post_200 for choosing what to warc
+    if crawler.warcwriter is not None:  # needs to use the same algo as post_2xx for choosing what to warc
         crawler.warcwriter.write_request_response_pair(url, f.ip, f.req_headers,
                                                        f.response.raw_headers, f.is_truncated, f.body_bytes,
                                                        decompressed=False)
@@ -190,7 +190,7 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
     # after we return, json_log will get logged
 
 
-async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
+async def post_2xx(f, url, ridealong, priority, host_geoip, json_log, crawler):
 
     if crawler.warcwriter is not None:
         # needs to use the same algo as post_dns for choosing what to warc
@@ -204,8 +204,14 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
     content_type, content_encoding, charset = content.parse_headers(resp_headers, json_log)
 
     html_types = set(('text/html', '', 'application/xhtml+xml'))
+    html_types.add('')  # no content type
+    html_types.add('*/*')  # mildly common in the wild, whatwg says we should sniff in this case
 
-    if content_type in html_types:
+    if content_type not in html_types:
+        # XXX sniff the type https://mimesniff.spec.whatwg.org/
+        json_log['comment'] = 'not an html content type'
+        #json_log['checksum'] = sha1  # XXX would like to log this
+    else:
         if content_encoding != 'identity':
             with stats.record_burn('response body decompress', url=url):
                 body_bytes = content.decompress(f.body_bytes, content_encoding, url=url)
@@ -281,6 +287,6 @@ async def post_200(f, url, ridealong, priority, host_geoip, json_log, crawler):
 
 
 def post_dns(dns, expires, url, crawler):
-    if crawler.warcwriter is not None:  # needs to use the same algo as post_200 for choosing what to warc
+    if crawler.warcwriter is not None:  # needs to use the same algo as post_2xx for choosing what to warc
         now = time.time()
         crawler.warcwriter.write_dns(dns, expires-now, url)
