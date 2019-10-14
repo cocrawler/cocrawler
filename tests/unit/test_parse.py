@@ -24,10 +24,13 @@ test_html_harder = '''
 <head></head>
 <body>
 <iframe src="iframe.html"></iframe>
+<iframe src=""></iframe>
 <link href="stylesheet.blah" rel="stylesheet">
+<link href="" rel="stylesheet">
 <link href="http://example.com" rel="prefetch">
 <link href="do-not-crash-1">
 <link href="do-not-crash-2" rel="one" rel="two">
+<link href="">
 </body>
 '''
 

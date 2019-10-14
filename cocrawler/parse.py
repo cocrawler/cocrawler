@@ -114,6 +114,8 @@ def clean_link_objects(link_objects, schemes):
     schemes = tuple(schemes)
     ret = []
     for link_object in link_objects:
+        if link_object is None:
+            continue
         u = link_object.get('href') or link_object.get('src')
         if u and u.startswith(schemes):
             continue
@@ -242,9 +244,13 @@ def find_css_links_re(css):
 def find_head_links_soup(head_soup):
     embeds = []
     for tag in head_soup.find_all(src=True):
-        embeds.append(build_link_object(tag))
+        lo = build_link_object(tag)
+        if lo:
+            embeds.append(lo)
     for tag in head_soup.find_all(href=True):
-        embeds.append(build_link_object(tag))
+        lo = build_link_object(tag)
+        if lo:
+            embeds.append(lo)
     return [], embeds
 
 
@@ -269,6 +275,9 @@ def build_link_object(tag):
         ret['href'] = tag.get('href')
     if tag.get('src'):
         ret['src'] = tag.get('src')
+    if 'href' not in ret and 'src' not in ret:
+        # href or src was present but false
+        return
 
     if tag.name == 'a':
         try:
@@ -294,18 +303,26 @@ def find_body_links_soup(body_soup):
     links = []
     for tag in body_soup.find_all(src=True):
         if tag.name == 'iframe':
-            links.append(build_link_object(tag))
+            lo = build_link_object(tag)
+            if lo:
+                links.append(lo)
         else:
-            embeds.append(build_link_object(tag))
+            lo = build_link_object(tag)
+            if lo:
+                embeds.append(lo)
     for tag in body_soup.find_all(href=True):
         if tag.name == 'link':
             rel = tag.get('rel', [None])[0]
             if rel == 'stylesheet':
-                embeds.append(build_link_object(tag))
+                lo = build_link_object(tag)
+                if lo:
+                    embeds.append(lo)
             else:
                 pass  # discard other body-ok like 'prefetch'
         else:
-            links.append(build_link_object(tag))
+            lo = build_link_object(tag)
+            if lo:
+                links.append(lo)
     return links, embeds
 
 
