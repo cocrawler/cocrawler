@@ -242,7 +242,7 @@ def safe_url_canonicalization(url):
         (scheme, netloc, path, query, fragment) = urllib.parse.urlsplit(url)
     except ValueError:
         LOGGER.info('invalid url %s', url)
-        raise
+        return original_url, ''
 
     scheme = scheme.lower()
     if scheme not in ('http', 'https', 'ftp'):
