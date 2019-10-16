@@ -403,7 +403,10 @@ class URL(object):
         except ValueError:
             LOGGER.info('invalid url %s sent into URL constructor', url)
             # TODO: my code assumes URL() returns something valid, so...
-            raise
+            # attempt to get rid of anything that would cause an invalid ipv6 ValueError
+            # XXX this isn't the only place that needs tweaking
+            url = url.replace('[', '').replace(']', '')
+            self._urlsplit = urllib.parse.urlsplit(url)
 
         (scheme, netloc, path, query, _) = self._urlsplit
 
