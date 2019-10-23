@@ -382,15 +382,26 @@ class Crawler:
 
         self.scheduler.del_ridealong(surt)
 
-        if f.response.status >= 400 and 'seed' in ridealong:
-            seeds.fail(ridealong, self, json_log)
+        # from here down we want to jsonlog and stats everything
+
+        if f.response.status >= 400:
+            json_log['unretryable_4xx'] = True
+            stats.stats_sum('unretryable_4xx', 1)
+        elif f.response.status >= 300:
+            if not post_fetch.is_redirect(f.response):
+                json_log['unretryable_3xx'] = True,
+                stats.stats_sum('unretryable_3xx', 1)
+        elif f.response.status < 200:
+            json_log['unretryable_1xx'] = True,
+            stats.stats_sum('unretryable_1xx', 1)
 
         if 200 <= f.response.status < 300:
             await post_fetch.post_2xx(f, url, ridealong, priority, host_geoip, json_log, self)
-
-        if post_fetch.is_redirect(f.response):
+        elif post_fetch.is_redirect(f.response):
             post_fetch.handle_redirect(f, url, ridealong, priority, host_geoip, json_log, self, rand=rand)
             # meta-http-equiv-redirect will be dealt with in post_fetch
+        else:
+            seeds.fail(ridealong, self, json_log)
 
         LOGGER.debug('size of work queue now stands at %r urls', self.scheduler.qsize())
         LOGGER.debug('size of ridealong now stands at %r urls', self.scheduler.ridealong_size())

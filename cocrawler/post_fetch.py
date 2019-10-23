@@ -28,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
 
 # aiohttp.ClientReponse lacks this method, so...
 def is_redirect(response):
-    return 'Location' in response.headers and response.status in {301, 302, 303, 307, 308}
+    return response.status in {301, 302, 303, 307, 308}
 
 
 def should_retry(f):
@@ -122,11 +122,18 @@ def handle_redirect(f, url, ridealong, priority, host_geoip, json_log, crawler, 
     if location is None:
         seeds.fail(ridealong, crawler, json_log)
         LOGGER.info('%d redirect for %s has no Location: header', f.response.status, url.url)
-        raise ValueError(url.url + ' sent a redirect with no Location: header')
-    next_url = urls.URL(location, urljoin=url)
+        next_url = None
+        kwargs = {}
+    else:
+        next_url = urls.URL(location, urljoin=url)
+        kwargs = {'location': next_url.url}
 
     minimal_facet_me(resp_headers, url, host_geoip, 'redir', json_log['time'], crawler,
-                     seed_host=seed_host, location=next_url.url)
+                     seed_host=seed_host, **kwargs)
+
+    if next_url is None:
+        seeds.fail(ridealong, crawler, json_log)
+        return
 
     ridealong['url'] = next_url
 
