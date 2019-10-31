@@ -345,7 +345,11 @@ def get_domain(hostname):
     #  sometimes we do want *.blogspot.com to all be different tlds
     #  right now set externally, see https://github.com/john-kurkowski/tldextract/issues/66
     #  the makefile for this repo sets it to private and there is a unit test for it
-    tlde = tldextract.extract(hostname)
+    try:
+        tlde = tldextract.extract(hostname)
+    except IndexError:
+        # can be raised for punycoded hostnames
+        raise
     rd = tlde.registered_domain
     if rd:
         return rd
@@ -422,7 +426,11 @@ class URL(object):
 
         self._urlsplit = SplitResult(scheme, netloc, path, query, '')
         self._url = urllib.parse.urlunsplit(self._urlsplit)  # final canonicalization
-        self._tldextract = tldextract.extract(self._url)
+        try:
+            self._tldextract = tldextract.extract(self._url)
+        except IndexError:
+            # can be raised for punycoded hostnames
+            raise
         self._registered_domain = self._tldextract.registered_domain
         if not self._registered_domain:
             self._registered_domain = self._tldextract.suffix  # example: s3.amazonaws.com

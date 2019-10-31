@@ -94,9 +94,12 @@ def discard_www_from_hostname(hostname):
     if not hostname.lower().startswith('www'):
         return hostname
 
-    if tldextract.extract(hostname).registered_domain == hostname:
-        return hostname
-
+    try:
+        if tldextract.extract(hostname).registered_domain == hostname:
+            return hostname
+    except IndexError:
+        # can be raised for punycoded hostnames
+        raise
     return re.sub(r'^www\d{0,2}\.', '', hostname, count=1, flags=re.I)
 
 
