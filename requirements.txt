@@ -44,6 +44,6 @@ coveralls==1.8.2
 
 # packaging
 wheel==0.33.6
-twine<2
+twine<2  # python 3.5
 pypandoc==1.4
 setuptools==41.6.0
