@@ -80,10 +80,10 @@ async def work():
             result = await dns.prefetch(url, resolver)
         except Exception as e:
             result = None
-            if kind is not 'fake':
+            if kind != 'fake':
                 print('saw exception', e, 'but ignoring it')
 
-        if result is not None and kind is 'fake':
+        if result is not None and kind == 'fake':
             if args.expect_not_suitable:
                 print('as expected, this nameserver is not suitable for crawling')
             else:
