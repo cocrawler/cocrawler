@@ -15,7 +15,6 @@ python:
 matrix:
   fast_finish: true
   allow_failures:
-  - python: 3.8  # uvloop
   - python: 3.9-dev
   - python: nightly
   include:
