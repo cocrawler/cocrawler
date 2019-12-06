@@ -1,13 +1,3 @@
-'''
-Wrappers for WARC stuff
-
-TODOs:
- best-practice:
-  WARC-Warcinfo-ID for every record
- computation:
-  stick pre-computed digest into WARC-Payload-Digest
-'''
-
 import os
 import socket
 import logging
@@ -130,6 +120,7 @@ class CCWARCWriter:
         self.f = open(filename, 'wb')
         self.writer = WARCWriter(self.f, gzip=self.gzip)
         record = self.writer.create_warcinfo_record(self.filename, self.info)
+        self.warcinfo_id = record.rec_headers.get_header('WARC-Record-ID')
         self.writer.write_record(record)
 
     def get_serial(self, filename):
@@ -171,8 +162,14 @@ class CCWARCWriter:
                 pass
         payload = payload.encode('utf-8')
 
-        record = self.writer.create_warc_record('dns:'+host, 'resource', payload=BytesIO(payload),
-                                                warc_content_type='text/dns', length=len(payload))
+        warc_headers_dict = OrderedDict()
+        warc_headers_dict['WARC-Warcinfo-ID'] = self.warcinfo_id
+
+        record = self.writer.create_warc_record('dns:'+host, 'resource',
+                                                warc_content_type='text/dns',
+                                                payload=BytesIO(payload),
+                                                length=len(payload),
+                                                warc_headers_dict=warc_headers_dict)
 
         self.writer.write_record(record)
         LOGGER.debug('wrote warc dns response record%s for host %s', p(self.prefix), host)
@@ -208,13 +205,17 @@ class CCWARCWriter:
 
         req_http_headers = StatusAndHeaders('GET / HTTP/1.1', req_headers)
 
+        warc_headers_dict = OrderedDict()
+        warc_headers_dict['WARC-Warcinfo-ID'] = self.warcinfo_id
         request = self.writer.create_warc_record('http://example.com/', 'request',
+                                                 warc_headers_dict=warc_headers_dict,
                                                  http_headers=req_http_headers)
 
         fake_resp_headers = self._fake_resp_headers(resp_headers, len(payload), decompressed=decompressed)
         resp_http_headers = StatusAndHeaders('200 OK', fake_resp_headers, protocol='HTTP/1.1')
 
         warc_headers_dict = OrderedDict()
+        warc_headers_dict['WARC-Warcinfo-ID'] = self.warcinfo_id
         if ip is not None:
             if not isinstance(ip, str):
                 ip = ip[0]

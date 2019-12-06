@@ -15,13 +15,16 @@ def munge(s):
     Remove things known to differ in WARC files:
     uuids
     WARC-Date: headers
+    WARC-Warcinfo-ID headers
     '''
     out = ''
     for line in s.split('\n'):
-        if ':uuid:' in line:
-            line, _, _ = line.partition(':uuid:')
-        elif line.startswith('WARC-Date:'):
+        if line.startswith('WARC-Date:'):
             line = 'WARC-Date:'
+        elif line.startswith('WARC-Warcinfo-ID:'):
+            line = 'WARC-Warcinfo-ID:'
+        elif ':uuid:' in line:
+            line, _, _ = line.partition(':uuid:')
         elif line.startswith('software:'):
             continue
         out += line + '\n'

@@ -14,6 +14,7 @@ format: WARC file version 1.0
 
 
 WARC/1.0
+WARC-Warcinfo-ID: <urn:uuid:af24b829-5a2c-43cc-bb01-005b181d214a>
 WARC-Type: response
 WARC-Record-ID: <urn:uuid:2f409cd4-73a6-478d-bef5-6b32c2ddfbe3>
 WARC-Target-URI: https://www.google.com/
@@ -42,6 +43,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 WARC/1.0
+WARC-Warcinfo-ID: <urn:uuid:af24b829-5a2c-43cc-bb01-005b181d214a>
 WARC-Type: request
 WARC-Record-ID: <urn:uuid:faed81b8-ba13-47e4-aee6-95a60fae937d>
 WARC-Target-URI: https://www.google.com/
