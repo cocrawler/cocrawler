@@ -9,24 +9,24 @@ PyYAML==5.2
 cchardet==2.1.5
 surt==0.3.1
 reppy==0.4.14
-cachetools==3.1.1
+cachetools==4.0.0
 #filemagic==1.6  # needs libmagic installed in the OS
 tldextract==2.2.2
 sortedcontainers==2.1.0
 sortedcollections==1.1.2
 psutil==5.6.7
 hdrhistogram==0.7.1
-beautifulsoup4==4.8.1
+beautifulsoup4==4.8.2
 lxml==4.4.2
 extensions==0.4
 warcio==1.7.1
-geoip2==2.9.0
+geoip2==3.0.0
 objgraph==3.4.1
 brotlipy==0.7.0
 setuptools-scm==3.3.3
 
 # used to maintain this file
-pur==5.2.2
+pur==5.3.0
 
 # used by the mock webserver
 bottle==0.12.18
@@ -35,7 +35,7 @@ bottle==0.12.18
 coverage==4.5.4
 pylint==2.4.4
 flake8==3.7.9
-pytest==5.3.1
+pytest==5.3.2
 attrs==19.3.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
 pytest-cov==2.8.1
 pytest-asyncio==0.10.0
