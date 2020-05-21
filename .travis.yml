@@ -17,6 +17,10 @@ matrix:
   allow_failures:
   - python: 3.9-dev
   - python: nightly
+  - python: 3.8
+    arch: arm64
+  - python: 3.8
+    arch: s390x
   include:
   - python: 3.5.3
     env: COCRAWLER_LOGLEVEL=DEBUG
@@ -30,8 +34,11 @@ matrix:
 git:
   depth: 9999
 
+before_install:
+  - sudo chown -Rv $USER:$GROUP ~/.cache/pip/wheels  # temporary workaround for s390x and arm64 permissions problem
+
 install:
-  #- pip install cython  # does not fix reppy 3.9, also breaks s390 and arm64
+  - pip install cython  # does not fix reppy for python 3.9
   - pip install -r requirements.txt
 
 script:
