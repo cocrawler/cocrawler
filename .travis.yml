@@ -30,7 +30,9 @@ matrix:
 git:
   depth: 9999
 
-install: "pip install -r requirements.txt"
+install:
+  - pip install cython  # needed before reppy
+  - pip install -r requirements.txt
 
 script:
   - make test_coverage
