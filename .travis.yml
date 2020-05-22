@@ -35,7 +35,9 @@ git:
   depth: 9999
 
 before_install:
-  - sudo chown -Rv $USER:$GROUP ~/.cache/pip/wheels  # temporary workaround for s390x and arm64 permissions problem
+  # temporary workaround for s390x and arm64 permissions problem
+  # https://travis-ci.community/t/permission-issue-while-building-wheels-for-various-python-packages/7822/12
+  - sudo chown -Rv $USER:$GROUP ~/.cache/pip/wheels
 
 install:
   - pip install cython  # does not fix reppy for python 3.9
