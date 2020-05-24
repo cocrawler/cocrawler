@@ -50,7 +50,7 @@ register:
 	python setup.py register -r https://pypi.python.org/pypi
 
 distclean:
-	rm dist/*
+	rm -rf dist/*
 
 dist: distclean
 	echo "do not forget to git push --tags"
