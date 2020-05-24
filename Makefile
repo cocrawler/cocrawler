@@ -53,7 +53,7 @@ distclean:
 	rm dist/*
 
 dist: distclean
-	python ./setup.py --long-description | rst2html --exit-status=2 2>&1 > /dev/null
+	echo "do not forget to git push --tags"
 	python ./setup.py bdist_wheel
 	twine upload dist/* -r pypi
 
