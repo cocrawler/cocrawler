@@ -53,7 +53,7 @@ distclean:
 	rm -rf dist/*
 
 dist: distclean
-	echo "do not forget to git push --tags"
+	echo "did you remember to git tag v0.x.x and also git push --tags ?"
 	python ./setup.py bdist_wheel
 	twine upload dist/* -r pypi
 
