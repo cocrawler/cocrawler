@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from os import path
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
@@ -32,14 +33,13 @@ packages = [
 requires = [
     'uvloop',
     'aiohttp',
+    'yarl',
     'aiodns',
     'pyyaml',
     'cchardet',
     'surt',
     'reppy',
-    'robotexclusionrulesparser',
     'cachetools',
-    'filemagic',
     'tldextract',
     'sortedcontainers',
     'sortedcollections',
@@ -66,17 +66,16 @@ scripts = ['scripts/aiohttp-fetch.py',
            'scripts/run_parsers.py',
            'scripts/cocrawler-savefile-dump.py']
 
-try:
-    import pypandoc
-    description = pypandoc.convert_file('README.md', 'rst')
-except (IOError, ImportError):
-    description = open('README.md').read()
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    description = f.read()
 
 setup(
     name='cocrawler',
     use_scm_version=True,
     description='A modern web crawler framework for Python',
     long_description=description,
+    long_description_content_type='text/markdown',
     author='Greg Lindahl and others',
     author_email='lindahl@pbm.com',
     url='https://github.com/cocrawler/cocrawler',
@@ -89,6 +88,7 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
+        'Framework :: AsyncIO',
         'Intended Audience :: Information Technology',
         'Intended Audience :: Developers',
         'Natural Language :: English',
