@@ -48,7 +48,7 @@ def extension_allowed(url):
         _, last_part = url.urlsplit.path.rsplit('/', maxsplit=1)
         if last_part and '.' in last_part:
             _, extension = last_part.rsplit('.', maxsplit=1)
-            # people use dots in random ways, so let's use a blacklist
+            # people use dots in random ways, so let's use a blocklist
             if extension.lower() in not_text_extension:
                 return False
     return True
