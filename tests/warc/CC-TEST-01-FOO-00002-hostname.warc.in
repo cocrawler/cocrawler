@@ -3,6 +3,7 @@ WARC-Type: warcinfo
 WARC-Record-ID: <urn:uuid:58b7cdc2-8219-4361-89ec-4595c7965d44>
 WARC-Filename: CC-TEST-01-FOO-00002-hostname.warc
 WARC-Date: 2019-02-15T19:10:51Z
+WARC-Block-Digest: sha1:JUMBQWZJLJPW4H3OPIKPWCXCEAX7TIGA
 Content-Type: application/warc-fields
 Content-Length: 147
 
