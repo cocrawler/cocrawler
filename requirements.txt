@@ -20,7 +20,7 @@ beautifulsoup4==4.9.1
 lxml==4.5.2
 extensions==0.4
 warcio==1.7.4
-geoip2==4.0.2
+geoip2==4.0.2  # requires python >3.6
 objgraph==3.4.1
 brotlipy==0.7.0
 setuptools-scm==4.1.2
@@ -44,5 +44,5 @@ coveralls==2.1.2
 
 # packaging
 wheel==0.35.1
-twine<2  # python 3.5
+twine==3.2.0
 setuptools==49.6.0

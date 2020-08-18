@@ -3,9 +3,9 @@ sudo: required
 dist: xenial
 
 python:
-  - 3.5.3  # minimum for aiohttp=3 and async-timeout=3
-  - 3.5
-  - 3.6.3
+#  - 3.5.3  # minimum for aiohttp=3 and async-timeout=3
+#  - 3.5
+  - 3.6.3  # geoip2 is >3.6
   - 3.6
   - 3.7
   - 3.8
@@ -22,9 +22,9 @@ matrix:
   - python: 3.8
     arch: s390x
   include:
-  - python: 3.5.3
+  - python: 3.6.3
     env: COCRAWLER_LOGLEVEL=DEBUG
-  - python: 3.5.3
+  - python: 3.6.3
     env: PYTHONASYNCIODEBUG=1
   - python: 3.8
     arch: arm64
