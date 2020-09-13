@@ -33,10 +33,10 @@ bottle==0.12.18
 
 # used by Makefile
 coverage==5.2.1
-pylint==2.5.3
+pylint==2.6.0
 flake8==3.8.3
-pytest==6.0.1
-attrs==19.3.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
+pytest==6.0.2
+attrs==20.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
 pytest-cov==2.10.1
 pytest-asyncio==0.14.0
 pytest-sugar==0.9.4
@@ -45,4 +45,4 @@ coveralls==2.1.2
 # packaging
 wheel==0.35.1
 twine==3.2.0
-setuptools==49.6.0
+setuptools==50.3.0
