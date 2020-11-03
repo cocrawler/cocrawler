@@ -341,12 +341,11 @@ def special_redirect(url, next_url):
 
 
 def get_domain(hostname):
-    # TODO config option to set include_psl_private_domains=True ?
-    #  sometimes we do want *.blogspot.com to all be different tlds
-    #  right now set externally, see https://github.com/john-kurkowski/tldextract/issues/66
-    #  the makefile for this repo sets it to private and there is a unit test for it
+    # TODO config option to set include_psl_private_domains=False
+    #  currently we force *.blogspot.com to all be different domains
+    #  another call below in URL __init__
     try:
-        tlde = tldextract.extract(hostname)
+        tlde = tldextract.extract(hostname, include_psl_private_domains=True)
     except IndexError:
         # can be raised for punycoded hostnames
         raise
@@ -354,7 +353,7 @@ def get_domain(hostname):
     if rd:
         return rd
     else:
-        return tlde.suffix  # example: s3.amazonaws.com
+        return tlde.suffix  # example used to be: s3.amazonaws.com, but no longer
 
 
 def get_hostname(url, parts=None, remove_www=False):
@@ -427,13 +426,14 @@ class URL(object):
         self._urlsplit = SplitResult(scheme, netloc, path, query, '')
         self._url = urllib.parse.urlunsplit(self._urlsplit)  # final canonicalization
         try:
-            self._tldextract = tldextract.extract(self._url)
+            # see note above about private domains
+            self._tldextract = tldextract.extract(self._url, include_psl_private_domains=True)
         except IndexError:
             # can be raised for punycoded hostnames
             raise
         self._registered_domain = self._tldextract.registered_domain
         if not self._registered_domain:
-            self._registered_domain = self._tldextract.suffix  # example: s3.amazonaws.com
+            self._registered_domain = self._tldextract.suffix  # example used to be: s3.amazonaws.com, but no longer
 
     @property
     def url(self):

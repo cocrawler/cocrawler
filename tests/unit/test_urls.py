@@ -199,7 +199,6 @@ def test_tldextract():
     '''
     assert tldextract.extract('example.com').registered_domain == 'example.com'
     assert tldextract.extract('www.example.com').registered_domain == 'example.com'
-    assert tldextract.extract('s3.amazonaws.com').registered_domain == ''  # surprise! it's a tld
 
 
 def test_URL():
@@ -215,9 +214,6 @@ def test_URL():
     assert url.original_frag == '#foo#foo'
     url = URL('http://www.example.com/#')
     assert url.original_frag is None
-
-    url = URL('http://s3.amazonaws.com/')
-    assert url.registered_domain == 's3.amazonaws.com'
 
     # canonicalization
     url = URL('http://www.example.com/?')

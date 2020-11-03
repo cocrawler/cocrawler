@@ -40,7 +40,7 @@ requires = [
     'surt',
     'reppy',
     'cachetools',
-    'tldextract',
+    'tldextract>=3',
     'sortedcontainers',
     'sortedcollections',
     'psutil',
