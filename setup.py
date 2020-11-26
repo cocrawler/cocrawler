@@ -54,7 +54,7 @@ requires = [
     'brotlipy',
     'setuptools_scm']
 
-test_requirements = ['bottle', 'pytest>=3.0.0', 'coverage', 'pytest-cov']
+test_requirements = ['bottle', 'pytest>=3.0.0', 'pytest-cov']
 
 scripts = ['scripts/aiohttp-fetch.py',
            'scripts/bench_burner.py',
