@@ -2,8 +2,8 @@ trigger:
 - main
 
 jobs:
-  timeoutInMinutes: 10
   - job: linux
+    timeoutInMinutes: 10
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -44,6 +44,7 @@ jobs:
       displayName: 'pytest'
 
   - job: macos
+    timeoutInMinutes: 10
     pool:
       vmImage: 'macOS-latest'
     strategy:
