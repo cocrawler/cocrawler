@@ -9,6 +9,11 @@ import cocrawler.burner as burner
 import cocrawler.config as config
 
 
+loop = asyncio.get_event_loop()
+b = burner.Burner('parser')
+queue = asyncio.Queue()
+
+
 def burn(dt, data):
     t0 = time.process_time()
     end = t0 + dt
@@ -46,9 +51,6 @@ def main():
     c = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
     config.set_config(c)
 
-    loop = asyncio.get_event_loop()
-    b = burner.Burner('parser')
-    queue = asyncio.Queue()
     for _ in range(args.count):
         queue.put_nowait((args.duration, 'x' * args.datasize))
 
