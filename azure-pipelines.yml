@@ -10,11 +10,11 @@ jobs:
         # geoip2 is >= 3.6
         Python36:
           python.version: '3.6'
-        Python36:
-          python.version: '3.6loglevel'
+        Python36loglevel:
+          python.version: '3.6'
           myenv: COCRAWLER_LOGLEVEL=DEBUG
-        Python36:
-          python.version: '3.6asyncdebug'
+        Python36asyncdebug:
+          python.version: '3.6'
           myenv: PYTHONASYNCIODEBUG=1
         Python37:
           python.version: '3.7'
