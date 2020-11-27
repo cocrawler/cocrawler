@@ -93,6 +93,7 @@ def print_summary(f):
 
 def limit_resources():
     _, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    print('GREG getrlimit returned {} {}'.format(_, hard))
     # XXX warn if too few compared to max_wokers?
     resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 
