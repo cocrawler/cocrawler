@@ -44,14 +44,12 @@ jobs:
 
     - script: |
         pip install coveralls
-        coveralls
+        coveralls -v
       displayName: 'coveralls'
       env:
-        CI_NAME: Azure Pipelines
-        CI_BRANCH: $(Build.SourceBranch)
-        CI_BUILD_NUMBER: $(Build.BuildNumber)
-        CI_BUILD_URL: $(Build.BuildUri)
-        COVERALLS_REPO_TOKEN: $(COVERALLS_REPO_TOKEN)
+        CIRCLECI: 1
+        CIRCLE_BUILD_NUM: $(Build.BuildNumber)
+        COVERALLS_REPO_TOKEN: $(coveralls_repo_token)
 
   - job: macos
     timeoutInMinutes: 10  # does not cause a failure, unfortunately
@@ -84,9 +82,6 @@ jobs:
 
     - script: |
         pip install coveralls
-        echo CIRCLECI=$CIRCLECI
-        echo CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM
-        echo FOO=$COVERALLS_REPO_TOKEN
         coveralls -v
       displayName: 'coveralls'
       env:

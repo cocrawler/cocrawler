@@ -32,6 +32,7 @@ test_coverage: clean_coverage
 	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/parse-html.py data/html-parsing-test.html > /dev/null
 	(cd tests; PYTHONPATH=.. COVERAGE='coverage run -a --source=../cocrawler,../scripts' ./test.sh)
 	(cd tests/warc; PYTHONPATH=../.. COVERAGE='coverage run -a --source=../../cocrawler,.' ./test.sh)
+	find . -name '*coverage*' -print
 	coverage combine .coverage tests/.coverage tests/warc/.coverage
 	coverage report
 
