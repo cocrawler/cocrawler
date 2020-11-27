@@ -10,7 +10,7 @@ import cocrawler.config as config
 
 
 loop = asyncio.get_event_loop()
-b = burner.Burner('parser')
+b = None
 queue = asyncio.Queue()
 
 
@@ -50,6 +50,8 @@ def main():
 
     c = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
     config.set_config(c)
+    global b
+    b = burner.Burner('parser')
 
     for _ in range(args.count):
         queue.put_nowait((args.duration, 'x' * args.datasize))
