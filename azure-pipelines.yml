@@ -2,6 +2,7 @@ trigger:
 - main
 
 jobs:
+  timeoutInMinutes: 10
   - job: linux
     pool:
       vmImage: 'ubuntu-latest'
@@ -34,6 +35,7 @@ jobs:
       displayName: 'Install dependencies'
 
     - script: |
+        set -e
         pip install pytest-azurepipelines
         if [ ! -z "$(myenv)" ]; then
           export $(myenv)

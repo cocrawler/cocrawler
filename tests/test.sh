@@ -7,7 +7,7 @@ set -e
 
 # if there's a stray webserver, kill it
 # would like to use pkill -e but this option is not in ubuntu 12.04
-pkill -U $USER -f mock-webserver.py || true
+pkill -U $USER -f mock-webserver.py || echo "I think I killed someone else's mock webserver"
 # start a webserver
 (python -u ./mock-webserver.py 2>&1 | grep -v '" 200 ') &
 # give it a chance to bind
@@ -118,8 +118,8 @@ echo tearing down mock webserver
 echo
 
 # tear down the mock webserver a couple of ways
-kill %1 || true
-pkill -U $USER -f mock-webserver.py || true
+kill %1 || echo "I think I killed my mock webserver"
+pkill -U $USER -f mock-webserver.py || echo "I think I killed someone else's mock webserver"
 
 echo
 echo run_burner
