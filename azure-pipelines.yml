@@ -44,7 +44,8 @@ jobs:
 
     - script: |
         printenv
-        pip install coveralls
+        #pip install coveralls
+        pip install git+https://github.com/wumpus/coveralls-python
         coveralls -v
       displayName: 'coveralls'
       env:
@@ -82,7 +83,9 @@ jobs:
       displayName: 'pytest'
 
     - script: |
-        pip install coveralls
+        printenv
+        #pip install coveralls
+        pip install git+https://github.com/wumpus/coveralls-python
         coveralls -v
       displayName: 'coveralls'
       env:
