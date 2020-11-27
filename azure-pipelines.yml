@@ -61,9 +61,10 @@ jobs:
       displayName: 'Install dependencies'
 
     - script: |
-        pip install pytest-azurepipelines
         if [ ! -z "$(myenv)" ]; then
           export $(myenv)
         fi
         make test_coverage
+        pip install pytest-azurepipelines
+        coverage report
       displayName: 'pytest'

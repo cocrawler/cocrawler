@@ -95,14 +95,15 @@ def limit_resources():
     soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     try:
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
-    except ValueError:  # should always work, but hey, MacOS, you do you
-        LOGGER.warning('Failed to set RLIMIT_NOFILE to %d, got ValueError', hard)
-        if hard//2 > soft:
+    except ValueError as e:  # should always work, but hey, MacOS, you do you
+        LOGGER.warning('Failed to set RLIMIT_NOFILE to %d, got %s', hard, str(e))
+        new_soft = 10240  # OPEN_MAX, the secret MacOS limit in the kernel
+        if new_soft > soft:
             try:
-                resource.setrlimit(resource.RLIMIT_NOFILE, (hard//2, hard))
-                LOGGER.warning('Fallback to set RLIMIT_NOFILE to %d worked', hard//2)
-            except ValueError:
-                LOGGER.warning('Fallback to set RLIMIT_NOFILE to %d also got ValueError', hard//2)
+                resource.setrlimit(resource.RLIMIT_NOFILE, (new_soft, hard))
+                LOGGER.warning('Fallback to set RLIMIT_NOFILE to %d worked', new_soft)
+            except ValueError as e:
+                LOGGER.warning('Fallback to set RLIMIT_NOFILE to %d also got %s', new_soft, str(e))
     # XXX warn if too few compared to max_wokers?
 
     _, hard = resource.getrlimit(resource.RLIMIT_AS)
