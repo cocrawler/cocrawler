@@ -37,7 +37,7 @@ test_coverage: clean_coverage
 	coverage report
 	(cd tests/warc; PYTHONPATH=../.. COVERAGE='coverage run -a --source=../../cocrawler,.' ./test.sh)
 	coverage report
-	coverage combine .coverage tests/.coverage tests/warc/.coverage
+	coverage combine -a tests/.coverage tests/warc/.coverage
 	coverage report
 
 download-stuff:
