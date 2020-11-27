@@ -1,6 +1,7 @@
 import logging
 import time
 import asyncio
+import os
 from concurrent.futures import ProcessPoolExecutor
 import functools
 import traceback
@@ -55,10 +56,17 @@ class Burner:
         self.name = name
         self.f = []
         p = psutil.Process()
+        has_cpu_affinity = hasattr(p, 'cpu_affinity')  # MacOS does not
 
-        if config.read('Multiprocess', 'Affinity'):
+        if not has_cpu_affinity:
+            if config.read('Multiprocess', 'Affinity'):
+                LOGGER.info('config asks for Multiprocess Affinity but this OS does not support it')
+            if thread_count >= os.cpu_count():
+                LOGGER.warning('fewer available cpus (%d) than burner threads (%d), performance will suffer',
+                               os.cpu_count() - 1, thread_count)
+        elif config.read('Multiprocess', 'Affinity'):
             all_cpus = p.cpu_affinity()
-            for _ in range(thread_count):
+            for burner_no in range(thread_count):
                 try:
                     cpu = all_cpus.pop()
                 except IndexError:
@@ -66,15 +74,16 @@ class Burner:
                                  len(p.cpu_affinity()), thread_count)
                     break
                 wrap = functools.partial(set_an_affinity, cpu)
+                LOGGER.info('setting cpu affinity of burner thread %d to core %d', burner_no, cpu)
                 f = asyncio.ensure_future(
                     self.loop.run_in_executor(self.executor, wrap))  # pylint: disable=unused-variable
                 self.f.append(f)
-                # I can't await f because I'm not async
-                # todo: "from asyncinit import asyncinit" and @asyncinit decorator
+            # I can't await f because I'm not async
+            # todo: "from asyncinit import asyncinit" and @asyncinit decorator
         else:
-            if thread_count > len(p.cpu_affinity()):
-                LOGGER.warning('fewer cpus (%d) than burner threads (%d), performance will suffer',
-                               len(p.cpu_affinity()), thread_count)
+            if thread_count >= len(p.cpu_affinity()):
+                LOGGER.warning('fewer available cpus (%d) than burner threads (%d), performance will suffer',
+                               len(p.cpu_affinity()) - 1, thread_count)
 
     async def burn(self, partial, url=None):
         '''

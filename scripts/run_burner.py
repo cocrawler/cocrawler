@@ -9,7 +9,7 @@ import cocrawler.burner as burner
 import cocrawler.parse as parse
 import cocrawler.stats as stats
 import cocrawler.config as config
-import cocrawler.parse as parse
+
 
 c = {'Multiprocess': {'BurnerThreads': 2}}
 config.set_config(c)
@@ -56,30 +56,35 @@ async def crawl():
         if not w.done():
             w.cancel()
 
-# Main program:
 
-for d in sys.argv[1:]:
-    if os.path.isfile(d):
-        queue.put_nowait(d)
-        continue
-    for root, _, files in os.walk(d):
-        for f in files:
-            if f.endswith('.html') or f.endswith('.htm'):
-                queue.put_nowait(os.path.join(root, f))
+def main():
+    for d in sys.argv[1:]:
+        if os.path.isfile(d):
+            queue.put_nowait(d)
+            continue
+        for root, _, files in os.walk(d):
+            for f in files:
+                if f.endswith('.html') or f.endswith('.htm'):
+                    queue.put_nowait(os.path.join(root, f))
 
-print('Queue size is {}, beginning work.'.format(queue.qsize()))
+    print('Queue size is {}, beginning work.'.format(queue.qsize()))
 
-try:
-    loop.run_until_complete(crawl())
-    print('exit run until complete')
-except KeyboardInterrupt:
-    sys.stderr.flush()
-    print('\nInterrupt. Exiting cleanly.\n')
-finally:
-    loop.stop()
-    loop.run_forever()
-    loop.close()
+    try:
+        loop.run_until_complete(crawl())
+        print('exit run until complete')
+    except KeyboardInterrupt:
+        sys.stderr.flush()
+        print('\nInterrupt. Exiting cleanly.\n')
+    finally:
+        loop.stop()
+        loop.run_forever()
+        loop.close()
 
-levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
-logging.basicConfig(level=levels[3])
-stats.report()
+    levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
+    logging.basicConfig(level=levels[3])
+    stats.report()
+
+
+if __name__ == '__main__':
+    # this guard needed for MacOS and Windows
+    main()
