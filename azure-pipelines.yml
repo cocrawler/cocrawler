@@ -84,9 +84,10 @@ jobs:
 
     - script: |
         pip install coveralls
+        echo CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM
         coveralls
       displayName: 'coveralls'
       env:
-        COVERALLS_SERVICE_NAME: Azure Pipelines
-        COVERALLS_SERVICE_JOB_NUMBER: $(Build.BuildNumber)
+        CIRCLECI: 1
+        CIRCLE_BUILD_NUM: $(Build.BuildNumber)
         COVERALLS_REPO_TOKEN: $(COVERALLS_REPO_TOKEN)
