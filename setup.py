@@ -81,6 +81,8 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
+        'Operating System :: POSIX :: Linux',
+        'Environment :: MacOS X',
         'Framework :: AsyncIO',
         'Intended Audience :: Information Technology',
         'Intended Audience :: Developers',
