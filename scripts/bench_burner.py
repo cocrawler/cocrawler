@@ -32,50 +32,57 @@ async def crawl():
         if not w.done():
             w.cancel()
 
-ARGS = argparse.ArgumentParser(description='bench_burn benchmark for burner thread overhead')
-ARGS.add_argument('--threads', type=int, default=2)
-ARGS.add_argument('--workers', type=int, default=100)
-ARGS.add_argument('--datasize', type=int, default=10000)
-ARGS.add_argument('--affinity', action='store_true')
-ARGS.add_argument('--duration', type=float, default=0.010)
-ARGS.add_argument('--count', type=int, default=10000)
-args = ARGS.parse_args()
 
-c = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
-config.set_config(c)
+def main():
+    ARGS = argparse.ArgumentParser(description='bench_burn benchmark for burner thread overhead')
+    ARGS.add_argument('--threads', type=int, default=2)
+    ARGS.add_argument('--workers', type=int, default=100)
+    ARGS.add_argument('--datasize', type=int, default=10000)
+    ARGS.add_argument('--affinity', action='store_true')
+    ARGS.add_argument('--duration', type=float, default=0.010)
+    ARGS.add_argument('--count', type=int, default=10000)
+    args = ARGS.parse_args()
 
-loop = asyncio.get_event_loop()
-b = burner.Burner('parser')
-queue = asyncio.Queue()
-for _ in range(args.count):
-    queue.put_nowait((args.duration, 'x' * args.datasize))
+    c = {'Multiprocess': {'BurnerThreads': args.threads, 'Affinity': args.affinity}}
+    config.set_config(c)
 
-print('args are', args)
+    loop = asyncio.get_event_loop()
+    b = burner.Burner('parser')
+    queue = asyncio.Queue()
+    for _ in range(args.count):
+        queue.put_nowait((args.duration, 'x' * args.datasize))
 
-print('Processing {} items of size {} kbytes and {:.3f} seconds of burn using {} burner threads'.format(
-    args.count, int(args.datasize/1000), args.duration, args.threads))
+    print('args are', args)
 
-t0 = time.time()
-c0 = time.process_time()
+    print('Processing {} items of size {} kbytes and {:.3f} seconds of burn using {} burner threads'.format(
+        args.count, int(args.datasize/1000), args.duration, args.threads))
 
-try:
-    loop.run_until_complete(crawl())
-except KeyboardInterrupt:
-    sys.stderr.flush()
-    print('\nInterrupt. Exiting.\n')
-finally:
-    loop.stop()
-    loop.run_forever()
-    loop.close()
+    t0 = time.time()
+    c0 = time.process_time()
 
-elapsed = time.time() - t0
-print('Elapsed time is {:.1f} seconds.'.format(elapsed))
-expected = args.count * args.duration / args.threads
-print('Expected is {:.1f} seconds.'.format(expected))
+    try:
+        loop.run_until_complete(crawl())
+    except KeyboardInterrupt:
+        sys.stderr.flush()
+        print('\nInterrupt. Exiting.\n')
+    finally:
+        loop.stop()
+        loop.run_forever()
+        loop.close()
 
-print('Burner-side overhead is {}% or {:.4f} seconds per call'.format(
-    int((elapsed - expected)/expected*100), (elapsed - expected)/args.count))
+    elapsed = time.time() - t0
+    print('Elapsed time is {:.1f} seconds.'.format(elapsed))
+    expected = args.count * args.duration / args.threads
+    print('Expected is {:.1f} seconds.'.format(expected))
 
-celapsed = time.process_time() - c0
-print('Main-thread overhead is {}%, {:.4f} seconds per call, {} calls per cpu-second'.format(
-    int(celapsed/elapsed*100), celapsed/args.count, int(args.count/celapsed)))
+    print('Burner-side overhead is {}% or {:.4f} seconds per call'.format(
+        int((elapsed - expected)/expected*100), (elapsed - expected)/args.count))
+
+    celapsed = time.process_time() - c0
+    print('Main-thread overhead is {}%, {:.4f} seconds per call, {} calls per cpu-second'.format(
+        int(celapsed/elapsed*100), celapsed/args.count, int(args.count/celapsed)))
+
+
+if __name__ == '__main__':
+    # this guard needed for MacOS and Windows
+    main()

@@ -86,4 +86,5 @@ def main():
 
 
 if __name__ == '__main__':
+    # this guard needed for MacOS and Windows
     main()
