@@ -566,9 +566,14 @@ class Crawler:
         # this is now the 'main' coroutine
 
         if config.read('Multiprocess', 'Affinity'):
-            # set the main thread to run on core 0
             p = psutil.Process()
-            p.cpu_affinity([p.cpu_affinity().pop(0)])
+            if hasattr(p, 'cpu_affinity'):  # MacOS does not
+                # set the main thread to run on core 0
+                cpu = p.cpu_affinity().pop(0)
+                p.cpu_affinity([cpu])
+                LOGGER.info('setting cpu affinity of main thread to core %d', cpu)
+            else:
+                pass  # already sent a warning in burner constructor
 
         while True:
             await asyncio.sleep(1)
