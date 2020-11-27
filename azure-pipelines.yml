@@ -43,6 +43,7 @@ jobs:
       displayName: 'pytest'
 
     - script: |
+        printenv
         pip install coveralls
         coveralls -v
       displayName: 'coveralls'
