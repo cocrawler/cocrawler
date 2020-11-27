@@ -57,7 +57,7 @@ async def crawl():
             w.cancel()
 
 
-async def main():
+def main():
     for d in sys.argv[1:]:
         if os.path.isfile(d):
             queue.put_nowait(d)
