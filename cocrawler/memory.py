@@ -92,10 +92,18 @@ def print_summary(f):
 
 
 def limit_resources():
-    _, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    print('GREG getrlimit returned {} {}'.format(_, hard))
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    try:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
+    except ValueError:  # should always work, but hey, MacOS, you do you
+        LOGGER.warning('Failed to set RLIMIT_NOFILE to %d, got ValueError', hard)
+        if hard//2 > soft:
+            try:
+                resource.setrlimit(resource.RLIMIT_NOFILE, (hard//2, hard))
+                LOGGER.warning('Fallback to set RLIMIT_NOFILE to %d worked', hard//2)
+            except ValueError:
+                LOGGER.warning('Fallback to set RLIMIT_NOFILE to %d also got ValueError', hard//2)
     # XXX warn if too few compared to max_wokers?
-    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 
     _, hard = resource.getrlimit(resource.RLIMIT_AS)
     rlimit_as = int(config.read('System', 'RLIMIT_AS_gigabytes'))
