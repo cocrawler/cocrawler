@@ -3,7 +3,7 @@ trigger:
 
 jobs:
   - job: linux
-    timeoutInMinutes: 10
+    timeoutInMinutes: 10  # does not cause a failure, unfortunately
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -44,7 +44,7 @@ jobs:
       displayName: 'pytest'
 
   - job: macos
-    timeoutInMinutes: 10
+    timeoutInMinutes: 10  # does not cause a failure, unfortunately
     pool:
       vmImage: 'macOS-latest'
     strategy:
