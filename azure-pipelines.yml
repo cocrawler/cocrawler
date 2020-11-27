@@ -1,0 +1,69 @@
+trigger:
+- main
+
+jobs:
+  - job: linux
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        # geoip2 is >= 3.6
+        Python36:
+          python.version: '3.6'
+        Python36:
+          python.version: '3.6'
+          myenv: COCRAWLER_LOGLEVEL=DEBUG
+        Python36:
+          python.version: '3.6'
+          myenv: PYTHONASYNCIODEBUG=1
+        Python37:
+          python.version: '3.7'
+        Python38:
+          python.version: '3.8'
+        # 3.9 is a reppy build fail
+
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Use Python $(python.version)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install . .[test]
+      displayName: 'Install dependencies'
+
+    - script: |
+        pip install pytest-azurepipelines
+        if [ ! -z "$(myenv)" ]; then
+          export $(myenv)
+        fi
+        make test_coverage
+      displayName: 'pytest'
+
+  - job: macos
+    pool:
+      vmImage: 'macOS-latest'
+    strategy:
+      matrix:
+        Python38:
+          python.version: '3.8'
+
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Use Python $(python.version)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install . .[test]
+      displayName: 'Install dependencies'
+
+    - script: |
+        pip install pytest-azurepipelines
+        if [ ! -z "$(myenv)" ]; then
+          export $(myenv)
+        fi
+        make test_coverage
+      displayName: 'pytest'
