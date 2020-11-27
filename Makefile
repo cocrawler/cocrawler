@@ -27,7 +27,7 @@ clean_coverage:
 	rm -f tests/warc/.coverage.*
 
 test_coverage: clean_coverage
-	PYTHONPATH=. py.test --cov-report= --cov-append --cov cocrawler tests
+	PYTHONPATH=. py.test --cov-report=xml --cov-append --cov cocrawler tests
 	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/crawl.py --printdefault | wc -l | awk '{ if( $$1 > 10) {exit 0;} else {exit 1;} }'
 	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/parse-html.py data/html-parsing-test.html > /dev/null
 	(cd tests; PYTHONPATH=.. COVERAGE='coverage run -a --source=../cocrawler,../scripts' ./test.sh)
