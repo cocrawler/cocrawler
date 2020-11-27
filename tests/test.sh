@@ -31,7 +31,7 @@ echo test-deep-warc
 echo
 
 # and the WARC
-COUNT=`warcio index Testing-000000-*.warc.gz | wc -l`
+COUNT=`warcio index Testing-000000-*.warc.gz | wc -l | sed 's/ *//g'`  # MacOS has spaces
 if [ "$COUNT" != "2001" ]; then
    echo "warc index is the wrong size: saw $COUNT"
    exit 1

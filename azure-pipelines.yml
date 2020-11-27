@@ -61,6 +61,7 @@ jobs:
       displayName: 'Install dependencies'
 
     - script: |
+        set -e
         if [ ! -z "$(myenv)" ]; then
           export $(myenv)
         fi
