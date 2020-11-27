@@ -28,15 +28,10 @@ clean_coverage:
 
 test_coverage: clean_coverage
 	PYTHONPATH=. py.test --cov-report=xml --cov-append --cov cocrawler tests
-	coverage report
 	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/crawl.py --printdefault | wc -l | awk '{ if( $$1 > 10) {exit 0;} else {exit 1;} }'
-	coverage report
 	PYTHONPATH=. coverage run -a --source=cocrawler,scripts scripts/parse-html.py data/html-parsing-test.html > /dev/null
-	coverage report
 	(cd tests; PYTHONPATH=.. COVERAGE='coverage run -a --source=../cocrawler,../scripts' ./test.sh)
-	coverage report
 	(cd tests/warc; PYTHONPATH=../.. COVERAGE='coverage run -a --source=../../cocrawler,.' ./test.sh)
-	coverage report
 	coverage combine -a tests/.coverage tests/warc/.coverage
 	coverage report
 
