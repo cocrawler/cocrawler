@@ -85,7 +85,8 @@ jobs:
     - script: |
         pip install coveralls
         echo CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM
-        coveralls
+        echo FOO=$COVERALLS_REPO_TOKEN
+        coveralls -v
       displayName: 'coveralls'
       env:
         CIRCLECI: 1
