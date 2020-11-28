@@ -43,12 +43,9 @@ jobs:
       displayName: 'pytest'
 
     - script: |
-        printenv
-        #pip install coveralls
-        pip install git+https://github.com/wumpus/coveralls-python
+        pip install coveralls
         export CIRCLE_BRANCH=$BUILD_SOURCEBRANCH
-        coveralls -v
-        git rev-parse --abbrev-ref HEAD
+        coveralls
       displayName: 'coveralls'
       env:
         CIRCLECI: 1
@@ -85,12 +82,9 @@ jobs:
       displayName: 'pytest'
 
     - script: |
-        printenv
-        #pip install coveralls
-        pip install git+https://github.com/wumpus/coveralls-python
+        pip install coveralls
         export CIRCLE_BRANCH=$BUILD_SOURCEBRANCH
-        coveralls -v
-        git rev-parse --abbrev-ref HEAD
+        coveralls
       displayName: 'coveralls'
       env:
         CIRCLECI: 1
