@@ -46,13 +46,13 @@ jobs:
         printenv
         #pip install coveralls
         pip install git+https://github.com/wumpus/coveralls-python
+        export CIRCLE_BRANCH=$BUILD_SOURCEBRANCH
         coveralls -v
         git rev-parse --abbrev-ref HEAD
       displayName: 'coveralls'
       env:
         CIRCLECI: 1
         CIRCLE_BUILD_NUM: $(Build.BuildNumber)
-        CIRCLE_BRANCH: $BUILD_SOURCEBRANCH
         COVERALLS_REPO_TOKEN: $(coveralls_repo_token)
 
   - job: macos
@@ -88,11 +88,11 @@ jobs:
         printenv
         #pip install coveralls
         pip install git+https://github.com/wumpus/coveralls-python
+        export CIRCLE_BRANCH=$BUILD_SOURCEBRANCH
         coveralls -v
         git rev-parse --abbrev-ref HEAD
       displayName: 'coveralls'
       env:
         CIRCLECI: 1
         CIRCLE_BUILD_NUM: $(Build.BuildNumber)
-        CIRCLE_BRANCH: $BUILD_SOURCEBRANCH
         COVERALLS_REPO_TOKEN: $(coveralls_repo_token)
