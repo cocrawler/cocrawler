@@ -52,6 +52,7 @@ jobs:
       env:
         CIRCLECI: 1
         CIRCLE_BUILD_NUM: $(Build.BuildNumber)
+        CIRCLE_BRANCH: $BUILD_SOURCEBRANCH
         COVERALLS_REPO_TOKEN: $(coveralls_repo_token)
 
   - job: macos
@@ -93,4 +94,5 @@ jobs:
       env:
         CIRCLECI: 1
         CIRCLE_BUILD_NUM: $(Build.BuildNumber)
+        CIRCLE_BRANCH: $BUILD_SOURCEBRANCH
         COVERALLS_REPO_TOKEN: $(coveralls_repo_token)
