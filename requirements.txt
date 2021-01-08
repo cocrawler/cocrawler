@@ -2,45 +2,45 @@
 
 # used by the cocrawler system
 uvloop==0.14.0
-aiohttp==3.7.2
-yarl==1.6.2
+aiohttp==3.7.3
+yarl==1.6.3
 aiodns==2.0.0
 PyYAML==5.3.1
 cchardet==2.1.7
 surt==0.3.1
 reppy==0.4.14
-cachetools==4.1.1
+cachetools==4.2.0
 #filemagic==1.6  # needs libmagic installed in the OS
-tldextract==3.0.2
-sortedcontainers==2.2.2
-sortedcollections==1.2.1
-psutil==5.7.3
+tldextract==3.1.0
+sortedcontainers==2.3.0
+sortedcollections==1.2.3
+psutil==5.8.0
 hdrhistogram==0.8.0
 beautifulsoup4==4.9.3
-lxml==4.6.1
+lxml==4.6.2
 extensions==0.4
 warcio==1.7.4
 geoip2==4.1.0  # requires python >3.6
 objgraph==3.5.0
 brotlipy==0.7.0
-setuptools-scm==4.1.2
+setuptools-scm==5.0.1
 
 # used to maintain this file
 pur==5.3.0
 
 # used by the mock webserver
-bottle==0.12.18
+bottle==0.12.19
 
 # used by Makefile
 pylint==2.6.0
 flake8==3.8.4
-pytest==6.1.2
-attrs==20.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
+pytest==6.2.1
+attrs==20.3.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
 pytest-cov==2.10.1
 pytest-asyncio==0.14.0
 pytest-sugar==0.9.4
 
 # packaging
-wheel==0.35.1
-twine==3.2.0
-setuptools==50.3.2
+wheel==0.36.2
+twine==3.3.0
+setuptools==51.1.1
