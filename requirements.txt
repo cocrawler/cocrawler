@@ -17,7 +17,7 @@ sortedcollections==2.1.0
 psutil==5.8.0
 hdrhistogram==0.8.0
 beautifulsoup4==4.9.3
-lxml==4.6.2
+lxml==4.6.3
 extensions==0.4
 warcio==1.7.4
 geoip2==4.1.0  # requires python >3.6
