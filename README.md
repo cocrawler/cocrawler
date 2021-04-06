@@ -25,42 +25,25 @@ Screenshot: ![Screenshot](https://cloud.githubusercontent.com/assets/2142266/196
 
 ## Installing
 
-We recommend that you use pyenv, because (1) CoCrawler requires Python
-3.5+, and (2) requirements.txt specifies exact module versions.
+We recommend that you use pyenv / virtualenv to separate the python
+executables and packages used by cocrawler from everything else.
+
+You can install cocrawler from pypi using "pip install cocrawler".
+
+For a more fresh version, clone the repo and install like this:
 
 ```
 git clone https://github.com/cocrawler/cocrawler.git
 cd cocrawler
-make init  # will install requirements using pip
+pip install . .[test]
 make pytest
 make test_coverage
 ```
 
-## Pluggable Modules
-
-Pluggable modules make policy decisions, and use utility routines
-to keep policy modules short and sweet.
-
-An additional set of pluggable modules provide support for a variety
-of databases. These databases are mostly used to orchestrate the
-cooperation of multiple crawl processes, enabling the horizontal
-scalability of the crawler over many cores and many nodes.
-
-Crawled web assets are intended to be stored as WARC files, although
-this interface should also pluggable.
-
-## Ranking
-
-Everyone knows that ranking is extremely important to search queries,
-but it's also important to crawling. Crawling the most important stuff
-is one of the best ways to avoid crawling too much webspam, soft 404s,
-and crawler trap pages.
-
-SEO is a multi-billion-dollar industry created to game search engine
-ranking, and any crawl of a wide swath of the web is going to run into
-poor-quality content attempting to appear to have high quality.
-There's little chance that CoCrawler's algorithms will beat the most
-sophisticated SEO techniques, but a little ranking goes a long way.
+The CI for this repo uses the latest versions of everything.  To see
+exactly what worked last, click on the "Build Status" link above.
+Alternately, you can look at `requirements.txt` for a test combination
+that I probably ran before checking in.
 
 ## Credits
 
