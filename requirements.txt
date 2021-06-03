@@ -4,15 +4,15 @@
 uvloop==0.15.2
 aiohttp==3.7.4.post0
 yarl==1.6.3
-aiodns==2.0.0
+aiodns==3.0.0
 PyYAML==5.4.1
 cchardet==2.1.7
 surt==0.3.1
 reppy==0.4.14
-cachetools==4.2.1
+cachetools==4.2.2
 #filemagic==1.6  # needs libmagic installed in the OS
 tldextract==3.1.0
-sortedcontainers==2.3.0
+sortedcontainers==2.4.0
 sortedcollections==2.1.0
 psutil==5.8.0
 hdrhistogram==0.8.0
@@ -20,27 +20,27 @@ beautifulsoup4==4.9.3
 lxml==4.6.3
 extensions==0.4
 warcio==1.7.4
-geoip2==4.1.0  # requires python >3.6
+geoip2==4.2.0  # requires python >3.6
 objgraph==3.5.0
 brotlipy==0.7.0
 setuptools-scm==6.0.1
 
 # used to maintain this file
-pur==5.4.0
+pur==5.4.1
 
 # used by the mock webserver
 bottle==0.12.19
 
 # used by Makefile
-pylint==2.7.4
-flake8==3.9.0
-pytest==6.2.3
-attrs==20.3.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
-pytest-cov==2.11.1
-pytest-asyncio==0.14.0
+pylint==2.8.3
+flake8==3.9.2
+pytest==6.2.4
+attrs==21.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
+pytest-cov==2.12.1
+pytest-asyncio==0.15.1
 pytest-sugar==0.9.4
 
 # packaging
 wheel==0.36.2
 twine==3.4.1
-setuptools==54.2.0
+setuptools==57.0.0

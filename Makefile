@@ -1,6 +1,7 @@
 .PHONY: init pytest test pylint clean_coverage test_coverage download-stuff run_parsers register distclean dist install mock-webserver
 
 init:
+	pip install --upgrade pip
 	pip install -r requirements.txt
 	-pip install -r optional-requirements.txt
 
