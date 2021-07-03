@@ -32,7 +32,7 @@ pur==5.4.1
 bottle==0.12.19
 
 # used by Makefile
-pylint==2.8.3
+pylint==2.9.3
 flake8==3.9.2
 pytest==6.2.4
 attrs==21.2.0  # >= 17..4.0works around https://github.com/pypa/pip/issues/5335
