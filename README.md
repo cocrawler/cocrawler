@@ -1,6 +1,6 @@
 # CoCrawler
 
-[![Build Status](https://dev.azure.com/cocrawler/cocrawler/_apis/build/status/cocrawler.cocrawler?branchName=master)](https://dev.azure.com/cocrawler/cocrawler/_build/latest?definitionId=2&branchName=master) [![Coverage Status](https://coveralls.io/repos/github/cocrawler/cocrawler/badge.svg?branch=master)](https://coveralls.io/github/cocrawler/cocrawler?branch=master) [![Apache License 2.0](https://img.shields.io/github/license/cocrawler/cocrawler.svg)](LICENSE)
+[![Build Status](https://dev.azure.com/cocrawler/cocrawler/_apis/build/status/cocrawler.cocrawler?branchName=main)](https://dev.azure.com/cocrawler/cocrawler/_build/latest?definitionId=2&branchName=main) [![Coverage Status](https://coveralls.io/repos/github/cocrawler/cocrawler/badge.svg?branch=main)](https://coveralls.io/github/cocrawler/cocrawler?branch=main) [![Apache License 2.0](https://img.shields.io/github/license/cocrawler/cocrawler.svg)](LICENSE)
 
 CoCrawler is a versatile web crawler built using modern tools and
 concurrency.
