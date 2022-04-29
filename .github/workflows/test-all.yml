@@ -15,18 +15,22 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.7, 3.8, 3.9, 3.10]
+        python-version: [3.7, 3.8]  # no reppy wheel: , 3.9, '3.10']
+        EXTRA: false  # used to force includes to get included
         include:
           - python-version: 3.8
             os: ubuntu-latest
             # make sure that the most verbose level is not crashy
             COCRAWLER_LOGLEVEL: DEBUG
             PYTHONASYNCIODEBUG: 1
+            VERBOSE: verbose
+            EXTRA: true
           - python-version: 3.8
             os: ubuntu-latest
             # make sure that exact versions still work
             EXACT_VERSIONS: 1
-          - python-version: 3.9
+            EXTRA: true
+          - python-version: 3.8
             os: macos-latest
 
     environment: cocrawler-test

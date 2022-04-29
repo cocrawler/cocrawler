@@ -73,7 +73,7 @@ setup(
     author_email='lindahl@pbm.com',
     url='https://github.com/cocrawler/cocrawler',
     packages=packages,
-    python_requires=">=3.7",  # was 3.6.3 before cachetools 5
+    python_requires=">=3.7",
     extras_require=extras_require,
     install_requires=requires,
     scripts=scripts,
@@ -89,11 +89,11 @@ setup(
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python',
-        #'Programming Language :: Python :: 3.6',
+        #'Programming Language :: Python :: 3.6',  # cachetools 5
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
+        #'Programming Language :: Python :: 3.9',  # no reppy wheel
+        #'Programming Language :: Python :: 3.10',  # no reppy wheel
         'Programming Language :: Python :: 3 :: Only',
     ],
 )
