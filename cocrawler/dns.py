@@ -4,12 +4,10 @@ DNS-related code
 
 import time
 import logging
-import urllib
 import ipaddress
 
 import cachetools
 import aiohttp
-import aiodns
 
 from . import stats
 from . import config
