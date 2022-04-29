@@ -47,6 +47,8 @@ def main():
         sys.exit(1)
 
     loglevel = os.getenv('COCRAWLER_LOGLEVEL')
+    if loglevel == '':
+        loglevel = None
     if loglevel is None and args.loglevel:
         loglevel = args.loglevel
     if loglevel is None and args.verbose:
