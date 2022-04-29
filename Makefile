@@ -1,4 +1,4 @@
-.PHONY: init pytest test pylint clean_coverage test_coverage download-stuff run_parsers register distclean dist install mock-webserver
+.PHONY: init pytest test pylint clean_coverage test_coverage download-stuff run_parsers check_action register distclean dist install mock-webserver
 
 init:
 	pip install --upgrade pip
@@ -44,6 +44,9 @@ download-stuff:
 
 run_parsers:
 	python ./scripts/run_parsers.py ~/public_html/
+
+check_action:
+	python -c 'import yaml, sys; print(yaml.safe_load(sys.stdin))' < .github/workflows/test-all.yml > /dev/null
 
 register:
 	python setup.py register -r https://pypi.python.org/pypi

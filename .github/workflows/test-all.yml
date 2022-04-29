@@ -16,7 +16,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.7, 3.8]  # no reppy wheel: , 3.9, '3.10']
-        EXTRA: false  # used to force includes to get included
+        EXTRA: [false]  # used to force includes to get included
         include:
           - python-version: 3.8
             os: ubuntu-latest
