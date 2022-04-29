@@ -46,7 +46,7 @@ jobs:
         pip install . .[test]
 
     - name: 'Install exact version if needed'
-      if: ${{ EXACT_VERSIONS }}
+      if: ${{ matrix.EXACT_VERSIONS }}
       run: |
         pip install -r requirements.txt
 
@@ -54,8 +54,8 @@ jobs:
       run: |
         make test_coverage
       env:
-        COCRAWLER_LOGLEVEL: ${{ COCRAWLER_LOGLEVEL }}
-        PYTHONASYNCIODEBUG: ${{ PYTHONASYNCIODEBUG }}
+        COCRAWLER_LOGLEVEL: ${{ matrix.COCRAWLER_LOGLEVEL }}
+        PYTHONASYNCIODEBUG: ${{ matrix.PYTHONASYNCIODEBUG }}
 
     - name: 'coveralls'
       run: |
