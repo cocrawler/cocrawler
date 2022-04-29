@@ -14,7 +14,7 @@ import pickle
 from collections import defaultdict
 from operator import itemgetter
 import logging
-import cachetools.ttl
+import cachetools
 import json
 
 from . import config
@@ -36,8 +36,8 @@ class Scheduler:
         self.awaiting_work = 0
         self.maxhostqps = None
         self.delta_t = None
-        self.next_fetch = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
-        self.frozen_until = cachetools.ttl.TTLCache(10000, 10)  # 10 seconds is longer than our typical delay
+        self.next_fetch = cachetools.TTLCache(10000, 10)  # 10 seconds good enough for QPS=0.1 and up
+        self.frozen_until = cachetools.TTLCache(10000, 10)  # 10 seconds is longer than our typical delay
         self.maxhostqps = float(config.read('Crawl', 'MaxHostQPS'))
         self.delta_t = 1./self.maxhostqps
         self.initialize_budgets()

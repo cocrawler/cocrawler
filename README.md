@@ -1,6 +1,6 @@
 # CoCrawler
 
-[![Build Status](https://dev.azure.com/cocrawler/cocrawler/_apis/build/status/cocrawler.cocrawler?branchName=main)](https://dev.azure.com/cocrawler/cocrawler/_build/latest?definitionId=2&branchName=main) [![Coverage Status](https://coveralls.io/repos/github/cocrawler/cocrawler/badge.svg?branch=main)](https://coveralls.io/github/cocrawler/cocrawler?branch=main) [![Apache License 2.0](https://img.shields.io/github/license/cocrawler/cocrawler.svg)](LICENSE)
+[![Build Status](https://github.com/cocrawler/cocrawler/actions/workflows/test-all.yml/badge.svg)](https://github.com/cocrawler/cocrawler/actions/workflows/test-all.yml) [![Coverage Status](https://coveralls.io/repos/github/cocrawler/cocrawler/badge.svg?branch=main)](https://coveralls.io/github/cocrawler/cocrawler?branch=main) [![Apache License 2.0](https://img.shields.io/github/license/cocrawler/cocrawler.svg)](LICENSE)
 
 CoCrawler is a versatile web crawler built using modern tools and
 concurrency.
@@ -12,7 +12,7 @@ include open-ended crawling of the whole web.
 
 The object of this project is to create a modular crawler with
 pluggable modules, capable of working well for a large variety of
-crawl tasks. The core of the crawler is written in Python 3.5+ using
+crawl tasks. The core of the crawler is written in Python 3.7+ using
 coroutines.
 
 ## Status

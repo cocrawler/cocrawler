@@ -1,6 +1,6 @@
 import pickle
 import logging
-import cachetools.ttl
+import cachetools
 
 from . import config
 from . import memory
@@ -15,7 +15,7 @@ class Datalayer:
 
         robots_size = config.read('Robots', 'RobotsCacheSize')
         robots_ttl = config.read('Robots', 'RobotsCacheTimeout')
-        self.robots = cachetools.ttl.TTLCache(robots_size, robots_ttl)
+        self.robots = cachetools.TTLCache(robots_size, robots_ttl)
 
         memory.register_debug(self.memory)
 
